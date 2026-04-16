@@ -1,5 +1,5 @@
 ---
-globs:
+paths:
   - "apps/**/*.py"
   - "config/**/*.py"
 ---
