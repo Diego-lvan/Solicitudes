@@ -1,0 +1,326 @@
+\chapter{Requerimientos No Funcionales}
+
+% ============================================================
+\section{Selección de Atributos de Calidad}
+
+Se identificaron los siguientes atributos de calidad relevantes para el Sistema de Solicitudes. La tabla \ref{tab:priorización} muestra la priorización mediante comparación pareada.
+
+\begin{table}[H]
+\centering
+\caption{Priorización de atributos de calidad.}
+\label{tab:priorización}
+\small
+\begin{tabular}{|l|c|c|c|c|c|c|c|}
+    \hline
+    \textbf{Atributo} & \textbf{Score} & \textbf{Seg.} & \textbf{Usab.} & \textbf{Disp.} & \textbf{Rend.} & \textbf{Intero.} & \textbf{Mant.} \\
+    \hline
+    \textbf{Seguridad} & 5 & --- & $>$ & $>$ & $>$ & $>$ & $>$ \\
+    \hline
+    \textbf{Usabilidad} & 4 & $<$ & --- & $>$ & $>$ & $>$ & $>$ \\
+    \hline
+    \textbf{Disponibilidad} & 3 & $<$ & $<$ & --- & $>$ & $>$ & $>$ \\
+    \hline
+    \textbf{Rendimiento} & 2 & $<$ & $<$ & $<$ & --- & $>$ & $>$ \\
+    \hline
+    \textbf{Interoperabilidad} & 1 & $<$ & $<$ & $<$ & $<$ & --- & $>$ \\
+    \hline
+    \textbf{Mantenibilidad} & 0 & $<$ & $<$ & $<$ & $<$ & $<$ & --- \\
+    \hline
+\end{tabular}
+\end{table}
+
+\textbf{Justificación de la priorización:}
+
+\begin{enumerate}
+    \item \textbf{Seguridad (Score: 5):} Es el atributo más crítico porque el sistema maneja datos personales de alumnos y docentes, documentos oficiales y comprobantes de pago. La autenticación por JWT y el control de acceso por roles son fundamentales.
+
+    \item \textbf{Usabilidad (Score: 4):} La adopción del sistema depende directamente de que sea fácil de usar. Si la interfaz es confusa o compleja, los usuarios regresaran a los canales informales.
+
+    \item \textbf{Disponibilidad (Score: 3):} El sistema debe estar disponible durante horarios académicos y administrativos para no bloquear trámites.
+
+    \item \textbf{Rendimiento (Score: 2):} Las operaciónes principales (crear solicitud, consultar, generar PDF) deben ser rápidas, pero el volumen de usuarios concurrentes no se espera excesivamente alto.
+
+    \item \textbf{Interoperabilidad (Score: 1):} El sistema debe integrarse con el proveedor de autenticación y el SIGA, pero estas integraciónes son puntuales y bien definidas.
+
+    \item \textbf{Mantenibilidad (Score: 0):} Aunque es deseable, la arquitectura de microservicio y el diseño dinámico ya fácilitan el mantenimiento.
+\end{enumerate}
+
+% ============================================================
+\section{Catálogo de Escenarios de Atributos de Calidad}
+
+\begin{longtable}{|C{1.2cm}|L{12.5cm}|}
+    \hline
+    \textbf{ID} & \textbf{Descripción} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Descripción} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    AC-01 & \textbf{Autenticación y autorizacion segura:} El sistema valida el token JWT en cada peticion y restringe el acceso a recursos segun el rol del usuario. \\
+    \hline
+    AC-02 & \textbf{Protección de datos sensibles:} Los archivos adjuntos y datos personales se transmiten y almacenan de forma segura. \\
+    \hline
+    AC-03 & \textbf{Control de acceso por roles:} Un usuario solo puede acceder a las solicitudes y funciones permitidas para su rol. \\
+    \hline
+    AC-04 & \textbf{Interfaz intuitiva para creación de solicitudes:} Un alumno sin capacitacion previa puede crear una solicitud en menos de 5 minutos. \\
+    \hline
+    AC-05 & \textbf{Formularios claros y validados:} Los formularios dinámicos muestran mensajes de error claros y guian al usuario para completar correctamente la información. \\
+    \hline
+    AC-06 & \textbf{Disponibilidad en horario académico:} El sistema esta disponible al menos el 99\% del tiempo durante dias hábiles (lunes a viernes, 8:00-20:00). \\
+    \hline
+    AC-07 & \textbf{Tiempo de respuesta aceptable:} Las operaciónes principales responden en menos de 3 segundos bajo carga normal. \\
+    \hline
+    AC-08 & \textbf{Generación de PDF eficiente:} La generación de un documento PDF a partir de plantilla se completa en menos de 5 segundos. \\
+    \hline
+    AC-09 & \textbf{Integración confiable con SIGA:} La consulta de datos al SIGA responde adecuadamente y el sistema maneja graciosamente la indisponibilidad del servicio. \\
+    \hline
+    AC-10 & \textbf{Integración con autenticación externa:} El sistema valida correctamente tokens JWT emitidos por el proveedor de autenticación. \\
+    \hline
+\end{longtable}
+
+% ============================================================
+\section{Especificación de Atributos de Calidad}
+
+% --- AC-01 ---
+\subsection{AC-01: Autenticación y autorizacion segura}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|L{3cm}|L{10.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{AC-01: Autenticación y autorizacion segura}} \\
+    \hline
+    \textbf{Fuente:} & Usuario no autenticado o con token inválido. \\
+    \hline
+    \textbf{Estimulo:} & Un usuario intenta acceder a un recurso del sistema sin un token JWT válido o con un token expirado. \\
+    \hline
+    \textbf{Artefacto:} & Middleware de autenticación del Sistema de Solicitudes. \\
+    \hline
+    \textbf{Ambiente:} & Operación normal del sistema. \\
+    \hline
+    \textbf{Respuesta:} & El sistema rechaza la peticion con un código HTTP 401 (Unauthorized) y redirige al proveedor de autenticación. No se expone información del sistema. \\
+    \hline
+    \textbf{Métrica:} & El 100\% de las peticiones sin token válido son rechazadas. Tiempo de validación del token menor a 100ms. \\
+    \hline
+\end{tabular}
+\end{table}
+
+% --- AC-02 ---
+\subsection{AC-02: Protección de datos sensibles}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|L{3cm}|L{10.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{AC-02: Protección de datos sensibles}} \\
+    \hline
+    \textbf{Fuente:} & Atacante externo. \\
+    \hline
+    \textbf{Estimulo:} & Intento de interceptar datos en transito o acceder a archivos adjuntos de otro usuario. \\
+    \hline
+    \textbf{Artefacto:} & Canal de comúnicación y almacenamiento de archivos. \\
+    \hline
+    \textbf{Ambiente:} & Operación normal del sistema. \\
+    \hline
+    \textbf{Respuesta:} & Toda la comúnicación se realiza sobre HTTPS (TLS 1.2+). Los archivos adjuntos solo son accesibles por el solicitante, el personal responsable y el administrador, validando permisos en cada descarga. \\
+    \hline
+    \textbf{Métrica:} & El 100\% de las conexiónes usan HTTPS. El 0\% de los accesos no autorizados a archivos son éxitosos. \\
+    \hline
+\end{tabular}
+\end{table}
+
+% --- AC-03 ---
+\subsection{AC-03: Control de acceso por roles}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|L{3cm}|L{10.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{AC-03: Control de acceso por roles}} \\
+    \hline
+    \textbf{Fuente:} & Usuario autenticado con rol insuficiente. \\
+    \hline
+    \textbf{Estimulo:} & Un alumno intenta acceder a la sección de administración o un miembro de control escolar intenta ver solicitudes asignadas a responsable de programa. \\
+    \hline
+    \textbf{Artefacto:} & Decoradores/middleware de control de acceso. \\
+    \hline
+    \textbf{Ambiente:} & Operación normal del sistema. \\
+    \hline
+    \textbf{Respuesta:} & El sistema deniega el acceso con un código HTTP 403 (Forbidden) y muestra un mensaje indicando que no tiene permisos suficientes. \\
+    \hline
+    \textbf{Métrica:} & El 100\% de los intentos de acceso a recursos no autorizados para el rol del usuario son bloqueados. \\
+    \hline
+\end{tabular}
+\end{table}
+
+% --- AC-04 ---
+\subsection{AC-04: Interfaz intuitiva para creación de solicitudes}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|L{3cm}|L{10.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{AC-04: Interfaz intuitiva para creación de solicitudes}} \\
+    \hline
+    \textbf{Fuente:} & Alumno sin experiencia previa con el sistema. \\
+    \hline
+    \textbf{Estimulo:} & El alumno necesita solicitar una constancia por primera vez. \\
+    \hline
+    \textbf{Artefacto:} & Interfaz de creación de solicitudes. \\
+    \hline
+    \textbf{Ambiente:} & Primer uso del sistema. \\
+    \hline
+    \textbf{Respuesta:} & El usuario puede selecciónar el tipo, llenar el formulario y enviar la solicitud sin necesidad de ayuda externa ni documentación. \\
+    \hline
+    \textbf{Métrica:} & Un usuario nuevo completa la creación de una solicitud en menos de 5 minutos sin capacitacion previa. La tasa de abandono del formulario es menor al 10\%. \\
+    \hline
+\end{tabular}
+\end{table}
+
+% --- AC-05 ---
+\subsection{AC-05: Formularios claros y validados}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|L{3cm}|L{10.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{AC-05: Formularios claros y validados}} \\
+    \hline
+    \textbf{Fuente:} & Solicitante. \\
+    \hline
+    \textbf{Estimulo:} & El solicitante envia un formulario con datos faltantes o en formato incorrecto. \\
+    \hline
+    \textbf{Artefacto:} & Formularios dinámicos de creación de solicitud. \\
+    \hline
+    \textbf{Ambiente:} & Operación normal del sistema. \\
+    \hline
+    \textbf{Respuesta:} & El sistema muestra mensajes de error claros, específicos y junto al campo correspondiente, indicando exactamente que debe corregirse. No se pierden los datos ya ingresados. \\
+    \hline
+    \textbf{Métrica:} & El 100\% de los errores de validación muestran un mensaje descriptivo. Los datos válidos ingresados previamente se conservan tras un error de validación. \\
+    \hline
+\end{tabular}
+\end{table}
+
+% --- AC-06 ---
+\subsection{AC-06: Disponibilidad en horario académico}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|L{3cm}|L{10.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{AC-06: Disponibilidad en horario académico}} \\
+    \hline
+    \textbf{Fuente:} & Cualquier usuario. \\
+    \hline
+    \textbf{Estimulo:} & Un usuario accede al sistema durante dias hábiles en horario académico. \\
+    \hline
+    \textbf{Artefacto:} & Sistema de Solicitudes (servidor web y base de datos). \\
+    \hline
+    \textbf{Ambiente:} & Dias hábiles, lunes a viernes, de 8:00 a 20:00 hrs (hora Mexico). \\
+    \hline
+    \textbf{Respuesta:} & El sistema responde correctamente a las peticiones del usuario. \\
+    \hline
+    \textbf{Métrica:} & Disponibilidad del 99\% durante horario académico. Tiempo máximo de inactividad no programada: 4 horas al mes. \\
+    \hline
+\end{tabular}
+\end{table}
+
+% --- AC-07 ---
+\subsection{AC-07: Tiempo de respuesta aceptable}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|L{3cm}|L{10.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{AC-07: Tiempo de respuesta aceptable}} \\
+    \hline
+    \textbf{Fuente:} & Cualquier usuario. \\
+    \hline
+    \textbf{Estimulo:} & El usuario realiza una operación comun: consultar lista de solicitudes, ver detalle, crear solicitud. \\
+    \hline
+    \textbf{Artefacto:} & API y vistas del sistema. \\
+    \hline
+    \textbf{Ambiente:} & Hasta 50 usuarios concurrentes (estimación para la unidad académica). \\
+    \hline
+    \textbf{Respuesta:} & El sistema procesa y responde la peticion dentro del tiempo establecido. \\
+    \hline
+    \textbf{Métrica:} & El 95\% de las peticiones responden en menos de 3 segundos. Ninguna peticion tarda más de 10 segundos (excluyendo generación de PDF y carga de archivos). \\
+    \hline
+\end{tabular}
+\end{table}
+
+% --- AC-08 ---
+\subsection{AC-08: Generación de PDF eficiente}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|L{3cm}|L{10.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{AC-08: Generación de PDF eficiente}} \\
+    \hline
+    \textbf{Fuente:} & Personal (Control Escolar, Responsable de Programa). \\
+    \hline
+    \textbf{Estimulo:} & El personal solicita generar un documento PDF a partir de una plantilla. \\
+    \hline
+    \textbf{Artefacto:} & Motor de generación de documentos PDF. \\
+    \hline
+    \textbf{Ambiente:} & Operación normal del sistema. \\
+    \hline
+    \textbf{Respuesta:} & El sistema genera el PDF sustituyendo las variables y lo ofrece para descarga. \\
+    \hline
+    \textbf{Métrica:} & La generación del PDF se completa en menos de 5 segundos para plantillas de hasta 5 páginas. \\
+    \hline
+\end{tabular}
+\end{table}
+
+% --- AC-09 ---
+\subsection{AC-09: Integración confiable con SIGA}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|L{3cm}|L{10.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{AC-09: Integración confiable con SIGA}} \\
+    \hline
+    \textbf{Fuente:} & Sistema de Solicitudes. \\
+    \hline
+    \textbf{Estimulo:} & El sistema necesita datos de un alumno/docente y consulta al SIGA via API. \\
+    \hline
+    \textbf{Artefacto:} & Módulo de integración con SIGA. \\
+    \hline
+    \textbf{Ambiente:} & Operación normal; SIGA puede estar disponible o no. \\
+    \hline
+    \textbf{Respuesta:} & Si el SIGA responde: se obtienen y muestran los datos completos. Si el SIGA no responde: el sistema muestra los datos básicos disponibles (del token JWT) y un mensaje indicando que los datos adicionales no estan disponibles temporalmente. El flujo principal no se interrumpe. \\
+    \hline
+    \textbf{Métrica:} & Timeout de conexión al SIGA: 5 segundos. El sistema continua operando normalmente ante la caida del SIGA en el 100\% de los casos. \\
+    \hline
+\end{tabular}
+\end{table}
+
+% --- AC-10 ---
+\subsection{AC-10: Integración con autenticación externa}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|L{3cm}|L{10.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{AC-10: Integración con autenticación externa}} \\
+    \hline
+    \textbf{Fuente:} & Proveedor de autenticación. \\
+    \hline
+    \textbf{Estimulo:} & Un usuario presenta un token JWT para acceder al sistema. \\
+    \hline
+    \textbf{Artefacto:} & Middleware de validación JWT. \\
+    \hline
+    \textbf{Ambiente:} & Operación normal del sistema. \\
+    \hline
+    \textbf{Respuesta:} & El sistema valida la firma, la expiracion y los claims del token. Si es válido, permite el acceso con el rol correspondiente. Si es inválido, rechaza la peticion. \\
+    \hline
+    \textbf{Métrica:} & Validación del token en menos de 100ms. El 100\% de los tokens inválidos o expirados son rechazados. \\
+    \hline
+\end{tabular}
+\end{table}

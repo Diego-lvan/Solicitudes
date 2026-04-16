@@ -1,0 +1,113 @@
+\chapter{Vision y Alcance}
+
+% ============================================================
+\section{Enunciado de la Vision}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{|l p{10cm}|}
+    \hline
+    \textbf{For} & los alumnos y docentes de la Universidad Autónoma de Zacatecas \\
+    \textbf{Who} & necesitan solicitar trámites académicos y administrativos (constancias, kardex, convalidaciónes, apoyos, móvilidad, entre otros) de forma ordenada y con seguimiento \\
+    \textbf{The} & \textit{Sistema de Solicitudes} es un servicio web \\
+    \textbf{That} & centraliza la creación, envio, atención y seguimiento de solicitudes con formularios dinámicos, enrutamiento automático por roles y generación de documentos PDF \\
+    \textbf{Unlike} & el proceso actual basado en correos electrónicos, mensajes informales y solicitudes presenciales sin registro ni trazabilidad \\
+    \textbf{Our product} & ofrece una plataforma única, configurable y trazable donde cada solicitud tiene un folio, un historial de seguimiento y notificaciónes automáticas, integrada como microservicio al ecosistema tecnológico de la universidad \\
+    \hline
+\end{tabular}
+\caption{Enunciado de la Vision del Sistema de Solicitudes.}
+\label{tab:vision}
+\end{table}
+
+% ============================================================
+\section{Descripción de la Solucion}
+
+El Sistema de Solicitudes es una aplicación web que funciona como microservicio dentro de la arquitectura de servicios de la universidad. La solucion se compone de los siguientes elementos clave:
+
+\begin{enumerate}
+    \item \textbf{Catálogo configurable de tipos de solicitud:} Un administrador puede definir nuevos tipos de solicitud (ej. constancia de estudios, solicitud de móvilidad, etc.) directamente desde la interfaz, sin intervenir el código. Cada tipo específica los datos requeridos, archivos necesarios, si requiere pago y a que rol se dirige.
+
+    \item \textbf{Motor de formularios dinámicos:} Cada tipo de solicitud tiene asociado un formulario cuyos campos son configurables (texto, número, fecha, archivo, etc.). Esto permite que un mismo sistema soporte solicitudes con requisitos completamente distintos.
+
+    \item \textbf{Flujo de solicitudes con estados:} Cada solicitud atraviesa un ciclo de vida definido (Creada $\rightarrow$ En proceso $\rightarrow$ Finalizada/Cancelada), con registro de cada transición.
+
+    \item \textbf{Enrutamiento automático:} Al crear una solicitud, el sistema la dirige automáticamente al personal con el rol correspondiente (departamento escolar, responsable de programa, etc.).
+
+    \item \textbf{Generador de documentos PDF:} Para tipos que requieren un documento de respuesta (como constancias), el sistema genera PDFs a partir de plantillas con variables que se sustituyen con datos del solicitante.
+
+    \item \textbf{Notificaciónes por correo:} El sistema envia correos electrónicos al personal cuando recibe una solicitud nueva, y al solicitante cuando cambia el estado de su trámite.
+
+    \item \textbf{Gestión de mentores:} El administrador puede mantener una lista de alumnos mentores activos que estan exentos de adjuntar comprobante de pago en ciertos tipos de solicitud.
+
+    \item \textbf{Dashboard y reportes:} Paneles con métricas sobre solicitudes (por tipo, estado, período) con opcion de exportar a CSV y PDF.
+\end{enumerate}
+
+% ============================================================
+\section{Suposiciones y Dependencias}
+
+\subsection*{Suposiciones}
+
+\begin{enumerate}
+    \item El servicio de autenticación externo (proveedor de JWT) estará operativo y proporcionara tokens válidos con los datos necesarios (matrícula, correo, rol).
+    \item El SIGA (Sistema Integral de Gestión Académica) tendrá disponible una API para consultar datos de alumnos y docentes por matrícula.
+    \item Los usuarios tendrán acceso a un navegador web moderno y conexión a internet.
+    \item El personal administrativo tiene conocimientos básicos de uso de aplicaciónes web.
+    \item Los tipos de solicitud iniciales seran configurados por el administrador del sistema antes del lanzamiento.
+    \item El servidor donde se desplegara el sistema tendrá capacidad suficiente para almacenar los archivos adjuntos generados por las solicitudes.
+\end{enumerate}
+
+\subsection*{Dependencias}
+
+\begin{longtable}{|C{1.2cm}|L{4.5cm}|L{8cm}|}
+    \hline
+    \textbf{ID} & \textbf{Dependencia} & \textbf{Descripción} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Dependencia} & \textbf{Descripción} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    DE-01 & Proveedor de autenticación & Servicio externo que autentica usuarios y emite tokens JWT. El Sistema de Solicitudes no implementa login propio; depende de este servicio para identificar al usuario y su rol. \\
+    \hline
+    DE-02 & SIGA (API de datos) & Sistema externo que contiene la información completa de alumnos y docentes (nombre, programa, semestre, etc.). Solicitudes consulta estos datos via API REST usando la matrícula. \\
+    \hline
+    DE-03 & Servicio SMTP & Servidor de correo electrónico para el envio de notificaciónes. Puede ser un servicio institucional o un proveedor externo. \\
+    \hline
+    DE-04 & Infraestructura de red & Conectividad entre el servidor del Sistema de Solicitudes, el proveedor de autenticación, el SIGA y el servicio SMTP. \\
+    \hline
+\end{longtable}
+
+% ============================================================
+\section{Alcance y Limitantes}
+
+\subsection*{Dentro del alcance}
+
+\begin{itemize}
+    \item Gestión del catálogo de tipos de solicitud (CRUD).
+    \item Configuración de formularios dinámicos por tipo de solicitud.
+    \item Creación de solicitudes por alumnos y docentes.
+    \item Ciclo de vida de solicitudes (estados y seguimiento).
+    \item Enrutamiento automático a personal responsable por rol.
+    \item Notificaciónes por correo electrónico.
+    \item Generación de documentos PDF a partir de plantillas con variables.
+    \item Gestión de lista de alumnos mentores (exención de pago).
+    \item Dashboard de métricas y exportación de reportes.
+    \item Gestión de archivos adjuntos.
+    \item Integración con autenticación externa (consumo de JWT).
+    \item Integración con SIGA (consulta de datos de usuarios).
+\end{itemize}
+
+\subsection*{Fuera del alcance}
+
+\begin{itemize}
+    \item \textbf{Autenticación y gestión de sesiónes:} Se delega completamente al proveedor externo. El sistema no implementa registro, login ni recuperación de contraseña.
+    \item \textbf{Gestión de datos maestros de alumnos/docentes:} Los datos de usuarios se consultan al SIGA; no se crean ni modifican en este sistema.
+    \item \textbf{Pagos en línea:} El sistema no procesa pagos. Solo registra si se requiere comprobante y permite adjuntarlo.
+    \item \textbf{Firma electrónica o digital:} Los documentos generados no llevan firma digital. Si se requiere en el futuro, seria una extension.
+    \item \textbf{Aplicación móvil nativa:} El sistema es únicamente web. Se diseña con responsividad para acceso desde dispositivos móviles, pero no existe una app nativa.
+    \item \textbf{Chat o mensajeria interna:} La comúnicación entre solicitante y responsable se limita a las observaciones del seguimiento y las notificaciónes por correo.
+\end{itemize}

@@ -1,0 +1,1182 @@
+\chapter{Requerimientos de Usuario}
+
+% ============================================================
+\section{Diagrama de Casos de Uso}
+
+Para mayor claridad, el diagrama de casos de uso se divide en tres subsistemas.
+
+% --- Subsistema 1: Solicitante ---
+\subsection{Subsistema: Solicitante (Alumno / Docente)}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.9, transform shape,
+    uc/.style={draw, ellipse, align=center, font=\footnotesize, inner sep=3pt, minimum width=3cm, minimum height=1cm},
+    act/.style={font=\small\bfseries, align=center},
+    sbound/.style={draw, dashed, rounded corners, inner sep=0.8cm},
+    inc/.style={dashed, -{Stealth}, font=\scriptsize},
+    generalization/.style={-{Triangle[open, length=3mm, width=2.5mm]}, thick}
+]
+
+% Actor abstracto (Solicitante) centrado verticalmente
+\node[act] (solicitante) at (-3.5, -5) {Solicitante};
+
+% Actores concretos
+\node[act] (alumno) at (-6.5, -2.5) {Alumno};
+\node[act] (docente) at (-6.5, -7.5) {Docente};
+
+% Generalizacion: Alumno y Docente -> Solicitante
+\draw[generalization] (alumno) -- (solicitante);
+\draw[generalization] (docente) -- (solicitante);
+
+% Casos de uso (espaciado de 2.5 unidades)
+\node[uc] (cu01) at (2.5, 0) {CU-01\\Crear solicitud};
+\node[uc] (cu02) at (2.5, -2.5) {CU-02\\Consultar solicitudes};
+\node[uc] (cu03) at (2.5, -5) {CU-03\\Ver detalle};
+\node[uc] (cu04) at (2.5, -7.5) {CU-04\\Cancelar solicitud};
+\node[uc] (cu05) at (2.5, -10) {CU-05\\Ver seguimiento};
+
+% CU-17 a la derecha
+\node[uc] (cu17) at (7.5, 0) {CU-17\\Notificar por correo};
+
+% Limites del sistema
+\node[sbound, fit=(cu01)(cu02)(cu03)(cu04)(cu05)(cu17), label={[font=\bfseries\small]above:Sistema de Solicitudes -- Solicitante}] (boundary) {};
+
+% Conexiones Solicitante -> todos los CU
+\draw[thick] (solicitante) -- (cu01.west);
+\draw[thick] (solicitante) -- (cu02.west);
+\draw[thick] (solicitante) -- (cu03.west);
+\draw[thick] (solicitante) -- (cu04.west);
+\draw[thick] (solicitante) -- (cu05.west);
+
+% Include CU-01 -> CU-17
+\draw[inc] (cu01) -- node[above, font=\scriptsize] {$\ll$include$\gg$} (cu17);
+
+\end{tikzpicture}
+\caption{Diagrama de casos de uso -- Subsistema Solicitante.}
+\label{fig:uc-solicitante}
+\end{figure}
+
+% --- Subsistema 2: Atención ---
+\subsection{Subsistema: Atención de Solicitudes (Personal)}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.9, transform shape,
+    uc/.style={draw, ellipse, align=center, font=\footnotesize, inner sep=3pt, minimum width=3cm, minimum height=1cm},
+    act/.style={font=\small\bfseries, align=center},
+    sbound/.style={draw, dashed, rounded corners, inner sep=0.8cm},
+    inc/.style={dashed, -{Stealth}, font=\scriptsize},
+    ext/.style={dashed, -{Stealth}, font=\scriptsize},
+    generalization/.style={-{Triangle[open, length=3mm, width=2.5mm]}, thick}
+]
+
+% Actor abstracto (Personal) centrado
+\node[act] (personal) at (-3.5, -5) {Personal};
+
+% Actores concretos
+\node[act] (ce) at (-6.5, -2.5) {Control\\Escolar};
+\node[act] (rp) at (-6.5, -7.5) {Responsable\\de Programa};
+
+% Generalizacion
+\draw[generalization] (ce) -- (personal);
+\draw[generalization] (rp) -- (personal);
+
+% Casos de uso principales (columna izquierda, espaciado 2.5)
+\node[uc] (cu06) at (2.5, 0) {CU-06\\Listar asignadas};
+\node[uc] (cu07) at (2.5, -2.5) {CU-07\\Atender solicitud};
+\node[uc] (cu08) at (2.5, -5) {CU-08\\Cambiar estado};
+\node[uc] (cu03b) at (2.5, -7.5) {CU-03\\Ver detalle};
+
+% Casos de uso secundarios (columna derecha, alíneados)
+\node[uc] (cu09) at (7.5, -2.5) {CU-09\\Generar PDF};
+\node[uc] (cu17b) at (7.5, -5) {CU-17\\Notificar por correo};
+
+% Limites
+\node[sbound, fit=(cu06)(cu07)(cu08)(cu09)(cu03b)(cu17b), label={[font=\bfseries\small]above:Sistema de Solicitudes -- Atención}] (boundary) {};
+
+% Conexiones Personal -> CU
+\draw[thick] (personal) -- (cu06.west);
+\draw[thick] (personal) -- (cu07.west);
+\draw[thick] (personal) -- (cu08.west);
+\draw[thick] (personal) -- (cu03b.west);
+
+% Extend CU-09 -> CU-07
+\draw[ext] (cu09) -- node[above, font=\scriptsize] {$\ll$extend$\gg$} (cu07);
+
+% Include CU-08 -> CU-17
+\draw[inc] (cu08) -- node[above, font=\scriptsize] {$\ll$include$\gg$} (cu17b);
+
+\end{tikzpicture}
+\caption{Diagrama de casos de uso -- Subsistema Atención.}
+\label{fig:uc-atención}
+\end{figure}
+
+% --- Subsistema 3: Administración ---
+\subsection{Subsistema: Administración}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.9, transform shape,
+    uc/.style={draw, ellipse, align=center, font=\footnotesize, inner sep=3pt, minimum width=3cm, minimum height=1cm},
+    act/.style={font=\small\bfseries, align=center},
+    sbound/.style={draw, dashed, rounded corners, inner sep=0.8cm},
+    inc/.style={dashed, -{Stealth}, font=\scriptsize}
+]
+
+% Actor
+\node[act] (admin) at (-3.5, -3.75) {Administrador};
+
+% Casos de uso (columna izquierda, espaciado 2.5)
+\node[uc] (cu10) at (2.5, 0) {CU-10\\Gestiónar tipos};
+\node[uc] (cu11) at (2.5, -2.5) {CU-11\\Gestiónar formularios};
+\node[uc] (cu12) at (2.5, -5) {CU-12\\Gestiónar plantillas};
+
+% Casos de uso (columna derecha)
+\node[uc] (cu13) at (7.5, 0) {CU-13\\Gestiónar mentores};
+\node[uc] (cu14) at (7.5, -2.5) {CU-14\\Ver dashboard};
+\node[uc] (cu15) at (7.5, -5) {CU-15\\Exportar reportes};
+
+% Limites
+\node[sbound, fit=(cu10)(cu11)(cu12)(cu13)(cu14)(cu15), label={[font=\bfseries\small]above:Sistema de Solicitudes -- Administración}] (boundary) {};
+
+% Conexiones
+\draw[thick] (admin) -- (cu10.west);
+\draw[thick] (admin) -- (cu11.west);
+\draw[thick] (admin) -- (cu12.west);
+\draw[thick] (admin) -- (cu13.west);
+\draw[thick] (admin) -- (cu14.west);
+\draw[thick] (admin) -- (cu15.west);
+
+\end{tikzpicture}
+\caption{Diagrama de casos de uso -- Subsistema Administración.}
+\label{fig:uc-admin}
+\end{figure}
+
+% ============================================================
+\section{Catálogo de Casos de Uso}
+
+\begin{longtable}{|C{1.2cm}|L{12.5cm}|}
+    \hline
+    \textbf{ID} & \textbf{Descripción} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Descripción} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    CU-01 & \textbf{Crear solicitud:} El solicitante (alumno o docente) seleccióna un tipo de solicitud, llena el formulario dinámico, adjunta archivos requeridos y envia la solicitud. \\
+    \hline
+    CU-02 & \textbf{Consultar solicitudes propias:} El solicitante visualiza un listado de todas las solicitudes que ha creado, con su folio, tipo y estado actual. \\
+    \hline
+    CU-03 & \textbf{Ver detalle de solicitud:} Cualquier usuario autorizado puede ver la información completa de una solicitud: datos del formulario, archivos adjuntos e historial de seguimiento. \\
+    \hline
+    CU-04 & \textbf{Cancelar solicitud propia:} El solicitante cancela una solicitud que se encuentre en estado ``Creada''. \\
+    \hline
+    CU-05 & \textbf{Ver seguimiento de solicitud:} El solicitante consulta el historial de cambios de estado de su solicitud con fechas y observaciones. \\
+    \hline
+    CU-06 & \textbf{Listar solicitudes asignadas:} El personal visualiza las solicitudes dirigidas a su rol, con filtros por estado, tipo, fecha y busqueda por folio o nombre. \\
+    \hline
+    CU-07 & \textbf{Atender solicitud:} El personal revisa el detalle de una solicitud asignada a su rol y realiza las acciones necesarias para su resolución. \\
+    \hline
+    CU-08 & \textbf{Cambiar estado de solicitud:} El personal modifica el estado de una solicitud (En proceso, Finalizada o Cancelada) y agrega observaciones. \\
+    \hline
+    CU-09 & \textbf{Generar documento PDF:} El personal genera un documento PDF a partir de la plantilla asociada al tipo de solicitud, sustituyendo las variables con datos del solicitante. \\
+    \hline
+    CU-10 & \textbf{Gestiónar tipos de solicitud:} El administrador crea, edita o elimina tipos de solicitud del catálogo. \\
+    \hline
+    CU-11 & \textbf{Gestiónar formularios dinámicos:} El administrador configura los campos del formulario asociado a cada tipo de solicitud. \\
+    \hline
+    CU-12 & \textbf{Gestiónar plantillas:} El administrador crea, edita o elimina plantillas de documentos con variables sustituibles para tipos de solicitud que lo requieran. \\
+    \hline
+    CU-13 & \textbf{Gestiónar lista de mentores:} El administrador agrega, elimina o consulta alumnos mentores activos de forma manual o mediante carga de archivo CSV. \\
+    \hline
+    CU-14 & \textbf{Ver dashboard y métricas:} El administrador visualiza estadísticas de solicitudes por tipo, estado y período. \\
+    \hline
+    CU-15 & \textbf{Exportar reportes:} El administrador exporta las métricas en formato CSV o PDF. \\
+    \hline
+    CU-17 & \textbf{Enviar notificación por correo:} El sistema envia automáticamente correos electrónicos al personal cuando se crea una solicitud y al solicitante cuando cambia el estado. \\
+    \hline
+\end{longtable}
+
+% ============================================================
+\section{Especificación de Casos de Uso}
+
+% --- CU-01 ---
+\subsection{CU-01: Crear solicitud}
+
+\begin{longtable}{|L{4cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{CU-01: Crear solicitud}} \\
+    \hline
+    \endfirsthead
+    \hline
+    \endfoot
+
+    \textbf{Fecha y Versión:} & Marzo 2026, v1.0 \\
+    \hline
+    \textbf{Autor:} & Equipo de desarrollo \\
+    \hline
+    \textbf{Descripción:} & El solicitante (alumno o docente) crea una nueva solicitud selecciónando un tipo del catálogo, llenando el formulario dinámico correspondiente y adjuntando los archivos requeridos. El sistema genera un folio único, registra la solicitud en estado ``Creada'' y notifica al personal responsable por correo electrónico. \\
+    \hline
+    \textbf{Actor(es) primario(s):} & Alumno, Docente \\
+    \hline
+    \textbf{Actor(es) secundario(s):} & Proveedor de autenticación (JWT), SIGA (datos del solicitante), Servicio SMTP (notificación) \\
+    \hline
+    \textbf{Precondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El usuario esta autenticado mediante token JWT válido.
+        \item Existe al menos un tipo de solicitud configurado en el catálogo.
+        \item El tipo de solicitud tiene un formulario dinámico asociado con al menos un campo.
+    \end{enumerate} \\
+    \hline
+    \textbf{Happy Path:} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El solicitante accede a la sección ``Crear solicitud''.
+        \item El sistema muestra la lista de tipos de solicitud disponibles para el rol del usuario.
+        \item El solicitante seleccióna un tipo de solicitud.
+        \item El sistema presenta el formulario dinámico correspondiente al tipo selecciónado con todos sus campos configurados (texto, fecha, archivo, etc.).
+        \item El solicitante llena los campos del formulario y adjunta los archivos requeridos.
+        \item El solicitante presiona el boton ``Enviar solicitud''.
+        \item El sistema valida que todos los campos requeridos esten completos y que los archivos cumplan con los formatos y tamaños permitidos.
+        \item El sistema genera un folio único para la solicitud.
+        \item El sistema registra la solicitud en estado ``Creada'' con la fecha actual.
+        \item El sistema crea el registro inicial de seguimiento.
+        \item El sistema envia una notificación por correo al personal con el rol responsable del tipo de solicitud (CU-17).
+        \item El sistema muestra al solicitante un mensaje de confirmación con el folio generado.
+    \end{enumerate} \\
+    \hline
+    \textbf{Postcondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item La solicitud queda registrada en el sistema con estado ``Creada'' y folio único.
+        \item Los archivos adjuntos quedan almacenados y asociados a la solicitud.
+        \item El personal responsable recibe una notificación por correo.
+        \item El registro de seguimiento inicial esta creado.
+    \end{enumerate} \\
+    \hline
+    \textbf{Alternativos:} &
+    \textbf{FA-01: El tipo de solicitud requiere pago.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[4.1] El sistema detecta que el tipo requiere comprobante de pago.
+        \item[4.2] El sistema verifica si el solicitante es un alumno mentor activo.
+        \item[4.3a] Si es mentor: el campo de comprobante de pago se omite o se marca como no requerido. Continua en paso 5.
+        \item[4.3b] Si no es mentor: el formulario incluye un campo obligatorio para adjuntar comprobante de pago. Continua en paso 5.
+    \end{enumerate}
+    \vspace{0.2cm}
+    \textbf{FA-02: Validación falla (campos incompletos).}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[7.1] El sistema detecta que hay campos requeridos sin completar o archivos faltantes.
+        \item[7.2] El sistema muestra mensajes de error indicando los campos que deben corregirse.
+        \item[7.3] El solicitante corrige la información.
+        \item[7.4] Regresa al paso 6.
+    \end{enumerate}
+    \vspace{0.2cm}
+    \textbf{FA-03: El archivo excede el tamaño permitido.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[7.1] El sistema detecta que un archivo excede el tamaño máximo.
+        \item[7.2] El sistema muestra un mensaje indicando el límite de tamaño.
+        \item[7.3] El solicitante adjunta un archivo más pequeno.
+        \item[7.4] Regresa al paso 6.
+    \end{enumerate}
+    \vspace{0.2cm}
+    \textbf{FA-04: Error al enviar notificación.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[11.1] El servicio SMTP no esta disponible.
+        \item[11.2] El sistema registra el error internamente.
+        \item[11.3] La solicitud se crea éxitosamente, pero la notificación queda pendiente.
+        \item[11.4] Continua en paso 12.
+    \end{enumerate} \\
+    \hline
+    \textbf{Notas:} & Los tipos de solicitud disponibles dependen del rol del usuario (alumno o docente). Los archivos se almacenan organizados por folio. \\
+    \hline
+    \textbf{Req. relacionados:} & RF-01, RF-02, RF-03, RF-04, RF-07, RF-10, RF-11 \\
+    \hline
+\end{longtable}
+
+% --- CU-02 ---
+\subsection{CU-02: Consultar solicitudes propias}
+
+\begin{longtable}{|L{4cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{CU-02: Consultar solicitudes propias}} \\
+    \hline
+    \endfirsthead
+    \hline
+    \endfoot
+
+    \textbf{Fecha y Versión:} & Marzo 2026, v1.0 \\
+    \hline
+    \textbf{Autor:} & Equipo de desarrollo \\
+    \hline
+    \textbf{Descripción:} & El solicitante consulta la lista de todas las solicitudes que ha creado, visualizando su folio, tipo, fecha de creación y estado actual. Puede filtrar por estado. \\
+    \hline
+    \textbf{Actor(es) primario(s):} & Alumno, Docente \\
+    \hline
+    \textbf{Actor(es) secundario(s):} & --- \\
+    \hline
+    \textbf{Precondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El usuario esta autenticado.
+        \item El usuario tiene al menos una solicitud creada.
+    \end{enumerate} \\
+    \hline
+    \textbf{Happy Path:} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El solicitante accede a la sección ``Mis solicitudes''.
+        \item El sistema muestra una lista páginada de las solicitudes del usuario, ordenadas por fecha de creación (más recientes primero).
+        \item Cada elemento de la lista muestra: folio, tipo de solicitud, fecha de creación y estado actual (con indicador visual de color).
+        \item El solicitante puede filtrar la lista por estado (Creada, En proceso, Finalizada, Cancelada).
+        \item El solicitante seleccióna una solicitud para ver su detalle (CU-03).
+    \end{enumerate} \\
+    \hline
+    \textbf{Postcondición(es):} & El solicitante visualiza la lista de sus solicitudes. \\
+    \hline
+    \textbf{Alternativos:} &
+    \textbf{FA-01: No tiene solicitudes.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[2.1] El sistema muestra un mensaje indicando que no tiene solicitudes registradas.
+        \item[2.2] Se ofrece un enlace para crear una nueva solicitud.
+    \end{enumerate} \\
+    \hline
+    \textbf{Req. relacionados:} & RF-08 \\
+    \hline
+\end{longtable}
+
+% --- CU-03 ---
+\subsection{CU-03: Ver detalle de solicitud}
+
+\begin{longtable}{|L{4cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{CU-03: Ver detalle de solicitud}} \\
+    \hline
+    \endfirsthead
+    \hline
+    \endfoot
+
+    \textbf{Fecha y Versión:} & Marzo 2026, v1.0 \\
+    \hline
+    \textbf{Autor:} & Equipo de desarrollo \\
+    \hline
+    \textbf{Descripción:} & Un usuario autorizado visualiza la información completa de una solicitud: datos del solicitante, respuestas del formulario, archivos adjuntos e historial de seguimiento. \\
+    \hline
+    \textbf{Actor(es) primario(s):} & Alumno, Docente, Control Escolar, Responsable de Programa, Administrador \\
+    \hline
+    \textbf{Actor(es) secundario(s):} & SIGA (para obtener datos completos del solicitante) \\
+    \hline
+    \textbf{Precondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El usuario esta autenticado.
+        \item La solicitud existe en el sistema.
+        \item El usuario tiene permiso para verla (es el solicitante, tiene el rol responsable, o es administrador).
+    \end{enumerate} \\
+    \hline
+    \textbf{Happy Path:} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El usuario seleccióna una solicitud de la lista (CU-02 o CU-06).
+        \item El sistema verifica que el usuario tiene permiso para ver la solicitud.
+        \item El sistema obtiene los datos completos del solicitante desde el SIGA (nombre, programa, etc.).
+        \item El sistema muestra la información organizada en secciónes:
+            \begin{itemize}[nosep]
+                \item Datos generales: folio, tipo, estado actual, fecha de creación.
+                \item Datos del solicitante: nombre, matrícula, programa, correo.
+                \item Respuestas del formulario: cada campo con su etiqueta y valor.
+                \item Archivos adjuntos: lista de archivos con opcion de descarga.
+                \item Historial de seguimiento: cambios de estado con fecha, responsable y observaciones.
+            \end{itemize}
+    \end{enumerate} \\
+    \hline
+    \textbf{Postcondición(es):} & El usuario visualiza toda la información de la solicitud. \\
+    \hline
+    \textbf{Alternativos:} &
+    \textbf{FA-01: SIGA no disponible.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[3.1] El sistema no puede conectarse al SIGA.
+        \item[3.2] Se muestra la información básica del solicitante (matrícula y correo del token) sin datos adicionales.
+    \end{enumerate}
+    \vspace{0.2cm}
+    \textbf{FA-02: Sin permiso.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[2.1] El usuario no tiene permiso para ver la solicitud.
+        \item[2.2] El sistema muestra un mensaje de acceso denegado.
+    \end{enumerate} \\
+    \hline
+    \textbf{Req. relacionados:} & RF-08, RF-09, RF-10, RNF-02 \\
+    \hline
+\end{longtable}
+
+% --- CU-04 ---
+\subsection{CU-04: Cancelar solicitud propia}
+
+\begin{longtable}{|L{4cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{CU-04: Cancelar solicitud propia}} \\
+    \hline
+    \endfirsthead
+    \hline
+    \endfoot
+
+    \textbf{Fecha y Versión:} & Marzo 2026, v1.0 \\
+    \hline
+    \textbf{Autor:} & Equipo de desarrollo \\
+    \hline
+    \textbf{Descripción:} & El solicitante cancela una solicitud que creo previamente, siempre que esta se encuentre en estado ``Creada''. \\
+    \hline
+    \textbf{Actor(es) primario(s):} & Alumno, Docente \\
+    \hline
+    \textbf{Actor(es) secundario(s):} & --- \\
+    \hline
+    \textbf{Precondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El usuario esta autenticado.
+        \item La solicitud pertenece al usuario.
+        \item La solicitud esta en estado ``Creada''.
+    \end{enumerate} \\
+    \hline
+    \textbf{Happy Path:} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El solicitante accede al detalle de una de sus solicitudes (CU-03).
+        \item El sistema muestra el boton ``Cancelar solicitud'' (visible solo si el estado es ``Creada'').
+        \item El solicitante presiona ``Cancelar solicitud''.
+        \item El sistema muestra un dialogo de confirmación: ``¿Esta seguro de que desea cancelar esta solicitud?''.
+        \item El solicitante confirma la cancelación.
+        \item El sistema cambia el estado de la solicitud a ``Cancelada''.
+        \item El sistema registra el cambio en el historial de seguimiento con la fecha, el usuario que cancelo y la observacion ``Cancelada por el solicitante''.
+        \item El sistema muestra un mensaje de confirmación.
+    \end{enumerate} \\
+    \hline
+    \textbf{Postcondición(es):} & La solicitud queda en estado ``Cancelada'' con el registro en el historial de seguimiento. \\
+    \hline
+    \textbf{Alternativos:} &
+    \textbf{FA-01: La solicitud no esta en estado ``Creada''.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[2.1] El boton ``Cancelar solicitud'' no se muestra porque el estado es ``En proceso'', ``Finalizada'' o ``Cancelada''.
+        \item[2.2] El solicitante no puede cancelar la solicitud.
+    \end{enumerate}
+    \vspace{0.2cm}
+    \textbf{FA-02: El solicitante no confirma.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[5.1] El solicitante presiona ``No'' en el dialogo de confirmación.
+        \item[5.2] El sistema cierra el dialogo. La solicitud permanece sin cambios.
+    \end{enumerate} \\
+    \hline
+    \textbf{Req. relacionados:} & RF-05 \\
+    \hline
+\end{longtable}
+
+% --- CU-05 ---
+\subsection{CU-05: Ver seguimiento de solicitud}
+
+\begin{longtable}{|L{4cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{CU-05: Ver seguimiento de solicitud}} \\
+    \hline
+    \endfirsthead
+    \hline
+    \endfoot
+
+    \textbf{Fecha y Versión:} & Marzo 2026, v1.0 \\
+    \hline
+    \textbf{Autor:} & Equipo de desarrollo \\
+    \hline
+    \textbf{Descripción:} & El solicitante consulta el historial detallado de cambios de estado de una solicitud propia, incluyendo fechas, quien realizo el cambio y las observaciones asociadas. \\
+    \hline
+    \textbf{Actor(es) primario(s):} & Alumno, Docente \\
+    \hline
+    \textbf{Actor(es) secundario(s):} & --- \\
+    \hline
+    \textbf{Precondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El usuario esta autenticado.
+        \item La solicitud pertenece al usuario.
+    \end{enumerate} \\
+    \hline
+    \textbf{Happy Path:} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El solicitante accede al detalle de una solicitud (CU-03).
+        \item El solicitante seleccióna la sección o pestana ``Seguimiento''.
+        \item El sistema muestra una línea de tiempo o tabla con el historial:
+            \begin{itemize}[nosep]
+                \item Fecha y hora del cambio.
+                \item Estado anterior y nuevo estado.
+                \item Quien realizo el cambio.
+                \item Observaciones.
+            \end{itemize}
+        \item El estado actual se resalta visualmente.
+    \end{enumerate} \\
+    \hline
+    \textbf{Postcondición(es):} & El solicitante visualiza el historial completo de seguimiento. \\
+    \hline
+    \textbf{Alternativos:} &
+    \textbf{FA-01: Solo existe el registro inicial.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[3.1] Solo se muestra el registro de creación (la solicitud no ha tenido cambios de estado).
+    \end{enumerate} \\
+    \hline
+    \textbf{Req. relacionados:} & RF-05, RF-08 \\
+    \hline
+\end{longtable}
+
+% --- CU-06 ---
+\subsection{CU-06: Listar solicitudes asignadas}
+
+\begin{longtable}{|L{4cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{CU-06: Listar solicitudes asignadas}} \\
+    \hline
+    \endfirsthead
+    \hline
+    \endfoot
+
+    \textbf{Fecha y Versión:} & Marzo 2026, v1.0 \\
+    \hline
+    \textbf{Autor:} & Equipo de desarrollo \\
+    \hline
+    \textbf{Descripción:} & El personal visualiza las solicitudes que han sido dirigidas a su rol, con opciones de filtrado y busqueda para fácilitar la gestión. \\
+    \hline
+    \textbf{Actor(es) primario(s):} & Control Escolar, Responsable de Programa \\
+    \hline
+    \textbf{Actor(es) secundario(s):} & --- \\
+    \hline
+    \textbf{Precondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El usuario esta autenticado con un rol de personal (control escolar o responsable de programa).
+    \end{enumerate} \\
+    \hline
+    \textbf{Happy Path:} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El personal accede a la sección ``Solicitudes asignadas''.
+        \item El sistema consulta las solicitudes cuyo tipo de solicitud tiene como responsable el rol del usuario.
+        \item El sistema muestra una lista páginada con: folio, tipo, nombre del solicitante, fecha de creación y estado.
+        \item El personal puede filtrar por:
+            \begin{itemize}[nosep]
+                \item Estado (Creada, En proceso, Finalizada, Cancelada, o Todas).
+                \item Tipo de solicitud.
+                \item Rango de fechas.
+            \end{itemize}
+        \item El personal puede buscar por folio o nombre del solicitante.
+        \item El sistema muestra contadores de solicitudes por estado.
+        \item El personal seleccióna una solicitud para atenderla (CU-07).
+    \end{enumerate} \\
+    \hline
+    \textbf{Postcondición(es):} & El personal visualiza la lista filtrada de solicitudes asignadas a su rol. \\
+    \hline
+    \textbf{Alternativos:} &
+    \textbf{FA-01: No hay solicitudes asignadas.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[3.1] El sistema muestra un mensaje indicando que no hay solicitudes pendientes.
+    \end{enumerate} \\
+    \hline
+    \textbf{Req. relacionados:} & RF-06, RF-08 \\
+    \hline
+\end{longtable}
+
+% --- CU-07 ---
+\subsection{CU-07: Atender solicitud}
+
+\begin{longtable}{|L{4cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{CU-07: Atender solicitud}} \\
+    \hline
+    \endfirsthead
+    \hline
+    \endfoot
+
+    \textbf{Fecha y Versión:} & Marzo 2026, v1.0 \\
+    \hline
+    \textbf{Autor:} & Equipo de desarrollo \\
+    \hline
+    \textbf{Descripción:} & El personal revisa el detalle completo de una solicitud asignada a su rol, incluyendo los datos del formulario, archivos adjuntos y el historial de seguimiento. A partir de esta revision, decide las acciones a tomar (cambiar estado, generar PDF). \\
+    \hline
+    \textbf{Actor(es) primario(s):} & Control Escolar, Responsable de Programa \\
+    \hline
+    \textbf{Actor(es) secundario(s):} & SIGA \\
+    \hline
+    \textbf{Precondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El usuario esta autenticado con rol de personal.
+        \item La solicitud esta asignada al rol del usuario.
+    \end{enumerate} \\
+    \hline
+    \textbf{Happy Path:} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El personal seleccióna una solicitud de la lista de asignadas (CU-06).
+        \item El sistema muestra el detalle completo (CU-03) más opciones de accion.
+        \item El personal revisa los datos del formulario y los archivos adjuntos.
+        \item El personal descarga los archivos si es necesario.
+        \item El personal decide la accion a tomar:
+            \begin{itemize}[nosep]
+                \item Marcar ``En proceso'' (CU-08).
+                \item Finalizar la solicitud (CU-08).
+                \item Cancelar la solicitud (CU-08).
+                \item Generar documento PDF si aplica (CU-09).
+            \end{itemize}
+    \end{enumerate} \\
+    \hline
+    \textbf{Postcondición(es):} & El personal ha revisado la solicitud y puede proceder con las acciones correspondientes. \\
+    \hline
+    \textbf{Req. relacionados:} & RF-09, RF-10 \\
+    \hline
+\end{longtable}
+
+% --- CU-08 ---
+\subsection{CU-08: Cambiar estado de solicitud}
+
+\begin{longtable}{|L{4cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{CU-08: Cambiar estado de solicitud}} \\
+    \hline
+    \endfirsthead
+    \hline
+    \endfoot
+
+    \textbf{Fecha y Versión:} & Marzo 2026, v1.0 \\
+    \hline
+    \textbf{Autor:} & Equipo de desarrollo \\
+    \hline
+    \textbf{Descripción:} & El personal modifica el estado de una solicitud conforme al ciclo de vida definido y registra observaciones sobre la decision. El sistema notifica al solicitante del cambio. \\
+    \hline
+    \textbf{Actor(es) primario(s):} & Control Escolar, Responsable de Programa \\
+    \hline
+    \textbf{Actor(es) secundario(s):} & Servicio SMTP \\
+    \hline
+    \textbf{Precondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El usuario esta autenticado con rol de personal.
+        \item La solicitud esta asignada al rol del usuario.
+        \item La solicitud no esta en estado ``Finalizada'' ni ``Cancelada''.
+    \end{enumerate} \\
+    \hline
+    \textbf{Happy Path:} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El personal visualiza la solicitud (CU-07).
+        \item El personal seleccióna la accion de cambio de estado.
+        \item El sistema muestra las opciones disponibles segun el estado actual:
+            \begin{itemize}[nosep]
+                \item Si estado es ``Creada'': puede pasar a ``En proceso'' o ``Cancelada''.
+                \item Si estado es ``En proceso'': puede pasar a ``Finalizada'' o ``Cancelada''.
+            \end{itemize}
+        \item El personal seleccióna el nuevo estado.
+        \item El personal escribe observaciones (obligatorio para ``Cancelada'', opcional para los demas).
+        \item El personal confirma el cambio.
+        \item El sistema actualiza el estado de la solicitud.
+        \item El sistema registra el cambio en el historial de seguimiento con: fecha, estado anterior, nuevo estado, responsable y observaciones.
+        \item Si el nuevo estado es ``Finalizada'', el sistema registra la fecha de finalización.
+        \item El sistema envia notificación por correo al solicitante informando del cambio de estado (CU-17).
+        \item El sistema muestra mensaje de éxito.
+    \end{enumerate} \\
+    \hline
+    \textbf{Postcondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El estado de la solicitud esta actualizado.
+        \item El historial de seguimiento tiene un nuevo registro.
+        \item El solicitante fue notificado por correo.
+    \end{enumerate} \\
+    \hline
+    \textbf{Alternativos:} &
+    \textbf{FA-01: Error al enviar notificación.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[10.1] El servicio SMTP no responde.
+        \item[10.2] El cambio de estado se completa éxitosamente.
+        \item[10.3] La notificación queda pendiente de reintento.
+    \end{enumerate}
+    \vspace{0.2cm}
+    \textbf{FA-02: Observaciones vacias para cancelación.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[6.1] El sistema detecta que no se proporcionaron observaciones para una cancelación.
+        \item[6.2] Se muestra un mensaje de error solicitando las observaciones.
+        \item[6.3] Regresa al paso 5.
+    \end{enumerate} \\
+    \hline
+    \textbf{Req. relacionados:} & RF-05, RF-07, RF-09 \\
+    \hline
+\end{longtable}
+
+% --- CU-09 ---
+\subsection{CU-09: Generar documento PDF}
+
+\begin{longtable}{|L{4cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{CU-09: Generar documento PDF}} \\
+    \hline
+    \endfirsthead
+    \hline
+    \endfoot
+
+    \textbf{Fecha y Versión:} & Marzo 2026, v1.0 \\
+    \hline
+    \textbf{Autor:} & Equipo de desarrollo \\
+    \hline
+    \textbf{Descripción:} & El personal genera un documento PDF a partir de la plantilla asociada al tipo de solicitud, sustituyendo las variables definidas con los datos reales del solicitante y la solicitud. \\
+    \hline
+    \textbf{Actor(es) primario(s):} & Control Escolar, Responsable de Programa \\
+    \hline
+    \textbf{Actor(es) secundario(s):} & SIGA (datos del solicitante) \\
+    \hline
+    \textbf{Precondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El usuario esta autenticado con rol de personal.
+        \item La solicitud tiene un tipo de solicitud con plantilla asociada.
+        \item La plantilla tiene variables definidas.
+    \end{enumerate} \\
+    \hline
+    \textbf{Happy Path:} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El personal visualiza la solicitud (CU-07).
+        \item El sistema detecta que el tipo de solicitud tiene una plantilla asociada y muestra el boton ``Generar documento''.
+        \item El personal presiona ``Generar documento''.
+        \item El sistema obtiene los datos del solicitante desde el SIGA (nombre, matrícula, programa, etc.).
+        \item El sistema obtiene las respuestas del formulario de la solicitud.
+        \item El sistema sustituye las variables de la plantilla (ej. \texttt{\{\{nombre\}\}}, \texttt{\{\{matrícula\}\}}, \texttt{\{\{fecha\}\}}) con los valores reales.
+        \item El sistema genera el documento en formato PDF.
+        \item El sistema ofrece la descarga del PDF al personal.
+    \end{enumerate} \\
+    \hline
+    \textbf{Postcondición(es):} & El documento PDF generado esta disponible para descarga. \\
+    \hline
+    \textbf{Alternativos:} &
+    \textbf{FA-01: SIGA no disponible.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[4.1] No se pueden obtener datos completos del solicitante.
+        \item[4.2] El sistema muestra un mensaje de error indicando que no se puede generar el documento en este momento.
+    \end{enumerate}
+    \vspace{0.2cm}
+    \textbf{FA-02: Variable sin valor.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[6.1] Una variable de la plantilla no tiene un valor correspondiente.
+        \item[6.2] El sistema deja la variable vacia o muestra un marcador ``[SIN DATO]''.
+        \item[6.3] Continua con la generación del PDF.
+    \end{enumerate} \\
+    \hline
+    \textbf{Req. relacionados:} & RF-03, RF-09, RNF-02 \\
+    \hline
+\end{longtable}
+
+% --- CU-10 ---
+\subsection{CU-10: Gestiónar tipos de solicitud}
+
+\begin{longtable}{|L{4cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{CU-10: Gestiónar tipos de solicitud}} \\
+    \hline
+    \endfirsthead
+    \hline
+    \endfoot
+
+    \textbf{Fecha y Versión:} & Marzo 2026, v1.0 \\
+    \hline
+    \textbf{Autor:} & Equipo de desarrollo \\
+    \hline
+    \textbf{Descripción:} & El administrador gestióna el catálogo de tipos de solicitud, pudiendo crear nuevos tipos, editar los existentes o eliminarlos. Cada tipo define su nombre, descripción, rol responsable, si requiere pago y los roles que pueden crearlo. \\
+    \hline
+    \textbf{Actor(es) primario(s):} & Administrador \\
+    \hline
+    \textbf{Actor(es) secundario(s):} & --- \\
+    \hline
+    \textbf{Precondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El usuario esta autenticado con rol de administrador.
+    \end{enumerate} \\
+    \hline
+    \textbf{Happy Path (Crear):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El administrador accede a la sección ``Catálogo de solicitudes''.
+        \item El sistema muestra la lista de tipos de solicitud existentes.
+        \item El administrador presiona ``Agregar tipo''.
+        \item El sistema presenta un formulario con los campos:
+            \begin{itemize}[nosep]
+                \item Nombre del tipo de solicitud.
+                \item Descripción.
+                \item Rol responsable de atenderla (selección).
+                \item Requiere pago (si/no).
+                \item Roles que pueden crear este tipo (alumno, docente o ambos).
+            \end{itemize}
+        \item El administrador llena los campos y presiona ``Guardar''.
+        \item El sistema valida los datos y crea el tipo de solicitud.
+        \item El sistema muestra mensaje de éxito y regresa a la lista.
+    \end{enumerate} \\
+    \hline
+    \textbf{Postcondición(es):} & El tipo de solicitud esta disponible en el catálogo para los roles especificados. \\
+    \hline
+    \textbf{Alternativos:} &
+    \textbf{FA-01: Editar tipo existente.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[3.1] El administrador seleccióna ``Editar'' en un tipo existente.
+        \item[3.2] El sistema carga el formulario con los datos actuales.
+        \item[3.3] El administrador modifica los campos deseados y guarda.
+    \end{enumerate}
+    \vspace{0.2cm}
+    \textbf{FA-02: Eliminar tipo.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[3.1] El administrador seleccióna ``Eliminar'' en un tipo.
+        \item[3.2] El sistema verifica si existen solicitudes asociadas a ese tipo.
+        \item[3.3a] Si no hay solicitudes: se elimina el tipo.
+        \item[3.3b] Si hay solicitudes: se muestra un mensaje indicando que no se puede eliminar porque tiene solicitudes asociadas.
+    \end{enumerate}
+    \vspace{0.2cm}
+    \textbf{FA-03: Nombre duplicado.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[6.1] Ya existe un tipo con el mismo nombre.
+        \item[6.2] El sistema muestra un error de duplicidad.
+    \end{enumerate} \\
+    \hline
+    \textbf{Req. relacionados:} & RF-01 \\
+    \hline
+\end{longtable}
+
+% --- CU-11 ---
+\subsection{CU-11: Gestiónar formularios dinámicos}
+
+\begin{longtable}{|L{4cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{CU-11: Gestiónar formularios dinámicos}} \\
+    \hline
+    \endfirsthead
+    \hline
+    \endfoot
+
+    \textbf{Fecha y Versión:} & Marzo 2026, v1.0 \\
+    \hline
+    \textbf{Autor:} & Equipo de desarrollo \\
+    \hline
+    \textbf{Descripción:} & El administrador configura los campos del formulario asociado a un tipo de solicitud. Puede agregar, editar, reordenar y eliminar campos, definiendo su tipo, etiqueta, si es requerido y opciones adicionales. \\
+    \hline
+    \textbf{Actor(es) primario(s):} & Administrador \\
+    \hline
+    \textbf{Actor(es) secundario(s):} & --- \\
+    \hline
+    \textbf{Precondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El usuario esta autenticado con rol de administrador.
+        \item Existe al menos un tipo de solicitud en el catálogo.
+    \end{enumerate} \\
+    \hline
+    \textbf{Happy Path:} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El administrador accede a la sección ``Formularios'' y seleccióna un tipo de solicitud.
+        \item El sistema muestra los campos actuales del formulario (si existen), ordenados por su campo ``orden''.
+        \item El administrador presiona ``Agregar campo''.
+        \item El sistema presenta un formulario con:
+            \begin{itemize}[nosep]
+                \item Etiqueta del campo (lo que vera el usuario).
+                \item Tipo de campo: texto, area de texto, número, fecha, selección (dropdown), archivo.
+                \item Requerido (si/no).
+                \item Opciones (solo para tipo ``selección'', separadas por coma).
+                \item Orden de aparicion (número).
+            \end{itemize}
+        \item El administrador llena la configuración y presiona ``Guardar''.
+        \item El sistema valida que no haya ordenes duplicados y crea el campo.
+        \item El sistema actualiza la vista del formulario con el nuevo campo.
+    \end{enumerate} \\
+    \hline
+    \textbf{Postcondición(es):} & El formulario queda actualizado y será presentado a los solicitantes al crear una solicitud de ese tipo. \\
+    \hline
+    \textbf{Alternativos:} &
+    \textbf{FA-01: Editar campo existente.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[3.1] El administrador seleccióna ``Editar'' en un campo.
+        \item[3.2] Modifica la configuración y guarda.
+    \end{enumerate}
+    \vspace{0.2cm}
+    \textbf{FA-02: Eliminar campo.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[3.1] El administrador seleccióna ``Eliminar'' en un campo.
+        \item[3.2] El sistema solicita confirmación.
+        \item[3.3] Se elimina el campo del formulario.
+    \end{enumerate}
+    \vspace{0.2cm}
+    \textbf{FA-03: Orden duplicado.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[6.1] Ya existe un campo con el mismo número de orden.
+        \item[6.2] El sistema muestra un error y solicita un orden diferente.
+    \end{enumerate} \\
+    \hline
+    \textbf{Req. relacionados:} & RF-02 \\
+    \hline
+\end{longtable}
+
+% --- CU-12 ---
+\subsection{CU-12: Gestiónar plantillas}
+
+\begin{longtable}{|L{4cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{CU-12: Gestiónar plantillas de documentos}} \\
+    \hline
+    \endfirsthead
+    \hline
+    \endfoot
+
+    \textbf{Fecha y Versión:} & Marzo 2026, v1.0 \\
+    \hline
+    \textbf{Autor:} & Equipo de desarrollo \\
+    \hline
+    \textbf{Descripción:} & El administrador crea, edita o elimina plantillas de documentos que se utilizan para generar PDFs. Las plantillas contienen variables sustituibles como \texttt{\{\{nombre\}\}}, \texttt{\{\{matrícula\}\}}, \texttt{\{\{programa\}\}}, \texttt{\{\{fecha\}\}}. \\
+    \hline
+    \textbf{Actor(es) primario(s):} & Administrador \\
+    \hline
+    \textbf{Actor(es) secundario(s):} & --- \\
+    \hline
+    \textbf{Precondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El usuario esta autenticado con rol de administrador.
+        \item Existe al menos un tipo de solicitud que requiera plantilla.
+    \end{enumerate} \\
+    \hline
+    \textbf{Happy Path:} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El administrador accede a la sección ``Plantillas''.
+        \item El sistema muestra las plantillas existentes con su tipo de solicitud asociado.
+        \item El administrador presiona ``Crear plantilla''.
+        \item El sistema presenta un formulario con:
+            \begin{itemize}[nosep]
+                \item Tipo de solicitud asociado (selección).
+                \item Nombre de la plantilla.
+                \item Contenido de la plantilla con soporte para variables (ej. \texttt{\{\{nombre\}\}}, \texttt{\{\{matrícula\}\}}).
+                \item Lista de variables disponibles (referencia).
+            \end{itemize}
+        \item El administrador configura la plantilla y presiona ``Guardar''.
+        \item El sistema valida y almacena la plantilla.
+        \item El sistema muestra mensaje de éxito.
+    \end{enumerate} \\
+    \hline
+    \textbf{Postcondición(es):} & La plantilla queda disponible para la generación de documentos PDF en solicitudes del tipo asociado. \\
+    \hline
+    \textbf{Alternativos:} &
+    \textbf{FA-01: Editar plantilla existente.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[3.1] El administrador seleccióna ``Editar'' en una plantilla.
+        \item[3.2] Modifica el contenido y guarda.
+    \end{enumerate}
+    \vspace{0.2cm}
+    \textbf{FA-02: Eliminar plantilla.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[3.1] El administrador seleccióna ``Eliminar''.
+        \item[3.2] Se solicita confirmación y se elimina.
+    \end{enumerate} \\
+    \hline
+    \textbf{Req. relacionados:} & RF-03 \\
+    \hline
+\end{longtable}
+
+% --- CU-13 ---
+\subsection{CU-13: Gestiónar lista de mentores}
+
+\begin{longtable}{|L{4cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{CU-13: Gestiónar lista de mentores}} \\
+    \hline
+    \endfirsthead
+    \hline
+    \endfoot
+
+    \textbf{Fecha y Versión:} & Marzo 2026, v1.0 \\
+    \hline
+    \textbf{Autor:} & Equipo de desarrollo \\
+    \hline
+    \textbf{Descripción:} & El administrador gestióna la lista de alumnos mentores activos. Los mentores estan exentos de adjuntar comprobante de pago en solicitudes que lo requieran. La lista se puede gestiónar de forma manual o mediante carga de CSV. \\
+    \hline
+    \textbf{Actor(es) primario(s):} & Administrador \\
+    \hline
+    \textbf{Actor(es) secundario(s):} & --- \\
+    \hline
+    \textbf{Precondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El usuario esta autenticado con rol de administrador.
+    \end{enumerate} \\
+    \hline
+    \textbf{Happy Path (Manual):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El administrador accede a la sección ``Gestión de mentores''.
+        \item El sistema muestra la lista actual de alumnos mentores con: matrícula, nombre (consultado al SIGA si esta disponible) y fecha de alta.
+        \item El administrador presiona ``Agregar mentor''.
+        \item El administrador ingresa la matrícula del alumno.
+        \item El sistema valida que la matrícula exista (consulta al SIGA si es posible).
+        \item El sistema agrega al alumno a la lista de mentores.
+        \item El sistema muestra mensaje de éxito.
+    \end{enumerate} \\
+    \hline
+    \textbf{Postcondición(es):} & El alumno queda registrado como mentor activo y será exento de pago en solicitudes que lo requieran. \\
+    \hline
+    \textbf{Alternativos:} &
+    \textbf{FA-01: Carga masiva por CSV.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[3.1] El administrador presiona ``Cargar CSV''.
+        \item[3.2] El administrador seleccióna un archivo CSV con una columna de matrículas.
+        \item[3.3] El sistema lee el archivo y procesa cada matrícula.
+        \item[3.4] El sistema muestra un resumen: cuantos se agregaron, cuantos ya existian, cuantos tuvieron error.
+    \end{enumerate}
+    \vspace{0.2cm}
+    \textbf{FA-02: Eliminar mentor.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[2.1] El administrador seleccióna ``Eliminar'' junto a un mentor.
+        \item[2.2] Se solicita confirmación.
+        \item[2.3] Se elimina al alumno de la lista de mentores.
+    \end{enumerate}
+    \vspace{0.2cm}
+    \textbf{FA-03: Matricula duplicada.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[6.1] La matrícula ya esta en la lista de mentores.
+        \item[6.2] El sistema muestra un mensaje indicando que ya esta registrado.
+    \end{enumerate}
+    \vspace{0.2cm}
+    \textbf{FA-04: Matricula no encontrada.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[5.1] La matrícula no existe en el SIGA.
+        \item[5.2] El sistema muestra una advertencia pero permite agregarlo (la validación con SIGA es complementaria).
+    \end{enumerate} \\
+    \hline
+    \textbf{Req. relacionados:} & RF-11 \\
+    \hline
+\end{longtable}
+
+% --- CU-14 ---
+\subsection{CU-14: Ver dashboard y métricas}
+
+\begin{longtable}{|L{4cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{CU-14: Ver dashboard y métricas}} \\
+    \hline
+    \endfirsthead
+    \hline
+    \endfoot
+
+    \textbf{Fecha y Versión:} & Marzo 2026, v1.0 \\
+    \hline
+    \textbf{Autor:} & Equipo de desarrollo \\
+    \hline
+    \textbf{Descripción:} & El administrador visualiza un panel con estadísticas generales del sistema: total de solicitudes, distribucion por tipo, por estado y por período de tiempo. \\
+    \hline
+    \textbf{Actor(es) primario(s):} & Administrador \\
+    \hline
+    \textbf{Actor(es) secundario(s):} & --- \\
+    \hline
+    \textbf{Precondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El usuario esta autenticado con rol de administrador.
+        \item Existe al menos una solicitud en el sistema.
+    \end{enumerate} \\
+    \hline
+    \textbf{Happy Path:} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El administrador accede a la sección ``Dashboard''.
+        \item El sistema calcula y muestra:
+            \begin{itemize}[nosep]
+                \item Total de solicitudes.
+                \item Solicitudes por estado (gráficos).
+                \item Solicitudes por tipo (gráficos).
+                \item Solicitudes del dia, la semana y el mes.
+                \item Solicitudes por area/responsable.
+            \end{itemize}
+        \item El administrador puede filtrar por rango de fechas.
+        \item El administrador puede selecciónar exportar los datos (CU-15).
+    \end{enumerate} \\
+    \hline
+    \textbf{Postcondición(es):} & El administrador visualiza las métricas actualizadas. \\
+    \hline
+    \textbf{Req. relacionados:} & RF-08, RNF-05 \\
+    \hline
+\end{longtable}
+
+% --- CU-15 ---
+\subsection{CU-15: Exportar reportes}
+
+\begin{longtable}{|L{4cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{CU-15: Exportar reportes}} \\
+    \hline
+    \endfirsthead
+    \hline
+    \endfoot
+
+    \textbf{Fecha y Versión:} & Marzo 2026, v1.0 \\
+    \hline
+    \textbf{Autor:} & Equipo de desarrollo \\
+    \hline
+    \textbf{Descripción:} & El administrador exporta las métricas y datos de solicitudes en formato CSV o PDF para su análisis o presentación fuera del sistema. \\
+    \hline
+    \textbf{Actor(es) primario(s):} & Administrador \\
+    \hline
+    \textbf{Actor(es) secundario(s):} & --- \\
+    \hline
+    \textbf{Precondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El usuario esta autenticado con rol de administrador.
+        \item Existen datos para exportar.
+    \end{enumerate} \\
+    \hline
+    \textbf{Happy Path:} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El administrador accede al dashboard (CU-14) o a la sección de reportes.
+        \item El administrador seleccióna el formato de exportación: CSV o PDF.
+        \item El administrador opcionalmente seleccióna filtros (rango de fechas, tipo, estado).
+        \item El administrador presiona ``Exportar''.
+        \item El sistema genera el archivo en el formato selecciónado.
+        \item El sistema ofrece la descarga del archivo.
+    \end{enumerate} \\
+    \hline
+    \textbf{Postcondición(es):} & El archivo de reporte se descarga éxitosamente. \\
+    \hline
+    \textbf{Req. relacionados:} & RNF-05 \\
+    \hline
+\end{longtable}
+
+% --- CU-17 ---
+\subsection{CU-17: Enviar notificación por correo}
+
+\begin{longtable}{|L{4cm}|L{9.5cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{CU-17: Enviar notificación por correo}} \\
+    \hline
+    \endfirsthead
+    \hline
+    \endfoot
+
+    \textbf{Fecha y Versión:} & Marzo 2026, v1.0 \\
+    \hline
+    \textbf{Autor:} & Equipo de desarrollo \\
+    \hline
+    \textbf{Descripción:} & El sistema envia automáticamente notificaciónes por correo electrónico en eventos relevantes del ciclo de vida de una solicitud. No es un caso de uso iniciado por un actor humano; es disparado por otros casos de uso. \\
+    \hline
+    \textbf{Actor(es) primario(s):} & Sistema (automático) \\
+    \hline
+    \textbf{Actor(es) secundario(s):} & Servicio SMTP \\
+    \hline
+    \textbf{Precondición(es):} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item Se ha producido un evento que requiere notificación (creación de solicitud o cambio de estado).
+        \item El destinatario tiene un correo electrónico registrado.
+    \end{enumerate} \\
+    \hline
+    \textbf{Happy Path:} &
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item El sistema detecta un evento de notificación:
+            \begin{itemize}[nosep]
+                \item Solicitud creada: notificar al personal responsable.
+                \item Estado cambiado: notificar al solicitante.
+            \end{itemize}
+        \item El sistema construye el correo con:
+            \begin{itemize}[nosep]
+                \item Destinatario(s).
+                \item Asunto descriptivo (ej. ``Nueva solicitud: [tipo] - Folio [folio]'').
+                \item Cuerpo con información relevante (folio, tipo, estado, enlace al sistema).
+            \end{itemize}
+        \item El sistema envia el correo a través del servicio SMTP.
+        \item El envio se registra internamente.
+    \end{enumerate} \\
+    \hline
+    \textbf{Postcondición(es):} & El correo fue enviado éxitosamente al destinatario. \\
+    \hline
+    \textbf{Alternativos:} &
+    \textbf{FA-01: Servicio SMTP no disponible.}
+    \begin{enumerate}[nosep, leftmargin=*]
+        \item[3.1] La conexión al SMTP falla.
+        \item[3.2] El sistema registra el error.
+        \item[3.3] La notificación queda marcada como pendiente para reintento posterior.
+        \item[3.4] El flujo principal del caso de uso que disparo la notificación no se ve afectado.
+    \end{enumerate} \\
+    \hline
+    \textbf{Req. relacionados:} & RF-07 \\
+    \hline
+\end{longtable}

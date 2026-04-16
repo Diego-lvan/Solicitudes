@@ -1,0 +1,121 @@
+\chapter{Requerimientos de Negocio}
+
+Este capítulo describe las oportunidades, riesgos y requerimientos de alto nivel que justifican el desarrollo del Sistema de Solicitudes desde la perspectiva del negocio (en este caso, la gestión académica-administrativa de la universidad).
+
+% ============================================================
+\section{Oportunidad del Negocio}
+
+El Sistema de Solicitudes representa una oportunidad significativa para la Universidad Autónoma de Zacatecas en los siguientes aspectos:
+
+\begin{enumerate}
+    \item \textbf{Mejora de procesos administrativos:} Centralizar y estandarizar las solicitudes reduce los tiempos de atención, elimina la duplicación de esfuerzos y permite al personal enfocarse en resolver trámites en lugar de recopilar información.
+
+    \item \textbf{Transparencia y trazabilidad:} Cada solicitud tendrá un folio único y un historial de seguimiento, lo que permite a los solicitantes conocer el estado de su trámite en todo momento y al personal demostrar que los trámites fueron atendidos.
+
+    \item \textbf{Reducción de errores:} Los formularios dinámicos garantizan que el solicitante envie toda la información y documentación requerida desde el inicio, reduciendo los rechazos por información incompleta.
+
+    \item \textbf{Escalabilidad:} Al ser los tipos de solicitud configurables desde la base de datos (no desde el código), se pueden agregar nuevos tipos de trámite sin necesidad de desarrollo adicional.
+
+    \item \textbf{Generación de métricas:} Por primera vez se podrán obtener datos cuantitativos sobre volumen de solicitudes, tiempos de atención, tipos más demandados y carga de trabajo por area, lo que fácilita la toma de decisiones.
+
+    \item \textbf{Integración con el ecosistema existente:} El sistema se integra como microservicio dentro de la arquitectura existente, aprovechando la autenticación centralizada y los datos del SIGA sin duplicar infraestructura.
+\end{enumerate}
+
+% ============================================================
+\section{Riesgos del Negocio}
+
+\begin{longtable}{|C{1.2cm}|L{5.5cm}|C{1.5cm}|L{5.5cm}|}
+    \hline
+    \textbf{ID} & \textbf{Riesgo} & \textbf{Nivel} & \textbf{Mitigación} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Riesgo} & \textbf{Nivel} & \textbf{Mitigación} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    RI-01 & \textbf{Baja adopción por usuarios.} El personal y los alumnos continuan usando canales informales y no adoptan el sistema. & Alto & Capacitacion a usuarios, interfaz intuitiva, comúnicación institucional sobre el uso obligatorio del sistema. \\
+    \hline
+    RI-02 & \textbf{Dependencia de servicios externos.} El sistema depende del proveedor de autenticación (JWT) y del SIGA para datos de alumnos. Si alguno falla, el sistema queda parcialmente inoperativo. & Medio & Implementar manejo de errores robusto, cacheo temporal de datos del SIGA, y mensajes claros al usuario cuando un servicio externo no este disponible. \\
+    \hline
+    RI-03 & \textbf{Resistencia al cambio organizacional.} El personal administrativo puede resistirse a cambiar sus procesos habituales. & Medio & Involucrar al personal desde las etapas de diseño, mostrar beneficios concretos (reducción de carga, trazabilidad). \\
+    \hline
+    RI-04 & \textbf{Tipos de solicitud no previstos.} Pueden surgir tipos de solicitud con requisitos que el modelo dinámico actual no soporte. & Bajo & El diseño de formularios dinámicos es lo suficientemente flexible para soportar la mayoria de casos. Se puede extender el catálogo de tipos de campo en el futuro. \\
+    \hline
+    RI-05 & \textbf{Seguridad de datos.} Las solicitudes pueden contener información sensible (documentos personales, comprobantes de pago). & Alto & Comúnicación cifrada (HTTPS), validación de tokens JWT, control de acceso estricto por roles, almacenamiento seguro de archivos. \\
+    \hline
+    RI-06 & \textbf{Volumen de archivos.} La acumulación de archivos adjuntos puede consumir espacio de almacenamiento significativo con el tiempo. & Bajo & Políticas de retención de archivos, límites de tamaño por archivo, compresión automática. \\
+    \hline
+\end{longtable}
+
+% ============================================================
+\section{Catálogo de Requerimientos de Negocio}
+
+Los requerimientos de negocio representan las necesidades de alto nivel (epicas) que el sistema debe satisfacer.
+
+\begin{longtable}{|C{1.2cm}|L{12.5cm}|}
+    \hline
+    \textbf{ID} & \textbf{Descripción} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Descripción} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    RN-01 & Centralizar la gestión de solicitudes académicas y administrativas en una plataforma única accesible via web. \\
+    \hline
+    RN-02 & Permitir la configuración dinámica de tipos de solicitud, formularios y plantillas sin necesidad de modificar el código fuente. \\
+    \hline
+    RN-03 & Automatizar el enrutamiento de solicitudes al personal responsable segun el tipo de trámite solicitado. \\
+    \hline
+    RN-04 & Proporcionar trazabilidad completa del ciclo de vida de cada solicitud con historial de seguimiento. \\
+    \hline
+    RN-05 & Notificar a las partes involucradas (responsables y solicitantes) sobre eventos relevantes en las solicitudes mediante correo electrónico. \\
+    \hline
+    RN-06 & Generar documentos oficiales (constancias, etc.) a partir de plantillas configurables con variables dinámicas. \\
+    \hline
+    RN-07 & Ofrecer métricas y reportes sobre el volumen, tipos y estados de las solicitudes para la toma de decisiones. \\
+    \hline
+    RN-08 & Integrarse con los servicios existentes de la universidad (autenticación centralizada y SIGA) como un microservicio independiente. \\
+    \hline
+    RN-09 & Gestiónar excepciones de pago para alumnos mentores mediante una lista administrable. \\
+    \hline
+\end{longtable}
+
+% ============================================================
+\section{Reglas del Negocio}
+
+Las reglas del negocio son restricciónes y políticas del dominio que el sistema debe respetar en todo momento.
+
+\begin{enumerate}[label=\textbf{RG-\arabic*:}, leftmargin=2cm]
+    \item Un usuario solo puede tener un rol activo en el sistema (alumno, docente, control escolar, responsable de programa o administrador).
+
+    \item Cada tipo de solicitud debe estar asociado a exactamente un rol responsable de atenderla.
+
+    \item Una solicitud solo puede ser creada por un usuario con rol de alumno o docente.
+
+    \item Los tipos de solicitud disponibles para un alumno pueden diferir de los disponibles para un docente.
+
+    \item Si un tipo de solicitud requiere pago, el solicitante debe adjuntar un comprobante de pago, a menos que el solicitante sea un alumno registrado como mentor activo.
+
+    \item Un alumno mentor queda exento de pago únicamente mientras se encuentre en la lista de mentores activos.
+
+    \item Una solicitud sigue un ciclo de vida estricto: \textit{Creada} $\rightarrow$ \textit{En proceso} $\rightarrow$ \textit{Finalizada} o \textit{Cancelada}. No se puede retroceder de estado.
+
+    \item Una solicitud en estado \textit{Creada} puede ser cancelada por el solicitante. Una vez en estado \textit{En proceso}, solo el personal responsable puede cancelarla o finalizarla.
+
+    \item Cada cambio de estado debe registrarse en el historial de seguimiento con fecha, responsable y observaciones.
+
+    \item El folio de una solicitud es único e inmutable una vez generado.
+
+    \item El personal solo puede ver y atender las solicitudes asignadas a su rol. El administrador puede ver todas las solicitudes.
+
+    \item Las plantillas de documentos solo aplican a ciertos tipos de solicitud y son opcionales.
+
+    \item El sistema no gestióna la autenticación de usuarios; esta se delega a un servicio externo que provee tokens JWT.
+\end{enumerate}

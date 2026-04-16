@@ -1,0 +1,193 @@
+\chapter{Contexto del Negocio}
+
+% ============================================================
+\section{Perfiles de los Stakeholders}
+
+\begin{longtable}{|L{3cm}|L{3.5cm}|L{7cm}|}
+    \hline
+    \textbf{Stakeholder} & \textbf{Rol} & \textbf{Interes / Expectativa} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{Stakeholder} & \textbf{Rol} & \textbf{Interes / Expectativa} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    Alumnos & Solicitantes principales & Poder realizar trámites de forma rápida, sencilla y con seguimiento claro. No tener que acudir presencialmente ni enviar correos sin respuesta. \\
+    \hline
+    Docentes & Solicitantes secundarios & Solicitar listas de alumnos, constancias, apoyos SNI, estimulos y otros trámites de forma digitalizada. \\
+    \hline
+    Departamento Escolar (Control Escolar) & Personal que atiende solicitudes & Recibir solicitudes completas y organizadas, con toda la documentación necesaria desde el inicio. Reducir la carga de atención por multiples canales. \\
+    \hline
+    Responsable de Programa & Personal que atiende solicitudes & Atender solicitudes específicas de su programa de forma eficiente, con visibilidad clara de las pendientes. \\
+    \hline
+    Administrador del sistema & Configurador y supervisor & Poder configurar nuevos tipos de solicitud, formularios y plantillas sin depender del equipo de desarrollo. Tener visibilidad total y métricas. \\
+    \hline
+    Equipo de desarrollo & Desarrolladores & Contar con requerimientos claros, una arquitectura de microservicios bien definida y APIs documentadas para la integración. \\
+    \hline
+    Dirección de la Unidad Académica & Patrocinador & Mejorar la eficiencia administrativa, tener datos para la toma de decisiones y modernizar los procesos internos. \\
+    \hline
+\end{longtable}
+
+% ============================================================
+\section{Clases de Usuario}
+
+\begin{longtable}{|L{3.2cm}|L{10.5cm}|}
+    \hline
+    \textbf{Usuario} & \textbf{Descripción} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{Usuario} & \textbf{Descripción} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    Alumno & Estudiante inscrito en la universidad. Puede crear solicitudes de tipos como constancias, kardex, convalidación, apoyos y móvilidad. Puede consultar y dar seguimiento a sus propias solicitudes, y cancelar las que esten en estado ``Creada''. Si es alumno mentor, esta exento de adjuntar comprobante de pago. \\
+    \hline
+    Docente & Profesor adscrito a la universidad. Puede crear solicitudes de tipos como listas de alumnos, constancias, SNI y estimulos. Tiene las mismas capacidades de consulta y seguimiento que el alumno sobre sus propias solicitudes. \\
+    \hline
+    Control Escolar (Depto. Escolar) & Personal del departamento escolar. Atiende solicitudes asignadas a su rol. Puede cambiar el estado de las solicitudes, agregar observaciones y generar documentos PDF cuando el tipo de solicitud tiene plantilla. \\
+    \hline
+    Responsable de Programa & Coordinador de un programa académico. Atiende solicitudes asignadas a su rol con las mismas capacidades que Control Escolar dentro de su ámbito. \\
+    \hline
+    Administrador & Usuario con privilegios totales. Gestióna el catálogo de tipos de solicitud, los formularios dinámicos, las plantillas de documentos y la lista de alumnos mentores. Tiene visibilidad sobre todas las solicitudes y acceso al dashboard de métricas y reportes. \\
+    \hline
+\end{longtable}
+
+% ============================================================
+\section{Diagrama de Contexto}
+
+El siguiente diagrama muestra como el Sistema de Solicitudes interactua con los actores (usuarios) y los sistemas externos.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=2.5cm,
+    actor/.style={font=\small, align=center},
+    system/.style={draw, circle, minimum size=3.5cm, fill=uazblue!10, font=\small\bfseries, align=center, text width=2.8cm},
+    external/.style={draw, rectangle, rounded corners, minimum width=2.5cm, minimum height=1cm, fill=orange!15, font=\small, align=center},
+    arrow/.style={-{Stealth}, thick},
+    darrow/.style={{Stealth}-{Stealth}, thick},
+    label/.style={font=\scriptsize, midway, fill=white, inner sep=1pt}
+]
+
+% Sistema central
+\node[system] (sys) {Sistema de Solicitudes};
+
+% Actores - izquierda
+\node[actor, left=3.5cm of sys, yshift=2cm] (alumno) {\includegraphics[width=0.5cm]{example-image}\\Alumno};
+\node[actor, left=3.5cm of sys, yshift=-2cm] (docente) {\includegraphics[width=0.5cm]{example-image}\\Docente};
+
+% Actores - derecha
+\node[actor, right=3.5cm of sys, yshift=2cm] (ce) {\includegraphics[width=0.5cm]{example-image}\\Control\\Escolar};
+\node[actor, right=3.5cm of sys, yshift=-2cm] (rp) {\includegraphics[width=0.5cm]{example-image}\\Resp.\\Programa};
+
+% Actor - arriba
+\node[actor, above=2.5cm of sys] (admin) {\includegraphics[width=0.5cm]{example-image}\\Administrador};
+
+% Sistemas externos - abajo
+\node[external, below left=2.5cm and 1.5cm of sys] (auth) {Proveedor\\Autenticación\\(JWT)};
+\node[external, below right=2.5cm and 1.5cm of sys] (siga) {SIGA\\(API)};
+\node[external, below=3cm of sys] (smtp) {Servicio\\SMTP};
+
+% Flechas actores
+\draw[darrow] (alumno) -- node[label, above, sloped] {Crea, consulta,} node[label, below, sloped] {cancela solicitudes} (sys);
+\draw[darrow] (docente) -- node[label, above, sloped] {Crea, consulta,} node[label, below, sloped] {cancela solicitudes} (sys);
+\draw[darrow] (ce) -- node[label, above, sloped] {Atiende, cambia} node[label, below, sloped] {estado, genera PDF} (sys);
+\draw[darrow] (rp) -- node[label, above, sloped] {Atiende, cambia} node[label, below, sloped] {estado, genera PDF} (sys);
+\draw[darrow] (admin) -- node[label, right] {Configura catálogo, formularios, plantillas, mentores} (sys);
+
+% Flechas sistemas externos
+\draw[arrow] (auth) -- node[label, above, sloped] {Token JWT} (sys);
+\draw[darrow] (sys) -- node[label, above, sloped] {Consulta datos} node[label, below, sloped] {por matricula} (siga);
+\draw[arrow] (sys) -- node[label, right] {Envia correos} (smtp);
+
+\end{tikzpicture}
+\caption{Diagrama de contexto del Sistema de Solicitudes.}
+\label{fig:contexto}
+\end{figure}
+
+\textbf{Descripción del diagrama:} El Sistema de Solicitudes se encuentra al centro. A su alrededor interactuan cinco tipos de actores y tres sistemas externos:
+
+\begin{itemize}
+    \item \textbf{Alumno y Docente:} Crean solicitudes, consultan su estado, dan seguimiento y pueden cancelarlas.
+    \item \textbf{Control Escolar y Responsable de Programa:} Atienden solicitudes, cambian estados, agregan observaciones y generan documentos PDF.
+    \item \textbf{Administrador:} Configura el catálogo de solicitudes, formularios, plantillas y lista de mentores.
+    \item \textbf{Proveedor de Autenticación:} Emite tokens JWT que el sistema consume para identificar usuarios.
+    \item \textbf{SIGA:} Provee datos completos de alumnos y docentes via API REST.
+    \item \textbf{Servicio SMTP:} Recibe instrucciones del sistema para enviar notificaciónes por correo.
+\end{itemize}
+
+% ============================================================
+\section{Árbol de Características}
+
+El siguiente árbol presenta las funcionalidades principales del sistema organizadas por módulos.
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{forest}
+    for tree={
+        draw, rounded corners, fill=uazblue!8,
+        minimum height=0.7cm, minimum width=1.5cm,
+        font=\footnotesize, align=center, text width=1.8cm,
+        edge={thick, -Stealth},
+        l sep=1cm, s sep=0.2cm,
+        anchor=north
+    }
+    [Sistema de Solicitudes, fill=uazblue!25, text width=2.5cm
+        [Gestión de Catálogo, text width=1.8cm
+            [Crear tipo, text width=1.6cm]
+            [Editar tipo, text width=1.6cm]
+            [Eliminar tipo, text width=1.6cm]
+        ]
+        [Formularios Dinámicos, text width=1.8cm
+            [Configurar campos, text width=1.6cm]
+            [Tipos de campo, text width=1.6cm]
+            [Validaciónes, text width=1.6cm]
+        ]
+        [Solicitudes, text width=1.8cm
+            [Crear, text width=1.6cm]
+            [Consultar, text width=1.6cm]
+            [Cancelar, text width=1.6cm]
+            [Seguimiento, text width=1.6cm]
+        ]
+        [Atención, text width=1.8cm
+            [Listar asignadas, text width=1.6cm]
+            [Cambiar estado, text width=1.6cm]
+            [Generar PDF, text width=1.6cm]
+        ]
+        [Plantillas, text width=1.8cm
+            [Gestiónar plantillas, text width=1.6cm]
+            [Variables sustituibles, text width=1.6cm]
+        ]
+        [Mentores, text width=1.8cm
+            [Agregar manual, text width=1.6cm]
+            [Carga CSV, text width=1.6cm]
+            [Listar / Eliminar, text width=1.6cm]
+        ]
+        [Métricas, text width=1.8cm
+            [Dashboard, text width=1.6cm]
+            [Exportar CSV/PDF, text width=1.6cm]
+        ]
+    ]
+\end{forest}%
+}
+\caption{Árbol de características del Sistema de Solicitudes.}
+\label{fig:árbol}
+\end{figure}
+
+\textbf{Descripción del diagrama:} El sistema se divide en siete módulos principales:
+\begin{itemize}
+    \item \textbf{Gestión de Catálogo:} CRUD de tipos de solicitud.
+    \item \textbf{Formularios Dinámicos:} Configuración de campos por tipo.
+    \item \textbf{Solicitudes:} Creación, consulta, cancelación y seguimiento por parte del solicitante.
+    \item \textbf{Atención:} Listado, cambio de estado y generación de documentos por parte del personal.
+    \item \textbf{Plantillas:} Gestión de plantillas de documentos con variables.
+    \item \textbf{Mentores:} Administración de la lista de alumnos mentores exentos de pago.
+    \item \textbf{Métricas:} Dashboard y exportación de reportes.
+\end{itemize}

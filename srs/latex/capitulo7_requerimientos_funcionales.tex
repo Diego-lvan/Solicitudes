@@ -1,0 +1,207 @@
+\chapter{Requerimientos Funcionales}
+
+% ============================================================
+\section{Catálogo de Requerimientos Funcionales}
+
+\begin{longtable}{|C{1cm}|L{4.5cm}|L{8cm}|}
+    \hline
+    \textbf{ID} & \textbf{Nombre} & \textbf{Descripción} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Nombre} & \textbf{Descripción} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    RF-01 & Catálogo dinámico de tipos de solicitud & El sistema debe permitir al administrador crear, editar y eliminar tipos de solicitud desde la interfaz. Cada tipo define: nombre, descripción, rol responsable de atenderla, si requiere pago, roles que pueden crearlo (alumno, docente o ambos) y si tiene plantilla asociada. \\
+    \hline
+    RF-02 & Formularios dinámicos & Cada tipo de solicitud debe tener un formulario configurable con campos personalizados. Los tipos de campo soportados son: texto, area de texto, número, fecha, selección (dropdown) y archivo. Cada campo define: etiqueta, tipo, si es requerido, opciones (para selects) y orden de aparicion. \\
+    \hline
+    RF-03 & Plantillas con variables & El sistema debe soportar plantillas de documento asociadas a tipos de solicitud. Las plantillas contienen variables sustituibles (ej. \texttt{\{\{nombre\}\}}, \texttt{\{\{matrícula\}\}}, \texttt{\{\{programa\}\}}, \texttt{\{\{fecha\}\}}). Al generar el documento, el sistema reemplaza las variables con datos reales y produce un PDF. Las plantillas son opcionales por tipo. \\
+    \hline
+    RF-04 & Creación de solicitudes & Un usuario autenticado (alumno o docente) puede crear una solicitud selecciónando un tipo del catálogo. El sistema presenta el formulario dinámico, el usuario lo completa y adjunta archivos. Se genera un folio único y la solicitud inicia en estado ``Creada''. Si requiere pago y el usuario no es mentor, debe adjuntar comprobante. \\
+    \hline
+    RF-05 & Ciclo de vida de la solicitud & Las solicitudes siguen un ciclo de vida con los estados: Creada, En proceso, Finalizada y Cancelada. Las transiciónes validas son: Creada $\rightarrow$ En proceso, Creada $\rightarrow$ Cancelada, En proceso $\rightarrow$ Finalizada, En proceso $\rightarrow$ Cancelada. El solicitante puede cancelar en estado ``Creada''. Cada cambio se registra con fecha, responsable y observaciones. \\
+    \hline
+    RF-06 & Enrutamiento por roles & Las solicitudes se dirigen automáticamente al personal cuyo rol corresponda al responsable definido en el tipo de solicitud. El personal solo ve solicitudes asignadas a su rol. El administrador tiene visibilidad total. \\
+    \hline
+    RF-07 & Notificaciónes por correo & El sistema envia correo electrónico al personal responsable cuando se crea una nueva solicitud. También notifica al solicitante cuando cambia el estado de su solicitud (en proceso, finalizada, cancelada). Si el servicio SMTP falla, la solicitud no se ve afectada. \\
+    \hline
+    RF-08 & Consulta y seguimiento & El solicitante puede ver la lista de sus solicitudes con folio, tipo, fecha y estado, con filtros por estado. El personal puede listar solicitudes asignadas con filtros por estado, tipo, fecha y busqueda por folio o nombre. Ambos pueden ver el historial de seguimiento con fechas y observaciones. \\
+    \hline
+    RF-09 & Atención de solicitudes & El personal puede ver el detalle completo de una solicitud asignada (datos del formulario, archivos adjuntos, historial). Puede cambiar el estado, agregar observaciones y, si aplica, generar el documento PDF desde la plantilla. \\
+    \hline
+    RF-10 & Gestión de archivos adjuntos & El sistema soporta la carga de archivos individuales y comprimidos (.zip). Los archivos se almacenan organizados por folio de solicitud. El personal puede descargar los archivos adjuntos desde el detalle de la solicitud. \\
+    \hline
+    RF-11 & Gestión de alumnos mentores & El administrador puede gestiónar una lista de alumnos mentores activos. Los mentores se agregan manualmente por matrícula o mediante carga de archivo CSV. Los alumnos en la lista quedan exentos de adjuntar comprobante de pago en solicitudes que lo requieran. El administrador puede consultar y eliminar mentores de la lista. \\
+    \hline
+\end{longtable}
+
+% ============================================================
+\section{Interfaces Externas}
+
+El Sistema de Solicitudes interactua con tres sistemas externos. A continuacion se describen las interfaces de cada uno.
+
+% --- Proveedor de Autenticación ---
+\subsection{IE-01: Proveedor de Autenticación (JWT)}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|L{3.5cm}|L{10cm}|}
+    \hline
+    \textbf{Campo} & \textbf{Descripción} \\
+    \hline
+    \textbf{Tipo de interfaz:} & API / Token \\
+    \hline
+    \textbf{Dirección:} & Entrada (el sistema recibe el token) \\
+    \hline
+    \textbf{Protocolo:} & HTTPS \\
+    \hline
+    \textbf{Formato:} & JSON Web Token (JWT) \\
+    \hline
+    \textbf{Datos recibidos:} &
+    \begin{itemize}[nosep, leftmargin=*]
+        \item \texttt{matricula}: Identificador único del usuario.
+        \item \texttt{correo}: Correo electrónico del usuario.
+        \item \texttt{rol}: Rol del usuario en el sistema (alumno, docente, control\_escolar, responsable\_programa, administrador).
+    \end{itemize} \\
+    \hline
+    \textbf{Autenticación:} & El token es firmado por el proveedor. El sistema valida la firma usando la clave pública del proveedor. \\
+    \hline
+    \textbf{Manejo de errores:} & Token inválido o expirado: se rechaza la peticion con HTTP 401. Proveedor no disponible: el sistema no puede autenticar nuevos usuarios pero las sesiónes activas no se ven afectadas. \\
+    \hline
+\end{tabular}
+\end{table}
+
+% --- SIGA ---
+\subsection{IE-02: SIGA (Sistema Integral de Gestión Académica)}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|L{3.5cm}|L{10cm}|}
+    \hline
+    \textbf{Campo} & \textbf{Descripción} \\
+    \hline
+    \textbf{Tipo de interfaz:} & API REST \\
+    \hline
+    \textbf{Dirección:} & Salida (el sistema consulta al SIGA) \\
+    \hline
+    \textbf{Protocolo:} & HTTPS \\
+    \hline
+    \textbf{Formato:} & JSON \\
+    \hline
+    \textbf{Operación:} & Consulta de datos de usuario por matrícula. \\
+    \hline
+    \textbf{Datos obtenidos:} &
+    \begin{itemize}[nosep, leftmargin=*]
+        \item \texttt{nombre\_completo}: Nombre del alumno/docente.
+        \item \texttt{programa}: Programa académico.
+        \item \texttt{semestre}: Semestre actual (alumnos).
+        \item \texttt{correo}: Correo electrónico institucional.
+        \item Otros datos relevantes segun la API del SIGA.
+    \end{itemize} \\
+    \hline
+    \textbf{Manejo de errores:} & Si el SIGA no responde dentro de 5 segundos, el sistema usa los datos básicos del token JWT. Se muestra un aviso al usuario indicando que algunos datos adicionales no estan disponibles. \\
+    \hline
+\end{tabular}
+\end{table}
+
+% --- SMTP ---
+\subsection{IE-03: Servicio SMTP (Correo Electrónico)}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|L{3.5cm}|L{10cm}|}
+    \hline
+    \textbf{Campo} & \textbf{Descripción} \\
+    \hline
+    \textbf{Tipo de interfaz:} & Protocolo SMTP \\
+    \hline
+    \textbf{Dirección:} & Salida (el sistema envia correos) \\
+    \hline
+    \textbf{Protocolo:} & SMTP con TLS \\
+    \hline
+    \textbf{Formato:} & Correo electrónico (texto plano y/o HTML) \\
+    \hline
+    \textbf{Eventos que disparan envio:} &
+    \begin{itemize}[nosep, leftmargin=*]
+        \item Solicitud creada: correo al personal responsable.
+        \item Estado cambiado: correo al solicitante.
+    \end{itemize} \\
+    \hline
+    \textbf{Contenido del correo:} & Asunto descriptivo, folio de solicitud, tipo, estado actual/nuevo, enlace al sistema. \\
+    \hline
+    \textbf{Manejo de errores:} & Si el SMTP falla, el envio se registra como pendiente. La operación principal (creación o cambio de estado) no se ve afectada. \\
+    \hline
+\end{tabular}
+\end{table}
+
+% ============================================================
+\section{Restricciónes}
+
+\begin{longtable}{|C{1cm}|L{4cm}|L{8.5cm}|}
+    \hline
+    \textbf{ID} & \textbf{Restricción} & \textbf{Descripción} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Restricción} & \textbf{Descripción} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    RT-01 & Autenticación delegada & El sistema no debe implementar módulo de autenticación propio. Toda la autenticación se delega al proveedor externo via JWT. No se implementa registro, login ni recuperación de contraseña. \\
+    \hline
+    RT-02 & Arquitectura de microservicio & El Sistema de Solicitudes debe funcionar como un servicio independiente, sin dependencias de código con otros módulos del ecosistema. La comúnicación con servicios externos es únicamente via APIs REST y tokens. \\
+    \hline
+    RT-03 & Base de datos independiente & El sistema debe tener su propia base de datos. No debe acceder directamente a bases de datos de otros sistemas (SIGA, autenticación, etc.). \\
+    \hline
+    RT-04 & Comúnicación cifrada & Toda la comúnicación entre el cliente (navegador) y el servidor, así como entre el servidor y servicios externos, debe realizarse sobre HTTPS (TLS 1.2 o superior). \\
+    \hline
+    RT-05 & Compatibilidad de navegadores & La interfaz web debe ser funcional en las versiónes más recientes de Google Chrome, Mozilla Firefox, Microsoft Edge y Safari. \\
+    \hline
+    RT-06 & Sin procesamiento de pagos & El sistema no procesa pagos en línea. Solo registra si un tipo de solicitud requiere comprobante de pago y permite adjuntarlo como archivo. \\
+    \hline
+    RT-07 & Tamaño de archivos & Los archivos adjuntos deben respetar un tamaño máximo configurable (valor sugerido: 10 MB por archivo individual). \\
+    \hline
+    RT-08 & Idioma & La interfaz del sistema debe estar en idioma español (Mexico). \\
+    \hline
+\end{longtable}
+
+% ============================================================
+\section{Matriz de Trazabilidad}
+
+La siguiente tabla muestra la relacion entre los requerimientos de negocio, los requerimientos funcionales y los casos de uso.
+
+\begin{table}[H]
+\centering
+\caption{Matriz de trazabilidad RN $\rightarrow$ RF $\rightarrow$ CU.}
+\label{tab:trazabilidad}
+\small
+\begin{tabular}{|c|c|l|}
+    \hline
+    \textbf{Req. Negocio} & \textbf{Req. Funcional} & \textbf{Caso(s) de Uso} \\
+    \hline
+    RN-01 & RF-04, RF-08 & CU-01, CU-02, CU-03, CU-05 \\
+    \hline
+    RN-02 & RF-01, RF-02 & CU-10, CU-11 \\
+    \hline
+    RN-03 & RF-06 & CU-06 \\
+    \hline
+    RN-04 & RF-05, RF-08 & CU-05, CU-08 \\
+    \hline
+    RN-05 & RF-07 & CU-17 \\
+    \hline
+    RN-06 & RF-03 & CU-09, CU-12 \\
+    \hline
+    RN-07 & RF-08 & CU-14, CU-15 \\
+    \hline
+    RN-08 & --- & --- (RNF-01, RNF-02, RNF-03) \\
+    \hline
+    RN-09 & RF-11 & CU-13 \\
+    \hline
+\end{tabular}
+\end{table}

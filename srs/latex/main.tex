@@ -1,0 +1,148 @@
+\documentclass[12pt, letterpaper]{report}
+
+% --- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish, mexico]{babel}
+\usepackage{geometry}
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{forest}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{multirow}
+\usepackage{caption}
+
+% --- TikZ libraries ---
+\usetikzlibrary{shapes, arrows.meta, positioning, calc, fit, backgrounds, decorations.text}
+
+% --- Colores ---
+\definecolor{uazblue}{RGB}{0, 51, 102}
+\definecolor{lightgray}{RGB}{240, 240, 240}
+
+% --- Hyperref config ---
+\hypersetup{
+    colorlinks=true,
+    linkcolor=uazblue,
+    urlcolor=uazblue,
+    citecolor=uazblue
+}
+
+% --- Header/Footer ---
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small SRS -- Sistema de Solicitudes}
+\fancyhead[R]{\small Versión 1.0}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Formato de títulos ---
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\color{uazblue}}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{-20pt}{40pt}
+
+% --- Comandos personalizados ---
+\newcommand{\cufield}[2]{\textbf{#1:} & #2 \\}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% --- Estilos TikZ para UML ---
+\tikzset{
+    actor/.style={
+        draw, minimum width=0.5cm, minimum height=1.5cm,
+        append after command={
+            (\tikzlastnode.north) circle (3mm)
+            (\tikzlastnode.north) ++(0, -6mm) -- ++(0, -8mm)
+            (\tikzlastnode.north) ++(0, -9mm) -- ++(-5mm, -6mm)
+            (\tikzlastnode.north) ++(0, -9mm) -- ++(5mm, -6mm)
+            (\tikzlastnode.north) ++(0, -14mm) -- ++(-4mm, -7mm)
+            (\tikzlastnode.north) ++(0, -14mm) -- ++(4mm, -7mm)
+        }
+    },
+    usecase/.style={
+        draw, ellipse, minimum width=3.2cm, minimum height=1.2cm,
+        text width=2.8cm, align=center, font=\small
+    },
+    systemboundary/.style={
+        draw, rectangle, minimum width=8cm, minimum height=6cm,
+        label={[font=\bfseries]above:#1}
+    },
+    include/.style={
+        dashed, -{Stealth}, font=\footnotesize
+    },
+    extend/.style={
+        dashed, -{Stealth}, font=\footnotesize
+    }
+}
+
+\begin{document}
+
+% --- Portada ---
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+
+    {\Large\bfseries UNIVERSIDAD AUTÓNOMA DE ZACATECAS}\\[12pt]
+    {\normalsize UNIDAD ACADÉMICA DE INGENIERÍA ELÉCTRICA}\\[24pt]
+
+    \includegraphics[width=1.5in]{uaz.png}\\[40pt]
+
+    {\large\bfseries ESPECIFICACIÓN DE REQUERIMIENTOS DE SOFTWARE}\\[6pt]
+    {\large\bfseries SISTEMA DE SOLICITUDES}\\[20pt]
+
+    {\normalsize\bfseries
+    Diego Iván Correa Navarrete\\
+    Juan Antonio González del Río\\
+    Diego Arturo Ramos Ávila\\
+    Ángel David Carlos Silva\\
+    }
+
+    \vspace{40pt}
+
+    {\normalsize\bfseries LICENCIATURA EN INGENIERÍA DE SOFTWARE}\\[20pt]
+
+    {\normalsize Marzo de 2026}
+
+\end{titlepage}
+
+% --- Tabla de contenido ---
+\tableofcontents
+\newpage
+\listoffigures
+\listoftables
+\newpage
+
+% --- Capítulos ---
+\input{capitulo1_introduccion}
+\input{capitulo2_requerimientos_negocio}
+\input{capitulo3_vision_alcance}
+\input{capitulo4_contexto_negocio}
+\input{capitulo5_requerimientos_usuario}
+\input{capitulo6_requerimientos_no_funcionales}
+\input{capitulo7_requerimientos_funcionales}
+
+% --- Referencias ---
+\begin{thebibliography}{9}
+    \bibitem{ieee830}
+    IEEE, \textit{IEEE Std 830-1998: Recommended Practice for Software Requirements Specifications}, IEEE Computer Society, 1998.
+
+    \bibitem{wiegers}
+    K. Wiegers y J. Beatty, \textit{Software Requirements}, 3ra ed., Microsoft Press, 2013.
+
+    \bibitem{sommerville}
+    I. Sommerville, \textit{Software Engineering}, 10ma ed., Pearson, 2015.
+
+    \bibitem{pressman}
+    R. S. Pressman, \textit{Ingeniería del Software: Un Enfoque Práctico}, 7ma ed., McGraw-Hill, 2010.
+\end{thebibliography}
+
+\end{document}

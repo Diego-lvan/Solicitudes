@@ -1,0 +1,55 @@
+\chapter{Introducción}
+
+Este documento presenta la Especificación de Requerimientos de Software (SRS) para el \textbf{Sistema de Solicitudes}, un módulo que forma parte del ecosistema de servicios tecnológicos de la Universidad Autónoma de Zacatecas (UAZ). El documento sigue las prácticas recomendadas por el estándar IEEE 830 \cite{ieee830} y la métodología de Karl Wiegers \cite{wiegers} para la especificación de requerimientos.
+
+El propósito de este SRS es servir como referencia técnica y funcional para el equipo de desarrollo, los stakeholders y cualquier parte interesada que necesite comprender el alcance, las funcionalidades y las restricciónes del sistema.
+
+% ============================================================
+\section{Antecedentes}
+
+Actualmente, en la Universidad Autónoma de Zacatecas ---particularmente en la Unidad Académica de Ingeniería Eléctrica--- el proceso de gestión de solicitudes académicas y administrativas carece de una forma centralizada y estandarizada. Los alumnos y docentes que necesitan tramitar constancias, kardex, convalidaciónes, apoyos de móvilidad, actas de examen, entre otros, recurren a multiples canales informales como:
+
+\begin{itemize}
+    \item Correos electrónicos dirigidos a diferentes personas sin un formato estándar.
+    \item Mensajes por aplicaciónes de mensajeria (WhatsApp, Telegram).
+    \item Solicitudes verbales o presenciales en ventanilla.
+    \item Documentos en papel entregados en oficinas.
+\end{itemize}
+
+Esta situación genera diversos problemas:
+
+\begin{enumerate}
+    \item \textbf{Desorganización:} Las solicitudes se pierden entre correos, mensajes y papeles. No existe un registro único ni trazable de las peticiones realizadas.
+    \item \textbf{Falta de seguimiento:} El solicitante no tiene forma de conocer el estado de su trámite sin contactar directamente al responsable.
+    \item \textbf{Carga administrativa:} El personal atiende solicitudes por multiples canales, duplicando esfuerzos y sin poder priorizar eficientemente.
+    \item \textbf{Inconsistencia en los datos:} Al no existir formularios estandarizados, los solicitantes envian información incompleta o en formatos diferentes, lo que retrasa la atención.
+    \item \textbf{Falta de métricas:} No se pueden generar estadísticas sobre tipos de solicitud, tiempos de atención o volumen de trámites.
+\end{enumerate}
+
+Adicionalmente, en el semestre anterior un equipo de desarrollo realizo un prototipo inicial del sistema. Sin embargo, este prototipo presento limitaciones de arquitectura y funcionalidad que no lo hacen viable para producción, por lo que se toma únicamente como referencia parcial para este nuevo desarrollo.
+
+% ============================================================
+\section{Propósito}
+
+El propósito de este documento es describir de manera completa y detallada los requerimientos del \textbf{Sistema de Solicitudes}, un servicio web que permitira a los miembros de la comunidad universitaria (alumnos y docentes) crear, enviar y dar seguimiento a solicitudes académicas y administrativas de forma centralizada, estandarizada y trazable.
+
+El sistema esta disenado para:
+
+\begin{itemize}
+    \item Centralizar todos los tipos de solicitudes en una sola plataforma.
+    \item Estandarizar los formularios y datos requeridos por cada tipo de solicitud de forma dinámica y configurable.
+    \item Automatizar el enrutamiento de solicitudes al personal responsable segun el tipo de trámite.
+    \item Proporcionar trazabilidad completa del ciclo de vida de cada solicitud.
+    \item Notificar a las partes involucradas sobre el estado de las solicitudes.
+    \item Generar documentos (constancias, etc.) a partir de plantillas con variables.
+    \item Ofrecer métricas y reportes para la toma de decisiones administrativas.
+\end{itemize}
+
+Este documento esta dirigido a:
+
+\begin{itemize}
+    \item El equipo de desarrollo de software encargado de la implementación.
+    \item El docente y evaluadores del proyecto.
+    \item El personal administrativo que utilizara el sistema.
+    \item Cualquier parte interesada que requiera comprender el funcionamiento esperado del sistema.
+\end{itemize}
