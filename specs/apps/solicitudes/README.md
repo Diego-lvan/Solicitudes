@@ -1,6 +1,6 @@
 # specs/apps/solicitudes
 
-Feature specs for the `apps/solicitudes` Django app.
+Feature specs for the `solicitudes` Django app.
 
 **Scope:** Core domain. Features: tipos (catalog), formularios (dynamic forms), intake (create draft), revision (personal review), lifecycle (state machine), archivos (attachments), pdf (rendering).
 

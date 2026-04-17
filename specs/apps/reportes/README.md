@@ -1,6 +1,6 @@
 # specs/apps/reportes
 
-Feature specs for the `apps/reportes` Django app.
+Feature specs for the `reportes` Django app.
 
 **Scope:** Dashboards and exports. Features: aggregated metrics, CSV/Excel export, role-scoped views.
 

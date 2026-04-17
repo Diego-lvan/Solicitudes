@@ -24,7 +24,7 @@ E2E means "exercises the full stack." There are two ways to do that: in-process 
 ### Idiom
 
 ```python
-# apps/solicitudes/intake/tests/test_views.py
+# solicitudes/intake/tests/test_views.py
 import pytest
 from django.urls import reverse
 
@@ -58,7 +58,7 @@ def test_alumno_creates_and_submits_solicitud(client_logged_in_alumno, tipo_soli
     response = client_logged_in_alumno.post(submit_url, follow=True)
     assert response.context["solicitud"].estado == "PENDIENTE"
 
-    # 4. Verify a notification was queued (via the apps.notificaciones service)
+    # 4. Verify a notification was queued (via the notificaciones service)
     from django.core import mail
     assert len(mail.outbox) == 1
     assert "Pendiente" in mail.outbox[0].subject

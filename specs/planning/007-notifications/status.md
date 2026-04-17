@@ -6,7 +6,7 @@
 ## Checklist
 
 ### App skeleton
-- [ ] Create `apps/notificaciones/` package + `apps.py`
+- [ ] Create `notificaciones/` package + `apps.py`
 - [ ] Register in `INSTALLED_APPS`
 
 ### Schemas, exceptions
@@ -28,9 +28,9 @@
 - [ ] [P] `templates/notificaciones/email/estado_cambiado.html` + `.txt`
 
 ### Replace NoOp wiring (in 004's dependencies)
-- [ ] [P] `apps/solicitudes/intake/dependencies.py`
-- [ ] [P] `apps/solicitudes/revision/dependencies.py`
-- [ ] [P] `apps/solicitudes/lifecycle/dependencies.py`
+- [ ] [P] `solicitudes/intake/dependencies.py`
+- [ ] [P] `solicitudes/revision/dependencies.py`
+- [ ] [P] `solicitudes/lifecycle/dependencies.py`
 
 ### Settings
 - [ ] Verify env vars in `.env.example`: `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`, `DEFAULT_FROM_EMAIL`, `SITE_BASE_URL`

@@ -286,7 +286,7 @@ The `code-reviewer` agent will check these against `plan.md` like any other deli
 - **Services:** 95% line, 90% branch (business rules are where bugs hide).
 - **Views:** 80% line — they're glue, but every permission path must be tested.
 - **Forms:** 100% line (small surface, easy to fully cover).
-- **`apps/_shared/`:** 90% line.
+- **`_shared/`:** 90% line.
 - Total >85% line, >80% branch.
 
 Coverage is a floor, not a target. Don't write tests just to hit a number. Write tests that would have caught real bugs.

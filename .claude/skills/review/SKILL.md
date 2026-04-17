@@ -73,8 +73,8 @@ Read `.claude/rules/django-code-architect.md` and verify:
 - [ ] **Templates receive DTOs**, never querysets or model instances
 - [ ] **Cross-feature deps: service → service**, never service → another feature's repository
 - [ ] **Feature has `dependencies.py`** wiring its repositories → services as factory functions
-- [ ] **Shared infra in `apps/_shared/`**, not in feature packages, and not named `utils`/`common`/`helpers`
-- [ ] **Custom exceptions** subclass `apps._shared.exceptions.AppError`; repositories raise feature exceptions, never let `Model.DoesNotExist` leak
+- [ ] **Shared infra in `_shared/`**, not in feature packages, and not named `utils`/`common`/`helpers`
+- [ ] **Custom exceptions** subclass `_shared.exceptions.AppError`; repositories raise feature exceptions, never let `Model.DoesNotExist` leak
 - [ ] **English identifiers**; Spanish only in user-facing copy (templates, form labels, exception `user_message`)
 
 ---

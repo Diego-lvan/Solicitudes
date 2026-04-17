@@ -2,7 +2,7 @@
 
 ## Summary
 
-`apps/mentores` exposes the mentor catalog (a small, periodically updated list of student matrículas exempt from comprobante de pago for tipos with `mentor_exempt=True`). Admins manage the catalog via manual entry or CSV bulk upload. The intake flow consumes `MentorService.is_mentor(matricula)` to decide whether to require comprobante (replaces 004's `FalseMentorService` placeholder).
+`mentores` exposes the mentor catalog (a small, periodically updated list of student matrículas exempt from comprobante de pago for tipos with `mentor_exempt=True`). Admins manage the catalog via manual entry or CSV bulk upload. The intake flow consumes `MentorService.is_mentor(matricula)` to decide whether to require comprobante (replaces 004's `FalseMentorService` placeholder).
 
 ## Depends on
 
@@ -12,8 +12,8 @@
 
 ## Affected Apps / Modules
 
-- `apps/mentores/` — new app
-- `apps/solicitudes/intake/dependencies.py` — replace `FalseMentorService` with the real `MentorService`
+- `mentores/` — new app
+- `solicitudes/intake/dependencies.py` — replace `FalseMentorService` with the real `MentorService`
 
 ## References
 
@@ -25,7 +25,7 @@
 ### Layout
 
 ```
-apps/mentores/
+mentores/
 ├── __init__.py
 ├── apps.py
 ├── urls.py
@@ -145,10 +145,10 @@ Standard CRUD: `get_by_matricula`, `list(only_active, page)`, `upsert`, `deactiv
 
 ### Wire-up
 
-`apps/solicitudes/intake/dependencies.py`:
+`solicitudes/intake/dependencies.py`:
 
 ```python
-from apps.mentores import dependencies as mentores_dependencies
+from mentores import dependencies as mentores_dependencies
 
 def get_intake_service() -> IntakeService:
     return DefaultIntakeService(

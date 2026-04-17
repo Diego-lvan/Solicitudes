@@ -2,7 +2,7 @@
 
 ## Summary
 
-Admin-only dashboard with aggregate counts (per estado, per tipo, per month) over a date range, plus CSV/PDF export of the filtered solicitud list. No charts — Bootstrap tables and progress bars convey magnitudes. Uses the existing solicitud data; adds no new tables. Reads through `apps/solicitudes` repositories via service interfaces, never touching the ORM directly from `apps/reportes`.
+Admin-only dashboard with aggregate counts (per estado, per tipo, per month) over a date range, plus CSV/PDF export of the filtered solicitud list. No charts — Bootstrap tables and progress bars convey magnitudes. Uses the existing solicitud data; adds no new tables. Reads through `solicitudes` repositories via service interfaces, never touching the ORM directly from `reportes`.
 
 ## Depends on
 
@@ -12,8 +12,8 @@ Admin-only dashboard with aggregate counts (per estado, per tipo, per month) ove
 
 ## Affected Apps / Modules
 
-- `apps/reportes/` — new app
-- `apps/solicitudes/lifecycle/services/lifecycle_service` — extend with aggregation methods (interface change, additive)
+- `reportes/` — new app
+- `solicitudes/lifecycle/services/lifecycle_service` — extend with aggregation methods (interface change, additive)
 
 ## References
 
@@ -25,7 +25,7 @@ Admin-only dashboard with aggregate counts (per estado, per tipo, per month) ove
 ### Layout
 
 ```
-apps/reportes/
+reportes/
 ├── __init__.py
 ├── apps.py
 ├── urls.py

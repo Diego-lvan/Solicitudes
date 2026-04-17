@@ -6,9 +6,9 @@
 ## Checklist
 
 ### App skeleton
-- [ ] `apps/solicitudes/` package + `apps.py`
+- [ ] `solicitudes/` package + `apps.py`
 - [ ] Register in `INSTALLED_APPS`
-- [ ] `apps/solicitudes/urls.py` (mounts admin tipos URL)
+- [ ] `solicitudes/urls.py` (mounts admin tipos URL)
 
 ### Data models
 - [ ] [P] `models/tipo_solicitud.py`

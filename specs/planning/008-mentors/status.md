@@ -6,7 +6,7 @@
 ## Checklist
 
 ### App skeleton
-- [ ] Create `apps/mentores/` package + `apps.py`
+- [ ] Create `mentores/` package + `apps.py`
 - [ ] Register in `INSTALLED_APPS`
 
 ### Model & migration
@@ -41,7 +41,7 @@
 - [ ] [P] `templates/mentores/confirm_deactivate.html`
 
 ### Cross-app wiring
-- [ ] Replace `FalseMentorService` in `apps/solicitudes/intake/dependencies.py`
+- [ ] Replace `FalseMentorService` in `solicitudes/intake/dependencies.py`
 - [ ] Verify intake form behavior: mentor + mentor_exempt tipo → no comprobante; non-mentor + mentor_exempt → comprobante required
 
 ### End-to-end smoke

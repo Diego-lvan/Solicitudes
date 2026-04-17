@@ -18,7 +18,7 @@ Concise summary of the project's Django conventions. **For the canonical, deep a
 
 ## Architecture (one-liner)
 
-**View → Service → Repository.** ORM stays inside repository. Pydantic DTOs at every boundary. ABC + implementation split. Constructor DI via `dependencies.py` factory functions. Custom exceptions inherit from `apps._shared.exceptions.AppError`.
+**View → Service → Repository.** ORM stays inside repository. Pydantic DTOs at every boundary. ABC + implementation split. Constructor DI via `dependencies.py` factory functions. Custom exceptions inherit from `_shared.exceptions.AppError`.
 
 ## Layout
 
@@ -36,7 +36,7 @@ apps/<app>/
 │   ├── permissions.py
 │   ├── constants.py
 │   └── tests/
-apps/_shared/                # Cross-cutting infra (exceptions, middleware, auth)
+_shared/                # Cross-cutting infra (exceptions, middleware, auth)
 config/settings/{base,dev,prod}.py
 templates/                   # base.html + per-app
 ```

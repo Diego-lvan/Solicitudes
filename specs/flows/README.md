@@ -27,7 +27,7 @@ What initiates this flow (user action, scheduled job, signal).
 ## References
 - → `apps/A/<feature>` — A's role in this flow
 - → `apps/B/<feature>` — B's role
-- → `apps/_shared/...` — any shared infra used
+- → `_shared/...` — any shared infra used
 ```
 
 Create a flow doc when an initiative introduces a new cross-app path or modifies an existing one. Update it when the path changes.

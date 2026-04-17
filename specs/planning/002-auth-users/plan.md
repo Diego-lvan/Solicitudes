@@ -8,14 +8,14 @@ We **do not** issue tokens, run a login form, or store passwords. The callback h
 
 ## Depends on
 
-- **001** — `apps/_shared/auth.py` (JWT helpers), `AppErrorMiddleware`, `RequestIDMiddleware`, `AuthenticationRequired` exception, base templates.
+- **001** — `_shared/auth.py` (JWT helpers), `AppErrorMiddleware`, `RequestIDMiddleware`, `AuthenticationRequired` exception, base templates.
 
 ## Affected Apps / Modules
 
-- `apps/usuarios/` — new app
-- `apps/_shared/auth.py` — extended if needed (e.g., role normalization helper)
+- `usuarios/` — new app
+- `_shared/auth.py` — extended if needed (e.g., role normalization helper)
 - `config/settings/base.py` — middleware, env vars, `AUTH_USER_MODEL`
-- `config/urls.py` — mount `apps.usuarios.urls` under `/auth/`
+- `config/urls.py` — mount `usuarios.urls` under `/auth/`
 
 ## References
 
@@ -29,7 +29,7 @@ We **do not** issue tokens, run a login form, or store passwords. The callback h
 ### App layout
 
 ```
-apps/usuarios/
+usuarios/
 ├── __init__.py
 ├── apps.py
 ├── urls.py                          # /auth/callback, /auth/logout, /auth/me
@@ -81,7 +81,7 @@ apps/usuarios/
     └── test_permissions.py
 ```
 
-### Data model — `apps/usuarios/models/user.py`
+### Data model — `usuarios/models/user.py`
 
 ```python
 class User(AbstractBaseUser):
@@ -304,7 +304,7 @@ class AdminRequiredMixin(RoleRequiredMixin):        required_roles = {Role.ADMIN
 
 `RoleRequiredMixin.dispatch`: if anonymous → raise `AuthenticationRequired`; if role not in `required_roles` → raise `Unauthorized`. Both caught by `AppErrorMiddleware`.
 
-### URLs (`apps/usuarios/urls.py`)
+### URLs (`usuarios/urls.py`)
 
 | URL | View | Method | Auth |
 |---|---|---|---|
@@ -312,7 +312,7 @@ class AdminRequiredMixin(RoleRequiredMixin):        required_roles = {Role.ADMIN
 | `auth/logout` | `LogoutView` | GET | optional |
 | `auth/me` | `MeView` | GET | required |
 
-Mounted in `config/urls.py` via `path("", include(("apps.usuarios.urls", "usuarios")))` so the URLs are exactly `/auth/callback`, `/auth/logout`, `/auth/me`.
+Mounted in `config/urls.py` via `path("", include(("usuarios.urls", "usuarios")))` so the URLs are exactly `/auth/callback`, `/auth/logout`, `/auth/me`.
 
 ### `dependencies.py`
 
@@ -325,7 +325,7 @@ def get_user_service() -> UserService:
         user_repository=get_user_repository(),
         role_resolver=get_role_resolver(),
         siga_service=get_siga_service(),
-        logger=logging.getLogger("apps.usuarios.user_service"),
+        logger=logging.getLogger("usuarios.user_service"),
     )
 ```
 
@@ -348,7 +348,7 @@ This initiative is consumed by **every** later initiative (via `UserService` and
 
 ### Sequencing
 
-1. Create `apps/usuarios/` skeleton + `apps.py`; add to `INSTALLED_APPS`.
+1. Create `usuarios/` skeleton + `apps.py`; add to `INSTALLED_APPS`.
 2. `models/user.py` + `UserManager` + initial migration. Verify `python manage.py migrate` runs.
 3. `constants.py` (`Role`).
 4. `schemas.py`, `exceptions.py`.

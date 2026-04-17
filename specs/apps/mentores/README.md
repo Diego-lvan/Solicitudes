@@ -1,6 +1,6 @@
 # specs/apps/mentores
 
-Feature specs for the `apps/mentores` Django app.
+Feature specs for the `mentores` Django app.
 
 **Scope:** Mentor catalog and assignments. Features: mentor list, mentor-user assignment, search/filter.
 

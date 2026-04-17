@@ -14,9 +14,9 @@ This is the largest initiative; expect 2–3 sessions to land it cleanly.
 
 ## Affected Apps / Modules
 
-- `apps/solicitudes/` — adds three new feature packages: `intake`, `revision`, `lifecycle`
-- `apps/solicitudes/models/` — adds `Solicitud`, `HistorialEstado`
-- `apps/_shared/audit.py` — generic activity-log writer (created here, used by 005/007/008/009)
+- `solicitudes/` — adds three new feature packages: `intake`, `revision`, `lifecycle`
+- `solicitudes/models/` — adds `Solicitud`, `HistorialEstado`
+- `_shared/audit.py` — generic activity-log writer (created here, used by 005/007/008/009)
 
 ## References
 
@@ -29,7 +29,7 @@ This is the largest initiative; expect 2–3 sessions to land it cleanly.
 ### Layout
 
 ```
-apps/solicitudes/
+solicitudes/
 ├── models/
 │   ├── solicitud.py                # NEW
 │   ├── historial_estado.py         # NEW
@@ -408,10 +408,10 @@ class SolicitudFilter(BaseModel):
 ```python
 # config/urls.py
 urlpatterns = [
-    path("auth/", include(("apps.usuarios.urls", "usuarios"))),
-    path("solicitudes/admin/tipos/", include(("apps.solicitudes.tipos.urls", "tipos"))),
-    path("solicitudes/", include(("apps.solicitudes.intake.urls", "intake"))),
-    path("revision/", include(("apps.solicitudes.revision.urls", "revision"))),
+    path("auth/", include(("usuarios.urls", "usuarios"))),
+    path("solicitudes/admin/tipos/", include(("solicitudes.tipos.urls", "tipos"))),
+    path("solicitudes/", include(("solicitudes.intake.urls", "intake"))),
+    path("revision/", include(("solicitudes.revision.urls", "revision"))),
     path("health/", health_view),
 ]
 ```
@@ -444,12 +444,12 @@ Common partials in `templates/solicitudes/_partials/`:
 
 ### Cross-app dependencies (this initiative consumes)
 
-- `apps.usuarios.services.UserService` — to enrich `SolicitudRow` with solicitante name (intake/lifecycle inject `UserService`, never `UserRepository`).
-- `apps.notificaciones.NotificationService` — to dispatch on creation and transitions; **plugged in 007**. Until then, `dependencies.py` injects a `NoOpNotificationService` so 004 ships standalone. The interface is defined in 007's plan; we agree on the signature here (see Open Questions).
-- `apps.mentores.MentorService` — to resolve `is_mentor(matricula)`; **plugged in 008**. Until then, inject a `FalseMentorService` (always returns False). Mentor exemption testing is therefore deferred to 008's E2E pass.
-- `apps.solicitudes.archivos.ArchivoService` — for storing files at intake; **plugged in 005**. Until then, intake form's per-field `FileField`s are validated but uploaded files are discarded with a warning. Files are not testable end-to-end until 005 lands.
+- `usuarios.services.UserService` — to enrich `SolicitudRow` with solicitante name (intake/lifecycle inject `UserService`, never `UserRepository`).
+- `notificaciones.NotificationService` — to dispatch on creation and transitions; **plugged in 007**. Until then, `dependencies.py` injects a `NoOpNotificationService` so 004 ships standalone. The interface is defined in 007's plan; we agree on the signature here (see Open Questions).
+- `mentores.MentorService` — to resolve `is_mentor(matricula)`; **plugged in 008**. Until then, inject a `FalseMentorService` (always returns False). Mentor exemption testing is therefore deferred to 008's E2E pass.
+- `solicitudes.archivos.ArchivoService` — for storing files at intake; **plugged in 005**. Until then, intake form's per-field `FileField`s are validated but uploaded files are discarded with a warning. Files are not testable end-to-end until 005 lands.
 
-### `apps/_shared/audit.py`
+### `_shared/audit.py`
 
 ```python
 def write(event: str, **fields: Any) -> None:

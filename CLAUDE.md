@@ -4,11 +4,11 @@
 
 Sistema de Solicitudes for the Universidad Autónoma de Zacatecas. Monolithic Django application with server-side templates (Bootstrap 5, no DRF). Lets students and faculty file academic and administrative requests with dynamic forms, state-machine tracking, PDF generation from templates, and role-based management. See `specs/global/requirements.md` for full context.
 
-> **Note:** `code_example/` at the project root is the deprecated old code. It is reference material only — do not extend it. New code follows the layered architecture described below and lives at `apps/`, `config/`, `templates/`.
+> **Note:** `code_example/` at the project root is the deprecated old code. It is reference material only — do not extend it. New code follows the layered architecture described below and lives **inside `app/`** (the project-root wrapper that contains `manage.py`, `config/`, `templates/`, and one folder per Django app: `_shared/`, `usuarios/`, `solicitudes/`, …). The git repo root only holds infrastructure: `Dockerfile`, `docker-compose.*.yml`, `Makefile`, `.env.example`, `.gitignore`.
 
 ## Architectural Style
 
-**View → Service → Repository**, with Pydantic v2 DTOs at every layer boundary and Django ORM contained inside the repository. Server-side templates render Pydantic DTOs (no DRF, no JSON API by default). All exceptions inherit from `apps._shared.exceptions.AppError` and are mapped to HTTP responses by middleware.
+**View → Service → Repository**, with Pydantic v2 DTOs at every layer boundary and Django ORM contained inside the repository. Server-side templates render Pydantic DTOs (no DRF, no JSON API by default). All exceptions inherit from `_shared.exceptions.AppError` and are mapped to HTTP responses by middleware.
 
 **The full architectural rules live in `.claude/rules/django-code-architect.md`. Read it before any code change.** The accompanying `django-patterns` skill (`.claude/skills/django-patterns/`) holds canonical code examples (`features.md`, `errors.md`, `forms.md`, `platform.md`).
 
@@ -51,26 +51,36 @@ solicitudes/
 │   │   ├── infrastructure/
 │   │   └── best-practices/
 │   └── flows/                        # End-to-end flows that span apps
-├── config/                           # Django project settings + URL root
-│   ├── settings/{base,dev,prod}.py
-│   ├── urls.py
-│   ├── wsgi.py
-│   └── asgi.py
-├── apps/                             # Django apps (layered per-feature)
+├── Dockerfile                        # multi-stage; WeasyPrint deps baked in
+├── docker-compose.dev.yml            # web + db + mailhog
+├── docker-compose.test.yml           # postgres-test only (no app container)
+├── Makefile                          # every command goes through `docker compose exec web`
+├── .env.example
+├── .dockerignore
+├── app/                              # Django project root — mounted at /app/ in container
+│   ├── manage.py
+│   ├── pyproject.toml
+│   ├── requirements.txt
+│   ├── requirements-dev.txt
+│   ├── config/                       # Django settings + URL root
+│   │   ├── settings/{base,dev,prod,test_postgres}.py
+│   │   ├── urls.py
+│   │   ├── wsgi.py
+│   │   └── asgi.py
 │   ├── _shared/                      # Cross-cutting infra (exceptions, middleware, auth)
-│   ├── usuarios/                     # JWT validation, roles, profile
-│   ├── solicitudes/                  # Core: tipos, formularios, lifecycle, archivos, PDF
-│   ├── notificaciones/               # Email dispatch
-│   ├── mentores/                     # Mentor catalog
-│   └── reportes/                     # Dashboard + exports
-├── templates/                        # base.html + components/ + per-app
-├── static/                           # CSS, JS, images
-├── media/                            # Uploaded files (gitignored)
+│   ├── usuarios/                     # JWT validation, roles, profile (added in 002)
+│   ├── solicitudes/                  # Core: tipos, formularios, lifecycle, archivos, PDF (003+)
+│   ├── notificaciones/               # Email dispatch (007)
+│   ├── mentores/                     # Mentor catalog (008)
+│   ├── reportes/                     # Dashboard + exports (009)
+│   ├── templates/                    # base.html + components/ + per-app
+│   ├── static/                       # CSS, JS, images
+│   ├── media/                        # Uploaded files (gitignored)
+│   ├── locale/                       # i18n (es_MX)
+│   └── tests-e2e/                    # browser flows (Playwright)
 ├── code_example/                     # DEPRECATED — old code, reference only
 ├── srs/                              # Formal SRS (LaTeX)
 ├── requerimientos_solicitudes.md     # Original written requirements
-├── manage.py
-├── requirements.txt
 └── CLAUDE.md
 ```
 

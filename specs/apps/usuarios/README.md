@@ -1,6 +1,6 @@
 # specs/apps/usuarios
 
-Feature specs for the `apps/usuarios` Django app.
+Feature specs for the `usuarios` Django app.
 
 **Scope:** Auth, user model, roles, profile. Features: jwt validation, login/logout, role catalog, profile editing.
 

@@ -67,7 +67,7 @@ def get_solicitud_service() -> SolicitudService:
     return DefaultSolicitudService(
         solicitud_repository=get_solicitud_repository(),
         notification_service=get_notification_service(),
-        logger=logging.getLogger("apps.solicitudes.service"),
+        logger=logging.getLogger("solicitudes.service"),
     )
 ```
 
@@ -76,12 +76,12 @@ def get_solicitud_service() -> SolicitudService:
 The consumer defines the interface as an `abc.ABC`. The interface lives in `repositories/interface.py` (or `services/interface.py`); the implementation lives in `repositories/implementation.py` (or named per backend, e.g. `localdb_repository.py`).
 
 ```python
-# apps/solicitudes/intake/repositories/interface.py
+# solicitudes/intake/repositories/interface.py
 from abc import ABC, abstractmethod
 from typing import Optional
 from uuid import UUID
 
-from apps.solicitudes.intake.schemas import SolicitudRow, SolicitudDetail, CreateSolicitudInput
+from solicitudes.intake.schemas import SolicitudRow, SolicitudDetail, CreateSolicitudInput
 
 class SolicitudRepository(ABC):
     """Abstract interface for solicitud persistence."""
@@ -127,7 +127,7 @@ This ensures each feature owns its data access logic. If usuario lookup behavior
 
 ## PROJECT STRUCTURE (Feature-Based)
 
-Each Django app contains feature packages. Each feature is a self-contained vertical slice. Each layer within a feature is a subfolder (when the feature warrants it). Each component within a layer gets its own subfolder with `interface.py` + `implementation.py`. Shared infrastructure lives in `apps/_shared/`.
+Each Django app contains feature packages. Each feature is a self-contained vertical slice. Each layer within a feature is a subfolder (when the feature warrants it). Each component within a layer gets its own subfolder with `interface.py` + `implementation.py`. Shared infrastructure lives in `_shared/`.
 
 ```
 solicitudes/                                # project root
@@ -221,7 +221,7 @@ solicitudes/                                # project root
 
 When a feature is genuinely tiny (one view, one form, no DB writes), the package can collapse to flat files (`views.py`, `forms.py`, `urls.py`). The moment business logic appears, the layered structure is required. No "we'll layer it later."
 
-### `apps/_shared/` — Shared Infrastructure
+### `_shared/` — Shared Infrastructure
 
 Shared code used by ALL apps and features. Not business logic — infrastructure that every feature depends on. Named `_shared` (the leading underscore signals "this is project-internal infra, not a domain app"). Never `utils`, `common`, or `helpers`.
 
@@ -282,12 +282,12 @@ Shared code used by ALL apps and features. Not business logic — infrastructure
 
 Errors propagate through the layers as **typed exceptions**, never as None returns or dict error fields. Two layers, mirroring the Go pattern:
 
-### Layer 1 — `apps/_shared/exceptions.py`
+### Layer 1 — `_shared/exceptions.py`
 
 Core sentinel exceptions every feature can use. These are the only exceptions middleware knows how to map to HTTP responses.
 
 ```python
-# apps/_shared/exceptions.py
+# _shared/exceptions.py
 class AppError(Exception):
     """Base for all application-level exceptions."""
     code: str = "app_error"
@@ -329,8 +329,8 @@ class ExternalServiceError(AppError):
 Feature-specific exceptions that **subclass** the `_shared` exceptions, refining `code` and `user_message`. They carry feature-specific context but are still mappable to HTTP statuses by inheritance.
 
 ```python
-# apps/solicitudes/intake/exceptions.py
-from apps._shared.exceptions import NotFound, Conflict, DomainValidationError
+# solicitudes/intake/exceptions.py
+from _shared.exceptions import NotFound, Conflict, DomainValidationError
 
 class SolicitudNotFound(NotFound):
     code = "solicitud_not_found"
@@ -356,7 +356,7 @@ class FolioCollision(DomainValidationError):
 1. **Repositories raise the feature's exceptions, not Django's.** A repository catches `Solicitud.DoesNotExist` and raises `SolicitudNotFound`. Django exceptions never escape the repository.
 2. **Services raise feature exceptions** for domain rule violations (`SolicitudAlreadySubmitted`, `InvalidStateTransition`).
 3. **Views catch `AppError` (or specific subclasses) and render the appropriate response.** A view either renders an error template, redirects with a Django messages framework error, or — for AJAX-style endpoints — returns `JsonResponse` with the error payload.
-4. **Middleware (`apps/_shared/middleware.py`) provides a fallback handler** for any uncaught `AppError` reaching the boundary: maps `http_status`, logs with the request ID, renders a generic error template (or JSON for AJAX).
+4. **Middleware (`_shared/middleware.py`) provides a fallback handler** for any uncaught `AppError` reaching the boundary: maps `http_status`, logs with the request ID, renders a generic error template (or JSON for AJAX).
 5. **Never use bare `except Exception:`** in services or views. Catch specific exception types. The middleware fallback exists for the unexpected.
 6. **Never raise generic `Exception` or `RuntimeError`** for domain conditions. If the feature doesn't have an exception type for it, add one.
 7. **Form validation errors are a separate concern.** Django Form's `add_error()` handles user-input validation; `DomainValidationError` is for invariants the form cannot check (uniqueness across a complex condition, cross-record constraints).
@@ -370,7 +370,7 @@ Before writing any code, create a TODO list covering:
 3. Per feature: schemas, exceptions, repository interface+impl, service interface+impl, views, forms, urls, dependencies, permissions, tests
 4. Models to add or modify (with migration plan)
 5. Cross-feature dependencies (which features need service interfaces from other features)
-6. Shared infra needs (`apps/_shared/` — middleware, exceptions, helpers)
+6. Shared infra needs (`_shared/` — middleware, exceptions, helpers)
 7. Templates needed (which existing to extend, which new)
 8. URL routing plan (project → app → feature)
 9. Settings changes (env vars, INSTALLED_APPS, middleware order)

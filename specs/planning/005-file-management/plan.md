@@ -12,9 +12,9 @@ Persistent storage for solicitud attachments, including the comprobante de pago.
 
 ## Affected Apps / Modules
 
-- `apps/solicitudes/archivos/` — new feature package
-- `apps/solicitudes/models/archivo_solicitud.py` — new model
-- `apps/solicitudes/intake/views/create.py` — wire `archivo_service.store_for_solicitud` (replace 004's NoOp)
+- `solicitudes/archivos/` — new feature package
+- `solicitudes/models/archivo_solicitud.py` — new model
+- `solicitudes/intake/views/create.py` — wire `archivo_service.store_for_solicitud` (replace 004's NoOp)
 - `templates/solicitudes/_partials/_archivos.html` — list/download partial used in detail pages
 
 ## References
@@ -130,7 +130,7 @@ Uploads happen as part of the intake form submission (no dedicated upload URL); 
 
 ### Intake integration (replaces 004's NoOp)
 
-`apps/solicitudes/intake/views/create.py`:
+`solicitudes/intake/views/create.py`:
 
 ```python
 def post(self, request, slug):
@@ -161,8 +161,8 @@ The intake view is the only place that calls `archivo_service.store_for_solicitu
 
 ### Cross-app dependencies
 
-- `apps.usuarios.services.UserService` — read solicitante for authz checks.
-- Consumed by `apps.solicitudes.intake.views.create` and detail views (read).
+- `usuarios.services.UserService` — read solicitante for authz checks.
+- Consumed by `solicitudes.intake.views.create` and detail views (read).
 
 ### Sequencing
 

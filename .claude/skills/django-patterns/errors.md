@@ -2,14 +2,14 @@
 
 The error model is a two-layer hierarchy mirroring the Go `apperror` pattern:
 
-1. **`apps/_shared/exceptions.py`** — base `AppError` and core sentinels every feature can use.
+1. **`_shared/exceptions.py`** — base `AppError` and core sentinels every feature can use.
 2. **`apps/<app>/<feature>/exceptions.py`** — feature-specific exceptions that subclass the base sentinels.
 
-A single piece of middleware (`apps/_shared/middleware.py`) catches uncaught `AppError` and renders a uniform response. Views catch `AppError` explicitly when they need to surface field-level info to the form; the middleware is the safety net.
+A single piece of middleware (`_shared/middleware.py`) catches uncaught `AppError` and renders a uniform response. Views catch `AppError` explicitly when they need to surface field-level info to the form; the middleware is the safety net.
 
 ---
 
-## `apps/_shared/exceptions.py`
+## `_shared/exceptions.py`
 
 ```python
 """Base application exceptions. All domain exceptions inherit from AppError."""
@@ -86,8 +86,8 @@ class ExternalServiceError(AppError):
 ## Feature-specific exceptions — examples
 
 ```python
-# apps/solicitudes/intake/exceptions.py
-from apps._shared.exceptions import Conflict, DomainValidationError, NotFound
+# solicitudes/intake/exceptions.py
+from _shared.exceptions import Conflict, DomainValidationError, NotFound
 
 
 class SolicitudNotFound(NotFound):
@@ -111,8 +111,8 @@ class InvalidStateTransition(Conflict):
 ```
 
 ```python
-# apps/usuarios/auth/exceptions.py
-from apps._shared.exceptions import Unauthorized
+# usuarios/auth/exceptions.py
+from _shared.exceptions import Unauthorized
 
 
 class InvalidJWT(Unauthorized):
@@ -127,7 +127,7 @@ class RoleMismatch(Unauthorized):
 
 ---
 
-## Middleware fallback — `apps/_shared/middleware.py`
+## Middleware fallback — `_shared/middleware.py`
 
 ```python
 """Middleware that catches uncaught AppError and renders a uniform response."""
@@ -139,7 +139,7 @@ from typing import Callable
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 
-from apps._shared.exceptions import AppError
+from _shared.exceptions import AppError
 
 logger = logging.getLogger(__name__)
 
@@ -208,7 +208,7 @@ Register it in `config/settings/base.py`:
 ```python
 MIDDLEWARE = [
     # ... Django defaults ...
-    "apps._shared.middleware.AppErrorMiddleware",
+    "_shared.middleware.AppErrorMiddleware",
 ]
 ```
 

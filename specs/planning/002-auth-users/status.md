@@ -6,7 +6,7 @@
 ## Checklist
 
 ### App skeleton
-- [ ] Create `apps/usuarios/` package + `apps.py`
+- [ ] Create `usuarios/` package + `apps.py`
 - [ ] Register in `INSTALLED_APPS`
 - [ ] `constants.py` (Role enum + provider role map)
 - [ ] `schemas.py` (UserDTO, CreateOrUpdateUserInput, SigaProfile)
@@ -42,7 +42,7 @@
 - [ ] [P] `views/logout.py` + `tests/test_views_logout.py`
 - [ ] [P] `views/me.py` + `tests/test_views_me.py`
 - [ ] [P] `templates/usuarios/me.html`
-- [ ] `apps/usuarios/urls.py` + mount in `config/urls.py`
+- [ ] `usuarios/urls.py` + mount in `config/urls.py`
 
 ### Settings & env
 - [ ] Add JWT and SIGA env vars to `.env.example`

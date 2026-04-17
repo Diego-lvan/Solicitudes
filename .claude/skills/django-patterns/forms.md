@@ -34,7 +34,7 @@ The service signature is `create(self, data: CreateSolicitudInput) -> SolicitudD
 ## Forms live in `forms/` (one per file)
 
 ```
-apps/solicitudes/intake/forms/
+solicitudes/intake/forms/
 ├── __init__.py
 ├── create_solicitud_form.py
 ├── update_solicitud_form.py
@@ -53,7 +53,7 @@ from __future__ import annotations
 
 from django import forms
 
-from apps.solicitudes.models import TipoSolicitud
+from solicitudes.models import TipoSolicitud
 
 
 class CreateSolicitudForm(forms.Form):

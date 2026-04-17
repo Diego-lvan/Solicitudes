@@ -12,7 +12,7 @@ Full code examples for the layered Django architecture (View → Service → Rep
 | File | What it covers |
 | ---- | -------------- |
 | `features.md` | Feature package layout: schemas, exceptions, repository (interface + impl), service (interface + impl), view, form, dependencies — full working example |
-| `platform.md` | Shared infra: `apps/_shared/` modules, base templates, middleware (request ID, error handler), settings split, URL roots |
+| `platform.md` | Shared infra: `_shared/` modules, base templates, middleware (request ID, error handler), settings split, URL roots |
 | `errors.md` | Exception hierarchy: `_shared/exceptions.py` base classes, feature-specific subclasses, view-level error handling, middleware fallback |
 | `forms.md` | Form-to-DTO conversion: Django `Form`/`ModelForm` validation → Pydantic DTO → service; multi-step forms; file uploads |
 | `e2e.md` | End-to-end testing: in-process integration with `Client` (multi-step flows) and browser tests with `pytest-playwright` (Page Object Model, auth via storage state, artifact capture, CI) |

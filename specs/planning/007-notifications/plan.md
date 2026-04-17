@@ -12,8 +12,8 @@ Synchronous email dispatch on solicitud creation and on every state transition. 
 
 ## Affected Apps / Modules
 
-- `apps/notificaciones/` — new app
-- `apps/solicitudes/intake/dependencies.py`, `apps/solicitudes/lifecycle/dependencies.py`, `apps/solicitudes/revision/dependencies.py` — replace NoOp with the real service
+- `notificaciones/` — new app
+- `solicitudes/intake/dependencies.py`, `solicitudes/lifecycle/dependencies.py`, `solicitudes/revision/dependencies.py` — replace NoOp with the real service
 
 ## References
 
@@ -25,7 +25,7 @@ Synchronous email dispatch on solicitud creation and on every state transition. 
 ### Layout
 
 ```
-apps/notificaciones/
+notificaciones/
 ├── __init__.py
 ├── apps.py
 ├── exceptions.py
@@ -105,7 +105,7 @@ The exception is **never raised to the caller** (`DefaultNotificationService` al
 | `DEFAULT_FROM_EMAIL` | `no-reply@uaz.edu.mx` |
 | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS` | from env (already in 001's `.env.example`); `dev.py` defaults to `mailhog:1025`, no auth, no TLS |
 | `EMAIL_TIMEOUT` | default 10 seconds |
-| `SITE_BASE_URL` | base URL for email links; `http://localhost:8000` in dev, real host in prod |
+| `SITE_BASE_URL` | base URL for email links; `https://localhost` in dev (through nginx), real host in prod |
 
 ### Templates
 
@@ -117,7 +117,7 @@ Bodies link to `https://{HOST}/revision/{folio}/` (personal) or `https://{HOST}/
 
 ### Wire-up
 
-`apps/solicitudes/{intake,revision,lifecycle}/dependencies.py` replace:
+`solicitudes/{intake,revision,lifecycle}/dependencies.py` replace:
 
 ```python
 def get_notification_service() -> NotificationService:
@@ -132,7 +132,7 @@ def get_notification_service() -> NotificationService:
         recipient_resolver=DefaultRecipientResolver(user_service=usuarios_dependencies.get_user_service()),
         lifecycle_service=lifecycle_dependencies.get_lifecycle_service(),
         email_sender=SmtpEmailSender(),
-        logger=logging.getLogger("apps.notificaciones"),
+        logger=logging.getLogger("notificaciones"),
     )
 ```
 
@@ -140,7 +140,7 @@ To avoid a circular import (lifecycle calls notifications, notifications reads s
 
 ### Sequencing
 
-1. `apps/notificaciones/` skeleton.
+1. `notificaciones/` skeleton.
 2. Schemas, exceptions.
 3. Interfaces (NotificationService, RecipientResolver, EmailSender).
 4. Implementations + tests with locmem outbox.

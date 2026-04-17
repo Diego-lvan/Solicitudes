@@ -13,7 +13,7 @@ This initiative does **not** create solicitudes — it produces the catalog and 
 
 ## Affected Apps / Modules
 
-- `apps/solicitudes/` — new app, with `tipos` and `formularios` features
+- `solicitudes/` — new app, with `tipos` and `formularios` features
 - `templates/solicitudes/admin/` — catalog management UI
 
 ## References
@@ -27,7 +27,7 @@ This initiative does **not** create solicitudes — it produces the catalog and 
 ### Layout
 
 ```
-apps/solicitudes/
+solicitudes/
 ├── __init__.py
 ├── apps.py
 ├── urls.py                      # includes tipos/urls.py + (later) intake/urls.py + revision/urls.py
@@ -364,12 +364,12 @@ Form ergonomics: the create/edit page uses a `TipoForm` (metadata) + a Django fo
 
 ### URLs
 
-`apps/solicitudes/urls.py`:
+`solicitudes/urls.py`:
 
 ```python
 app_name = "solicitudes"
 urlpatterns = [
-    path("admin/tipos/", include(("apps.solicitudes.tipos.urls", "tipos"))),
+    path("admin/tipos/", include(("solicitudes.tipos.urls", "tipos"))),
     # intake/, revision/, archivos/, pdf/ added by later initiatives
 ]
 ```
@@ -390,12 +390,12 @@ All extend `templates/base.html`. `form.html` includes a `_field_row.html` parti
 
 ### Cross-app dependencies
 
-- Consumes `apps.usuarios.permissions.AdminRequiredMixin` and `apps.usuarios.constants.Role`.
+- Consumes `usuarios.permissions.AdminRequiredMixin` and `usuarios.constants.Role`.
 - Produces `TipoService` and `formularios.build_django_form` consumed by 004.
 
 ### Sequencing
 
-1. Create `apps/solicitudes/` skeleton, register in `INSTALLED_APPS`.
+1. Create `solicitudes/` skeleton, register in `INSTALLED_APPS`.
 2. `models/tipo_solicitud.py`, `models/field_definition.py`, migration.
 3. `tipos/constants.py`, `tipos/exceptions.py`, `tipos/schemas.py`.
 4. Repository + tests.

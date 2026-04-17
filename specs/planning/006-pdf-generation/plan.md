@@ -6,14 +6,14 @@ Per-tipo HTML templates with `{{ variable }}` substitution, rendered to PDF on d
 
 ## Depends on
 
-- **001** — `apps/_shared/pdf.py` (WeasyPrint wrapper). 001 also bakes the WeasyPrint OS deps (Cairo, Pango, GDK-PixBuf, fonts) into the `Dockerfile`, so this initiative needs no extra system-level work.
+- **001** — `_shared/pdf.py` (WeasyPrint wrapper). 001 also bakes the WeasyPrint OS deps (Cairo, Pango, GDK-PixBuf, fonts) into the `Dockerfile`, so this initiative needs no extra system-level work.
 - **003** — `TipoSolicitud.plantilla_id` (currently nullable UUID; 006 adds the FK)
 - **004** — `Solicitud`, `SolicitudDetail`
 
 ## Affected Apps / Modules
 
-- `apps/solicitudes/pdf/` — new feature package
-- `apps/solicitudes/models/plantilla.py` — new model (replacing the placeholder UUID column)
+- `solicitudes/pdf/` — new feature package
+- `solicitudes/models/plantilla.py` — new model (replacing the placeholder UUID column)
 
 ## References
 
@@ -107,7 +107,7 @@ Flow:
 4. `plantilla = plantilla_repo.get_by_id(tipo.plantilla_id)`.
 5. Build context (see "Variable resolution").
 6. `html_rendered = django.template.engines["django"].from_string(plantilla.html).render(context)`.
-7. `pdf_bytes = render_pdf(html=full_html_with_css(html_rendered, plantilla.css))` — using `apps._shared/pdf.py`.
+7. `pdf_bytes = render_pdf(html=full_html_with_css(html_rendered, plantilla.css))` — using `_shared/pdf.py`.
 8. `suggested_filename = f"{slugify(tipo.nombre)}-{folio}.pdf"`.
 9. Return `PdfRenderResult`.
 
@@ -155,8 +155,8 @@ No template for the rendered PDF itself — it's literal HTML stored in the DB.
 
 ### Cross-app dependencies
 
-- `apps.solicitudes.lifecycle.LifecycleService` (consumed for `get_detail`).
-- `apps.usuarios.UserService` (consumed for solicitante hydration if `solicitud.solicitante` lacks SIGA fields).
+- `solicitudes.lifecycle.LifecycleService` (consumed for `get_detail`).
+- `usuarios.UserService` (consumed for solicitante hydration if `solicitud.solicitante` lacks SIGA fields).
 
 ### Sequencing
 

@@ -1,13 +1,13 @@
 # Platform — Shared Infrastructure
 
-Cross-cutting modules under `apps/_shared/`, plus base templates, settings layout, and URL roots. None of this is domain logic; it's the glue every feature depends on.
+Cross-cutting modules under `_shared/`, plus base templates, settings layout, and URL roots. None of this is domain logic; it's the glue every feature depends on.
 
 ---
 
-## `apps/_shared/` layout
+## `_shared/` layout
 
 ```
-apps/_shared/
+_shared/
 ├── __init__.py
 ├── exceptions.py              # AppError + sentinel exceptions
 ├── middleware.py              # Cross-cutting middleware
@@ -23,7 +23,7 @@ apps/_shared/
 
 ---
 
-## `apps/_shared/middleware.py`
+## `_shared/middleware.py`
 
 ```python
 """Cross-cutting middleware: request ID, error handler, structured logging."""
@@ -37,7 +37,7 @@ from typing import Callable
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 
-from apps._shared.exceptions import AppError
+from _shared.exceptions import AppError
 
 logger = logging.getLogger(__name__)
 
@@ -132,21 +132,21 @@ Order in `MIDDLEWARE` matters:
 ```python
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "apps._shared.middleware.RequestIDMiddleware",          # first — assigns request_id
+    "_shared.middleware.RequestIDMiddleware",          # first — assigns request_id
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "apps._shared.middleware.StructuredLoggingMiddleware",  # logs each request
-    "apps._shared.middleware.AppErrorMiddleware",           # catches uncaught AppError
+    "_shared.middleware.StructuredLoggingMiddleware",  # logs each request
+    "_shared.middleware.AppErrorMiddleware",           # catches uncaught AppError
 ]
 ```
 
 ---
 
-## `apps/_shared/auth.py` — JWT validation helpers
+## `_shared/auth.py` — JWT validation helpers
 
 ```python
 """JWT validation helpers used by the auth middleware (or DRF-style auth class).
@@ -163,7 +163,7 @@ from uuid import UUID
 
 import jwt
 
-from apps._shared.exceptions import Unauthorized
+from _shared.exceptions import Unauthorized
 
 
 @dataclass(frozen=True)
@@ -197,7 +197,7 @@ The auth middleware (in the `usuarios` app, not `_shared`) calls `decode_jwt`, s
 
 ---
 
-## `apps/_shared/pagination.py`
+## `_shared/pagination.py`
 
 ```python
 """Pagination DTOs."""
@@ -245,7 +245,7 @@ Repository methods that paginate accept `PageRequest` and return `Page[Solicitud
 
 ---
 
-## `apps/_shared/pdf.py`
+## `_shared/pdf.py`
 
 ```python
 """WeasyPrint wrapper. Pure function; no Django dependencies beyond the template loader."""
@@ -301,25 +301,25 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # Project
-    "apps._shared",
-    "apps.usuarios",
-    "apps.solicitudes",
-    "apps.notificaciones",
-    "apps.mentores",
-    "apps.reportes",
+    "_shared",
+    "usuarios",
+    "solicitudes",
+    "notificaciones",
+    "mentores",
+    "reportes",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "apps._shared.middleware.RequestIDMiddleware",
+    "_shared.middleware.RequestIDMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "apps._shared.middleware.StructuredLoggingMiddleware",
-    "apps._shared.middleware.AppErrorMiddleware",
+    "_shared.middleware.StructuredLoggingMiddleware",
+    "_shared.middleware.AppErrorMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -370,23 +370,23 @@ from django.urls import path, include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("auth/", include("apps.usuarios.urls", namespace="usuarios")),
-    path("solicitudes/", include("apps.solicitudes.urls", namespace="solicitudes")),
-    path("mentores/", include("apps.mentores.urls", namespace="mentores")),
-    path("reportes/", include("apps.reportes.urls", namespace="reportes")),
+    path("auth/", include("usuarios.urls", namespace="usuarios")),
+    path("solicitudes/", include("solicitudes.urls", namespace="solicitudes")),
+    path("mentores/", include("mentores.urls", namespace="mentores")),
+    path("reportes/", include("reportes.urls", namespace="reportes")),
 ]
 ```
 
 ```python
-# apps/solicitudes/urls.py
+# solicitudes/urls.py
 from django.urls import include, path
 
 app_name = "solicitudes"
 
 urlpatterns = [
-    path("intake/", include("apps.solicitudes.intake.urls", namespace="intake")),
-    path("revision/", include("apps.solicitudes.revision.urls", namespace="revision")),
-    path("admin-tipos/", include("apps.solicitudes.tipos.urls", namespace="tipos")),
+    path("intake/", include("solicitudes.intake.urls", namespace="intake")),
+    path("revision/", include("solicitudes.revision.urls", namespace="revision")),
+    path("admin-tipos/", include("solicitudes.tipos.urls", namespace="tipos")),
 ]
 ```
 

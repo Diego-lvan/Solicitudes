@@ -1,6 +1,6 @@
 # specs/apps/notificaciones
 
-Feature specs for the `apps/notificaciones` Django app.
+Feature specs for the `notificaciones` Django app.
 
 **Scope:** Email and in-app notifications. Features: email dispatch on state transitions, user preferences, templated messages.
 

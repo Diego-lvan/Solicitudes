@@ -6,21 +6,21 @@
 ## Checklist
 
 ### App skeleton
-- [ ] Create `apps/reportes/` package + `apps.py`
+- [ ] Create `reportes/` package + `apps.py`
 - [ ] Register in `INSTALLED_APPS`
 
 ### Schemas, exceptions
 - [ ] [P] `schemas.py` (ReportFilter, CountByEstado, CountByTipo, CountByMonth, DashboardData)
 - [ ] [P] `exceptions.py` (placeholders if any)
 
-### Repository extension (apps/solicitudes)
+### Repository extension (solicitudes)
 - [ ] Add aggregate methods to `OrmSolicitudRepository.aggregate_by_*`
 - [ ] Tests assert single-query behavior (`django_assert_num_queries`)
 
 ### LifecycleService extension
 - [ ] Add aggregate methods to interface + impl + tests (additive, no breaking change)
 
-### Services (apps/reportes)
+### Services (reportes)
 - [ ] `services/report_service/{interface,implementation}.py` + tests (uses fakes)
 - [ ] `services/export_service/interface.py`
 - [ ] `services/export_service/csv_implementation.py` + tests (UTF-8 BOM, streaming)

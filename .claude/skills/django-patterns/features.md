@@ -5,7 +5,7 @@ This is the canonical layout and code shape for a feature in this project. Patte
 The example below is the `intake` feature inside the `solicitudes` app — the user creates a draft solicitud and submits it.
 
 ```
-apps/solicitudes/intake/
+solicitudes/intake/
 ├── __init__.py
 ├── apps.py                              # only at app root, not per-feature
 ├── urls.py
@@ -55,7 +55,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, computed_field, field_validator
 
-from apps.solicitudes.intake.constants import EstadoSolicitud
+from solicitudes.intake.constants import EstadoSolicitud
 
 
 class CreateSolicitudInput(BaseModel):
@@ -123,7 +123,7 @@ class SolicitudDetail(BaseModel):
 """Exceptions raised by the solicitudes intake feature."""
 from __future__ import annotations
 
-from apps._shared.exceptions import Conflict, DomainValidationError, NotFound
+from _shared.exceptions import Conflict, DomainValidationError, NotFound
 
 
 class SolicitudNotFound(NotFound):
@@ -163,7 +163,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 from uuid import UUID
 
-from apps.solicitudes.intake.schemas import (
+from solicitudes.intake.schemas import (
     CreateSolicitudInput,
     SolicitudDetail,
     SolicitudRow,
@@ -219,14 +219,14 @@ from uuid import UUID
 
 from django.db import IntegrityError, transaction
 
-from apps.solicitudes.intake.exceptions import FolioCollision, SolicitudNotFound
-from apps.solicitudes.intake.repositories.solicitud.interface import SolicitudRepository
-from apps.solicitudes.intake.schemas import (
+from solicitudes.intake.exceptions import FolioCollision, SolicitudNotFound
+from solicitudes.intake.repositories.solicitud.interface import SolicitudRepository
+from solicitudes.intake.schemas import (
     CreateSolicitudInput,
     SolicitudDetail,
     SolicitudRow,
 )
-from apps.solicitudes.models import Solicitud  # ORM model lives at app level
+from solicitudes.models import Solicitud  # ORM model lives at app level
 
 logger = logging.getLogger(__name__)
 
@@ -316,7 +316,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from apps.solicitudes.intake.schemas import (
+from solicitudes.intake.schemas import (
     CreateSolicitudInput,
     SolicitudDetail,
     SolicitudRow,
@@ -353,23 +353,23 @@ import secrets
 from datetime import datetime, timezone
 from uuid import UUID
 
-from apps.solicitudes.intake.constants import (
+from solicitudes.intake.constants import (
     ALLOWED_TRANSITIONS,
     EstadoSolicitud,
 )
-from apps.solicitudes.intake.exceptions import (
+from solicitudes.intake.exceptions import (
     InvalidStateTransition,
     SolicitudAlreadySubmitted,
 )
-from apps.solicitudes.intake.repositories.solicitud.interface import SolicitudRepository
-from apps.solicitudes.intake.schemas import (
+from solicitudes.intake.repositories.solicitud.interface import SolicitudRepository
+from solicitudes.intake.schemas import (
     CreateSolicitudInput,
     SolicitudDetail,
     SolicitudRow,
     TransitionSolicitudInput,
 )
-from apps.solicitudes.intake.services.solicitud.interface import SolicitudService
-from apps._shared.exceptions import Unauthorized
+from solicitudes.intake.services.solicitud.interface import SolicitudService
+from _shared.exceptions import Unauthorized
 
 logger = logging.getLogger(__name__)
 
@@ -433,7 +433,7 @@ from __future__ import annotations
 
 from django import forms
 
-from apps.solicitudes.models import TipoSolicitud
+from solicitudes.models import TipoSolicitud
 
 
 class CreateSolicitudForm(forms.Form):
@@ -479,10 +479,10 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
 
-from apps._shared.exceptions import AppError
-from apps.solicitudes.intake.dependencies import get_solicitud_service
-from apps.solicitudes.intake.forms.create_solicitud_form import CreateSolicitudForm
-from apps.solicitudes.intake.schemas import CreateSolicitudInput
+from _shared.exceptions import AppError
+from solicitudes.intake.dependencies import get_solicitud_service
+from solicitudes.intake.forms.create_solicitud_form import CreateSolicitudForm
+from solicitudes.intake.schemas import CreateSolicitudInput
 
 
 class CreateSolicitudView(LoginRequiredMixin, View):
@@ -532,10 +532,10 @@ class MisSolicitudesView(LoginRequiredMixin, View):
 """Dependency injection wiring for the solicitudes intake feature."""
 from __future__ import annotations
 
-from apps.solicitudes.intake.repositories.solicitud.implementation import OrmSolicitudRepository
-from apps.solicitudes.intake.repositories.solicitud.interface import SolicitudRepository
-from apps.solicitudes.intake.services.solicitud.implementation import DefaultSolicitudService
-from apps.solicitudes.intake.services.solicitud.interface import SolicitudService
+from solicitudes.intake.repositories.solicitud.implementation import OrmSolicitudRepository
+from solicitudes.intake.repositories.solicitud.interface import SolicitudRepository
+from solicitudes.intake.services.solicitud.implementation import DefaultSolicitudService
+from solicitudes.intake.services.solicitud.interface import SolicitudService
 
 
 def get_solicitud_repository() -> SolicitudRepository:
@@ -555,7 +555,7 @@ def get_solicitud_service() -> SolicitudService:
 ```python
 from django.urls import path
 
-from apps.solicitudes.intake.views import solicitante
+from solicitudes.intake.views import solicitante
 
 app_name = "intake"
 
@@ -598,9 +598,9 @@ ALLOWED_TRANSITIONS: dict[str, set[str]] = {
 
 ## Key reminders
 
-- The repository is the **only** layer that imports from `apps.solicitudes.models` (the ORM models).
+- The repository is the **only** layer that imports from `solicitudes.models` (the ORM models).
 - The service depends on `SolicitudRepository` (ABC), never on `OrmSolicitudRepository`.
 - The view turns `cleaned_data` into a `CreateSolicitudInput` Pydantic DTO **before** calling the service.
 - Templates receive `SolicitudDetail` / `SolicitudRow` Pydantic objects in context — never querysets, never model instances.
 - Domain authorization (owner-only read, state-transition rules) lives in the service. View-level `LoginRequiredMixin` is just the auth gate.
-- All exception classes inherit from `apps._shared.exceptions.AppError` so middleware can map them uniformly.
+- All exception classes inherit from `_shared.exceptions.AppError` so middleware can map them uniformly.
