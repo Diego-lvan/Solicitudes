@@ -1,0 +1,49 @@
+.git
+.gitignore
+.dockerignore
+.claude
+.vscode
+.idea
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Test artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+app/tests-e2e/auth/
+
+# Local
+.env
+.env.*
+*.sqlite3
+app/media/
+app/staticfiles/
+
+# Specs / docs / examples
+specs/
+srs/
+code_example/
+*.md
+
+# Compose / infra (image copies only app/)
+docker-compose*.yml
+Dockerfile
+Makefile
+nginx/
+certs/
+
+# Misc
+.docker-cache/

@@ -10,16 +10,37 @@ __pycache__/
 dist/
 build/
 .eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # Django
 *.log
 local_settings.py
 db.sqlite3
-media/
+*.sqlite3
+app/media/
+app/staticfiles/
 
 # Environment
 .env
 .env.*
+!.env.example
+
+# Test artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+app/tests-e2e/auth/*.json
+htmlcov/
+.coverage
+coverage.xml
+
+# TLS certs (dev = self-signed, prod = mounted from secret store)
+certs/
+*.crt
+*.key
+*.pem
 
 # LaTeX build artifacts
 *.aux
@@ -35,3 +56,6 @@ media/
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Docker
+.docker-cache/

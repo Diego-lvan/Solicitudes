@@ -1,0 +1,70 @@
+services:
+  nginx-dev:
+    image: nginx:alpine
+    depends_on:
+      - web
+      - mailhog
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/dev/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    networks:
+      - solicitudes-net
+
+  web:
+    build:
+      context: .
+      target: runtime
+    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      SECRET_KEY: dev-only-change-me
+      ALLOWED_HOSTS: localhost,127.0.0.1,nginx-dev,web
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: solicitudes
+      DB_USER: solicitudes
+      DB_PASSWORD: solicitudes
+      EMAIL_HOST: mailhog
+      EMAIL_PORT: "1025"
+      SITE_BASE_URL: https://localhost
+    volumes:
+      - ./app:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - solicitudes-net
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: solicitudes
+      POSTGRES_USER: solicitudes
+      POSTGRES_PASSWORD: solicitudes
+    ports:
+      - "5432:5432"
+    volumes:
+      - solicitudes_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U solicitudes -d solicitudes"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+    networks:
+      - solicitudes-net
+
+  mailhog:
+    image: mailhog/mailhog
+    networks:
+      - solicitudes-net
+
+networks:
+  solicitudes-net:
+    name: solicitudes_solicitudes-net
+    driver: bridge
+
+volumes:
+  solicitudes_dev_data:

@@ -1,0 +1,21 @@
+services:
+  postgres-test:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: solicitudes_test
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+    tmpfs:
+      - /var/lib/postgresql/data
+    networks:
+      - solicitudes-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d solicitudes_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+
+networks:
+  solicitudes-net:
+    external: true
+    name: solicitudes_solicitudes-net
