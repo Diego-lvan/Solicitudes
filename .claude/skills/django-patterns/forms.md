@@ -85,7 +85,7 @@ class CreateSolicitudForm(forms.Form):
 
 **Rules:**
 - All `label`s in Spanish (user-facing copy)
-- Widgets carry Bootstrap 5 classes (`form-control`, `form-select`, etc.) — see the user-level `frontend-design` skill
+- Widgets carry Bootstrap 5 classes (`form-control`, `form-select`, etc.) — see the `frontend-design` skill
 - Per-field cleanup in `clean_<field>()`; cross-field validation in `clean()`
 - The form does NOT call services or repositories. Pure parsing + validation.
 

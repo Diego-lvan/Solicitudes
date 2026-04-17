@@ -32,7 +32,7 @@ Full code examples for the layered Django architecture (View → Service → Rep
 ## When NOT to consult this skill
 
 - **During `/plan` or `/brainstorm`** — design docs (`requirements.md`, `plan.md`, `design.md`) describe layering and structure but do not embed full code. The rule under `.claude/rules/django-code-architect.md` is sufficient at that stage.
-- **For pure template/CSS work** — see the user-level `frontend-design` skill instead.
+- **For pure template/CSS work** — see the `frontend-design` skill instead.
 - **For one-off scripts or migrations** that don't follow the layered pattern by design.
 
 ## How this skill relates to other skills
@@ -40,4 +40,4 @@ Full code examples for the layered Django architecture (View → Service → Rep
 - `/implement` is the primary caller — when a task touches Python code, the implementer reads the relevant pattern file before writing.
 - The `code-reviewer` agent uses these files implicitly: it consults `django-code-architect.md` for rules and may refer here for the canonical implementation of those rules.
 - `/tdd` does not change which file you consult — it changes the order (test first, then pattern, then code).
-- `frontend-design` (user-level) covers Bootstrap 5 + Django templates UI patterns; orthogonal to this skill, which is purely Python-side.
+- `frontend-design` covers Bootstrap 5 + Django templates UI patterns; orthogonal to this skill, which is purely Python-side.

@@ -27,7 +27,8 @@ solicitudes/
 │   │   ├── receive-review/           # Process review feedback rigorously
 │   │   ├── review/                   # Final initiative validation
 │   │   ├── commit/                   # Manual conventional commits
-│   │   └── django-patterns/          # Canonical Django code examples
+│   │   ├── django-patterns/          # Canonical Django code examples
+│   │   └── frontend-design/          # Bootstrap 5 + Django templates UI conventions
 │   ├── agents/
 │   │   └── code-reviewer.md          # Fresh-context reviewer at section boundaries
 │   └── rules/
@@ -159,6 +160,7 @@ roadmap.md status updated
 | `/review` | Final validation against `plan.md` at initiative end. |
 | `/commit` | **Manual only.** User-invoked. |
 | `django-patterns` | Reference skill — full code examples for views, services, repos, forms, exceptions. |
+| `frontend-design` | Reference skill — Bootstrap 5 + Django templates UI conventions, accessibility, anti-AI-look. |
 
 **Agents** (`.claude/agents/`):
 | Agent | When |
@@ -177,7 +179,7 @@ roadmap.md status updated
 - **Python 3.12+**, **Django 5.x** (server-side templates, no DRF)
 - **Pydantic v2** — DTOs at every layer boundary
 - **PostgreSQL** (prod) / **SQLite** (dev) via Django ORM (contained in repositories)
-- **Bootstrap 5** templates (see user-level `frontend-design` skill for UI conventions)
+- **Bootstrap 5** templates (see `frontend-design` skill for UI conventions)
 - **WeasyPrint** for PDF generation
 - JWT validation in middleware (external auth provider)
 - **Celery + Redis** for async email (optional)
