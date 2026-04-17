@@ -2,7 +2,7 @@
 
 ## Summary
 
-Bootstrap the Django 5 project with the layered architecture described in `architecture.md`: configuration split, `apps/_shared/` cross-cutting infrastructure, root URL routing, base templates, request-id middleware, structured logging, and the `AppError` exception hierarchy. **Docker is part of this first step** — a multi-stage `Dockerfile` (with WeasyPrint system deps baked in), a full dev Compose stack (`web` + `db` + `mailhog`), and a Postgres-only test Compose stack that follows the rules in `.claude/skills/django-patterns/e2e.md`. No business features land in this initiative — every other initiative depends on this foundation being correct.
+Bootstrap the Django 5 project with the layered architecture described in `architecture.md`: configuration split, `_shared/` cross-cutting infrastructure, root URL routing, base templates, request-id middleware, structured logging, and the `AppError` exception hierarchy. **Docker is part of this first step** — a multi-stage `Dockerfile` (with WeasyPrint system deps baked in), a full dev Compose stack (`web` + `db` + `mailhog`), and a Postgres-only test Compose stack that follows the rules in `.claude/skills/django-patterns/e2e.md`. No business features land in this initiative — every other initiative depends on this foundation being correct.
 
 ## Depends on
 
@@ -11,7 +11,7 @@ None — this is the first initiative.
 ## Affected Apps / Modules
 
 - `config/` — settings split (`base`, `dev`, `prod`, `test_postgres`), root URLs, WSGI/ASGI entrypoints
-- `apps/_shared/` — exceptions, middleware, auth helpers, pagination DTO, PDF wrapper
+- `_shared/` — exceptions, middleware, auth helpers, pagination DTO, PDF wrapper
 - `templates/` — `base.html`, `components/`, `_shared/error.html`
 - `static/` — Bootstrap 5 assets, project CSS shell
 - `requirements.txt`, `pyproject.toml`, `.env.example`, `manage.py`
@@ -30,74 +30,92 @@ None — this is the first initiative.
 
 ### Repository layout produced by this initiative
 
+The git repo root holds **infrastructure** (Docker, compose, Makefile, env). All Python / Django source lives **inside `app/`**, which is mounted at `/app/` in containers. There is **no `apps/` namespace** — each Django app sits directly under `app/` (`app/_shared/`, `app/usuarios/`, `app/solicitudes/`, …).
+
 ```
-solicitudes/
-├── manage.py
-├── pyproject.toml                  # ruff, mypy, pytest config
-├── requirements.txt                # pinned runtime deps
-├── requirements-dev.txt            # pinned dev/test deps
-├── .env.example
-├── .gitignore                      # adds media/, .env, __pycache__, .pytest_cache, test-results/, playwright-report/
-├── Dockerfile                      # multi-stage (builder + runtime), WeasyPrint deps baked in
+solicitudes/                              # git repo ROOT — only infra
+├── .gitignore                            # adds media/, .env, __pycache__, .pytest_cache, test-results/, playwright-report/
 ├── .dockerignore
-├── docker-compose.dev.yml          # web + db + mailhog
-├── docker-compose.test.yml         # postgres-only (no app container), tmpfs, port 55432
-├── Makefile                        # up/down/logs/test/e2e/e2e-postgres/e2e-headed
-├── config/
-│   ├── __init__.py
-│   ├── settings/
-│   │   ├── __init__.py
-│   │   ├── base.py
-│   │   ├── dev.py
-│   │   ├── prod.py
-│   │   └── test_postgres.py        # opt-in Postgres for live_server tests; default tests use SQLite
-│   ├── urls.py                     # root, namespaced per-app includes
-│   ├── wsgi.py
-│   └── asgi.py
-├── apps/
-│   ├── __init__.py
-│   └── _shared/
-│       ├── __init__.py
-│       ├── apps.py                 # AppConfig (name = "apps._shared")
-│       ├── exceptions.py
-│       ├── middleware/
-│       │   ├── __init__.py
-│       │   ├── request_id.py
-│       │   ├── error_handler.py
-│       │   └── logging.py
-│       ├── auth.py                 # JWT decode helper (no Django imports)
-│       ├── pagination.py
-│       ├── pdf.py                  # WeasyPrint thin wrapper
-│       ├── logging_config.py       # dictConfig builder
-│       └── tests/
-│           ├── __init__.py
-│           ├── test_exceptions.py
-│           ├── test_middleware_request_id.py
-│           ├── test_middleware_error_handler.py
-│           ├── test_auth.py
-│           ├── test_pagination.py
-│           └── test_pdf.py
-├── templates/
-│   ├── base.html                   # Bootstrap 5 layout, blocks
-│   ├── components/
-│   │   ├── nav.html
-│   │   ├── alerts.html             # django.contrib.messages renderer
-│   │   ├── pagination.html
-│   │   └── empty_state.html
-│   └── _shared/
-│       ├── error.html              # generic AppError fallback
-│       └── 404.html
-├── static/
-│   ├── css/
-│   │   └── app.css
-│   ├── js/
-│   │   └── app.js
-│   └── vendor/                     # bootstrap, htmx (if used)
-├── tests-e2e/                      # skeleton; populated as initiatives add browser flows
-│   └── README.md                   # points at .claude/skills/django-patterns/e2e.md
-├── media/                          # gitignored
-└── locale/                         # es_MX (placeholder; populated as features add copy)
+├── .env.example
+├── Dockerfile                            # multi-stage (builder + runtime), WeasyPrint deps baked in
+├── docker-compose.dev.yml                # web + db + mailhog
+├── docker-compose.test.yml               # postgres-test only (no app container), tmpfs, joins solicitudes-net
+├── Makefile                              # up/down/logs/test/e2e/e2e-postgres/e2e-headed/lint/type/certs
+├── README.md
+├── nginx/
+│   ├── dev/nginx.conf                    # permissive, self-signed cert paths
+│   └── prod/nginx.conf                   # hardened: TLSv1.3, HSTS, CSP, rate limiting
+├── certs/                                # gitignored — self-signed certs in dev, real certs mounted in prod
+│   ├── server.crt
+│   └── server.key
+└── app/                                  # Django project root — mounted at /app/ inside web container
+    ├── manage.py
+    ├── pyproject.toml                    # ruff, mypy, pytest config
+    ├── requirements.txt                  # pinned runtime deps
+    ├── requirements-dev.txt              # pinned dev/test deps
+    ├── config/
+    │   ├── __init__.py
+    │   ├── settings/
+    │   │   ├── __init__.py
+    │   │   ├── base.py
+    │   │   ├── dev.py
+    │   │   ├── prod.py
+    │   │   └── test_postgres.py          # opt-in for `--ds=config.settings.test_postgres`
+    │   ├── urls.py                       # root, namespaced per-app includes
+    │   ├── wsgi.py
+    │   └── asgi.py
+    ├── _shared/                          # cross-cutting infra (this initiative)
+    │   ├── __init__.py
+    │   ├── apps.py                       # AppConfig (name = "_shared")
+    │   ├── exceptions.py
+    │   ├── middleware/
+    │   │   ├── __init__.py
+    │   │   ├── request_id.py
+    │   │   ├── error_handler.py
+    │   │   └── logging.py
+    │   ├── auth.py                       # JWT decode helper (no Django imports)
+    │   ├── pagination.py
+    │   ├── pdf.py                        # WeasyPrint thin wrapper
+    │   ├── logging_config.py             # dictConfig builder
+    │   └── tests/
+    │       ├── __init__.py
+    │       ├── test_exceptions.py
+    │       ├── test_middleware_request_id.py
+    │       ├── test_middleware_error_handler.py
+    │       ├── test_auth.py
+    │       ├── test_pagination.py
+    │       └── test_pdf.py
+    ├── usuarios/                         # added in 002 (placeholder dir not created here)
+    ├── solicitudes/                      # added in 003
+    ├── notificaciones/                   # added in 007
+    ├── mentores/                         # added in 008
+    ├── reportes/                         # added in 009
+    ├── templates/
+    │   ├── base.html                     # Bootstrap 5 layout, blocks
+    │   ├── components/
+    │   │   ├── nav.html
+    │   │   ├── alerts.html               # django.contrib.messages renderer
+    │   │   ├── pagination.html
+    │   │   └── empty_state.html
+    │   └── _shared/
+    │       ├── error.html                # generic AppError fallback
+    │       └── 404.html
+    ├── static/
+    │   ├── css/app.css
+    │   ├── js/app.js
+    │   └── vendor/                       # bootstrap, htmx (if used)
+    ├── tests-e2e/                        # skeleton; populated as initiatives add browser flows
+    │   └── README.md                     # points at .claude/skills/django-patterns/e2e.md
+    ├── media/                            # gitignored
+    └── locale/                           # es_MX (placeholder; populated as features add copy)
 ```
+
+**Conventions baked into this layout:**
+
+- **`INSTALLED_APPS`** uses bare names: `["_shared", "usuarios", "solicitudes", "notificaciones", "mentores", "reportes"]`. No `apps.` prefix.
+- **Imports** mirror that: `from _shared.exceptions import AppError`, `from usuarios.services.user_service import ...`. There is no `apps` package; trying to import `apps.X` is a bug.
+- **Django sees `/app/` as the project root** because `WORKDIR /app` in the Dockerfile and `manage.py` lives at `/app/manage.py`. On the host, that's `./app/manage.py`.
+- **Path conventions in this and downstream plans:** when a plan says `usuarios/services/...`, that's relative to the Django project root (i.e., `app/usuarios/services/...` on the host, `/app/usuarios/services/...` inside the container).
 
 ### Settings split
 
@@ -111,7 +129,7 @@ solicitudes/
 | `SECRET_KEY` | from env, fail loudly if missing | `dev-only-secret-…` | from env, mandatory |
 | Static | `STATIC_URL = "/static/"`, `STATICFILES_DIRS = [BASE_DIR/"static"]` | + `STATIC_ROOT = BASE_DIR/"staticfiles"` | + `STATIC_ROOT`, manifest storage |
 | Media | `MEDIA_URL = "/media/"`, `MEDIA_ROOT = BASE_DIR/"media"` | same | `MEDIA_ROOT` from env |
-| Logging | dictConfig from `apps._shared.logging_config` | DEBUG to stdout | INFO to stdout, JSON formatter |
+| Logging | dictConfig from `_shared.logging_config` | DEBUG to stdout | INFO to stdout, JSON formatter |
 | `LANGUAGE_CODE` | `"es-mx"` | — | — |
 | `TIME_ZONE` | `"America/Mexico_City"` | — | — |
 | `USE_TZ` | `True` | — | — |
@@ -125,14 +143,14 @@ solicitudes/
 2. `django.contrib.sessions.middleware.SessionMiddleware`
 3. `django.middleware.common.CommonMiddleware`
 4. `django.middleware.csrf.CsrfViewMiddleware`
-5. **`apps._shared.middleware.request_id.RequestIDMiddleware`** — assigns `request.id = uuid4().hex` (or echoes incoming `X-Request-ID`); attaches to log records via a `contextvars`-backed filter.
-6. **`apps._shared.middleware.logging.StructuredLoggingMiddleware`** — logs `request.start` and `request.end` with method, path, status, duration_ms, request_id.
+5. **`_shared.middleware.request_id.RequestIDMiddleware`** — assigns `request.id = uuid4().hex` (or echoes incoming `X-Request-ID`); attaches to log records via a `contextvars`-backed filter.
+6. **`_shared.middleware.logging.StructuredLoggingMiddleware`** — logs `request.start` and `request.end` with method, path, status, duration_ms, request_id.
 7. `django.contrib.auth.middleware.AuthenticationMiddleware` *(replaced in 002 by JWT middleware that sets `request.user` from the JWT)*
 8. `django.contrib.messages.middleware.MessageMiddleware`
 9. `django.middleware.clickjacking.XFrameOptionsMiddleware`
-10. **`apps._shared.middleware.error_handler.AppErrorMiddleware`** — last, so it catches anything raised below.
+10. **`_shared.middleware.error_handler.AppErrorMiddleware`** — last, so it catches anything raised below.
 
-### `apps/_shared/exceptions.py`
+### `_shared/exceptions.py`
 
 ```python
 class AppError(Exception):
@@ -166,7 +184,7 @@ class ExternalServiceError(AppError):
    - For `AuthenticationRequired` (401): redirect to the auth provider (set in 002; for 001 a placeholder URL `LOGIN_REDIRECT_URL`).
 2. If not an `AppError`: re-raise (Django's debug page / 500 handler takes over). Production: log `error.unhandled` with stack trace + `request_id`, render `_shared/error.html` with code `internal_error`.
 
-### `apps/_shared/auth.py`
+### `_shared/auth.py`
 
 Pure-Python JWT helpers, no Django imports — re-used by middleware, services, tests.
 
@@ -183,7 +201,7 @@ def parse_claims(payload: dict[str, Any]) -> JwtClaims: ...
 
 Implementation: `PyJWT` library. Raises `AuthenticationRequired` on `ExpiredSignatureError` / `InvalidTokenError`.
 
-### `apps/_shared/pagination.py`
+### `_shared/pagination.py`
 
 ```python
 class PageRequest(BaseModel):
@@ -205,7 +223,7 @@ class Page(BaseModel, Generic[T]):
 
 Templates use `total_pages`, `has_next`, `has_prev`. Repositories return `Page[SomeRowDTO]`.
 
-### `apps/_shared/pdf.py`
+### `_shared/pdf.py`
 
 Thin wrapper around WeasyPrint — keeps the dependency contained.
 
@@ -281,10 +299,10 @@ DEFAULT_FROM_EMAIL=no-reply@uaz.edu.mx
 urlpatterns = [
     path("", RedirectView.as_view(url="/solicitudes/", permanent=False)),
     # filled by later initiatives:
-    # path("auth/", include(("apps.usuarios.urls", "usuarios"))),
-    # path("solicitudes/", include(("apps.solicitudes.urls", "solicitudes"))),
-    # path("mentores/", include(("apps.mentores.urls", "mentores"))),
-    # path("reportes/", include(("apps.reportes.urls", "reportes"))),
+    # path("auth/", include(("usuarios.urls", "usuarios"))),
+    # path("solicitudes/", include(("solicitudes.urls", "solicitudes"))),
+    # path("mentores/", include(("mentores.urls", "mentores"))),
+    # path("reportes/", include(("reportes.urls", "reportes"))),
 ]
 ```
 
@@ -307,29 +325,140 @@ Stage 2 — `runtime`:
 - Same base, only the runtime libs (no `-dev`, no `build-essential`)
 - `COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages`
 - `COPY --from=builder /usr/local/bin /usr/local/bin`
-- `COPY . /app` ; `WORKDIR /app`
+- `WORKDIR /app`
+- `COPY app/requirements.txt app/requirements-dev.txt /app/` (in `builder` stage, before `pip install`, for layer caching)
+- `COPY app/ /app/` (in `runtime` stage; only the `app/` subdir lands in the image — never `Dockerfile`, `docker-compose.*.yml`, `Makefile`, `specs/`, etc.)
 - Non-root user `app` (`useradd --create-home --shell /bin/bash app && chown -R app /app`); `USER app`
 - `EXPOSE 8000`
 - Default `CMD`: `gunicorn config.wsgi --bind 0.0.0.0:8000 --workers 3` — overridden in dev compose to use `runserver` for hot reload.
 
 #### `docker-compose.dev.yml`
 
-Three services on a `solicitudes-net` bridge network:
+Four services on a `solicitudes-net` bridge network. **Only `nginx-dev` and `db` publish host ports** — `web` and `mailhog` are reachable only through nginx, so all browser traffic is `https://localhost` (no port).
 
 | Service | Image / Build | Ports (host:container) | Volumes |
 |---|---|---|---|
-| `web` | `build: { context: ., target: runtime }` | `8000:8000` | `.:/app` (live reload), `./media:/app/media` |
-| `db` | `postgres:16` | `5432:5432` | `solicitudes_dev_data:/var/lib/postgresql/data` |
-| `mailhog` | `mailhog/mailhog` | `1025:1025` (SMTP), `8025:8025` (UI) | — |
+| `nginx-dev` | `nginx:alpine` | `443:443`, `80:80` (redirects to 443) | `./nginx/dev/nginx.conf:/etc/nginx/conf.d/default.conf:ro`, `./certs:/etc/nginx/certs:ro` |
+| `web` | `build: { context: ., target: runtime }` | — (internal-only) | `./app:/app` (live reload — only the `app/` subdir is mounted) |
+| `db` | `postgres:16` | `5432:5432` (for psql / DataGrip) | `solicitudes_dev_data:/var/lib/postgresql/data` |
+| `mailhog` | `mailhog/mailhog` | — (internal-only; UI proxied at `https://localhost/__mailhog/`) | — |
 
 `web`:
 - `command: python manage.py runserver 0.0.0.0:8000`
-- `environment`: `DJANGO_SETTINGS_MODULE=config.settings.dev`, `DB_HOST=db`, `DB_PORT=5432`, `EMAIL_HOST=mailhog`, `EMAIL_PORT=1025`
+- `environment`: `DJANGO_SETTINGS_MODULE=config.settings.dev`, `DB_HOST=db`, `DB_PORT=5432`, `EMAIL_HOST=mailhog`, `EMAIL_PORT=1025`, `ALLOWED_HOSTS=localhost,nginx-dev`
 - `depends_on: { db: { condition: service_healthy } }`
+
+`nginx-dev`:
+- `depends_on: [web, mailhog]`
+- TLS termination — proxies to `web:8000` and `mailhog:8025` over the internal network.
 
 `db.healthcheck`: `pg_isready -U $POSTGRES_USER` every 2s, 5 retries.
 
-The `.:/app` bind mount + `runserver` gives hot reload. Mailhog catches outgoing SMTP without leaking real emails (007 wires this in).
+The `./app:/app` bind mount + `runserver` gives hot reload. Mailhog catches outgoing SMTP without leaking real emails (007 wires this in).
+
+#### Nginx & TLS — every request goes through nginx, even in dev
+
+Same shape as production: TLS terminates at nginx, Django sees `X-Forwarded-Proto: https`. **No `http://...:port` URLs anywhere in our docs or workflow** — only `https://localhost` (port 443 implicit). Dev uses self-signed certs; prod uses real certs from a mounted volume.
+
+##### Two configs, shared shape
+
+| Concern | `nginx/dev/nginx.conf` | `nginx/prod/nginx.conf` |
+|---|---|---|
+| TLS protocols | TLSv1.2, TLSv1.3 | TLSv1.3 only |
+| Cipher suites | Defaults | Hardened (Mozilla "intermediate") |
+| HTTP → HTTPS redirect | Yes (301) | Yes (301) |
+| `server_tokens` | on (debug-friendly) | off |
+| HSTS | off (avoid pinning self-signed cert into the browser) | on, `max-age=31536000; includeSubDomains; preload` |
+| CSP | minimal | full (script-src self, style-src self+inline for Bootstrap) |
+| Security headers | `X-Content-Type-Options nosniff` | + `Referrer-Policy strict-origin-when-cross-origin`, `X-Frame-Options DENY`, `Permissions-Policy` |
+| `client_max_body_size` | `25m` (testing uploads) | `10m` (matches RT-07) |
+| Proxy timeouts | `120s` (debugging-friendly) | `30s` |
+| Access log format | verbose (incl. `$upstream_response_time`, `$request_time`) | standard combined + `$request_id` |
+| Rate limiting | none | per-IP for `/auth/*` and global cap |
+| Mailhog vhost | `/__mailhog/` proxies to `mailhog:8025` | not present (no Mailhog in prod) |
+| Static files | proxied to `web` (runserver handles) | served directly from a volume mount |
+
+##### Both configs include
+
+- `listen 443 ssl http2;` with cert paths from `/etc/nginx/certs/`.
+- `listen 80; return 301 https://$host$request_uri;` — port 80 exists only for the redirect.
+- `proxy_set_header X-Request-ID $request_id;` — Django middleware echoes this back, ties logs together.
+- `proxy_set_header X-Real-IP $remote_addr;`
+- `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`
+- `proxy_set_header X-Forwarded-Proto $scheme;`
+- `proxy_set_header Host $host;`
+
+Django reads `X-Forwarded-Proto`: set `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")` in `prod.py` (and `dev.py`, since dev also goes through nginx now).
+
+##### Sketch — `nginx/dev/nginx.conf`
+
+```nginx
+server {
+    listen 80;
+    server_name localhost;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name localhost;
+
+    ssl_certificate     /etc/nginx/certs/server.crt;
+    ssl_certificate_key /etc/nginx/certs/server.key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+
+    client_max_body_size 25m;
+    proxy_read_timeout   120s;
+
+    add_header X-Content-Type-Options nosniff always;
+
+    location /__mailhog/ {
+        # strip the prefix before forwarding
+        rewrite ^/__mailhog/(.*) /$1 break;
+        proxy_pass http://mailhog:8025;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        proxy_pass http://web:8000;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Request-ID      $request_id;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Production config differs as per the table above (TLSv1.3 only, HSTS, no Mailhog vhost, rate-limit zones for `/auth/*`).
+
+##### Self-signed certs (dev)
+
+`certs/` lives at the repo root and is **gitignored**. Generated by `make certs`:
+
+- **Preferred — mkcert** (installs a local root CA so the browser trusts the cert without warnings):
+  ```bash
+  mkcert -install
+  mkcert -cert-file certs/server.crt -key-file certs/server.key localhost 127.0.0.1
+  ```
+- **Fallback — openssl** (browser will warn the first time; click through):
+  ```bash
+  openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout certs/server.key -out certs/server.crt \
+    -subj "/CN=localhost" \
+    -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+  ```
+
+The `make certs` target detects which is installed and uses the better one.
+
+##### Prod certs
+
+Mount real certs into `/etc/nginx/certs/server.crt` and `server.key` from a host path or a secret volume. The `nginx/prod/nginx.conf` references the same paths, so the deployment surface is identical to dev — only the config file and the cert source change.
+
+##### Tests don't go through nginx
+
+Tier 1 (`Client`) and Tier 2 (`pytest-playwright` + `live_server`) hit Django **directly**, bypassing nginx. nginx is plumbing — verified manually after `make up` and in production smoke checks. This matches `e2e.md`'s rule that the test loop is in-process.
 
 #### `docker-compose.test.yml` (Postgres only — no app container)
 
@@ -395,7 +524,18 @@ EXEC    := $(DC_DEV) exec -T web
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
-up:                ## Start dev stack (web + db + mailhog)
+certs:             ## Generate self-signed dev certs (mkcert preferred, openssl fallback)
+	@mkdir -p certs
+	@if command -v mkcert >/dev/null 2>&1; then \
+	  mkcert -install && mkcert -cert-file certs/server.crt -key-file certs/server.key localhost 127.0.0.1; \
+	else \
+	  openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+	    -keyout certs/server.key -out certs/server.crt \
+	    -subj "/CN=localhost" \
+	    -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"; \
+	fi
+
+up: certs          ## Start dev stack (nginx + web + db + mailhog) — runs `certs` if missing
 	$(DC_DEV) up -d --build
 
 down:              ## Stop dev stack
@@ -465,6 +605,12 @@ playwright-report/
 playwright/.cache/
 tests-e2e/auth/*.json
 
+# TLS certs (dev = self-signed, prod = mounted from secret store)
+certs/
+*.crt
+*.key
+*.pem
+
 # Local
 .env
 media/
@@ -479,8 +625,9 @@ media/
 3. Write `Dockerfile` (multi-stage). Verify `docker build .` succeeds and `docker run --rm <image> python -c "import weasyprint; weasyprint.HTML(string='<h1>x</h1>').write_pdf()"` produces non-empty bytes — proves WeasyPrint's system deps are present.
 4. Write `docker-compose.dev.yml` (web + db + mailhog). `make up` brings everything up; `make migrate` runs migrations against Postgres in the `db` service.
 5. Write `docker-compose.test.yml` (postgres-only, tmpfs, joins `solicitudes-net` as `external`) and `config/settings/test_postgres.py` (HOST=`postgres-test`, PORT=`5432`). Verify `make up` first, then `docker compose -f docker-compose.test.yml up -d --wait` boots, then `docker compose -f docker-compose.dev.yml exec web psql -h postgres-test -U test solicitudes_test -c "SELECT 1"` succeeds from inside `web`.
-6. Write `Makefile` with the targets above. Verify `make help` lists all targets.
-7. Create `apps/_shared/` package and `AppConfig` (registered in `INSTALLED_APPS` as `"apps._shared"`).
+6. Write `nginx/dev/nginx.conf` and `nginx/prod/nginx.conf` (TLS termination, redirect 80→443, X-Forwarded-* headers, `/__mailhog/` vhost in dev). Add `nginx-dev` service to `docker-compose.dev.yml`; remove host port publishing from `web` and `mailhog`.
+7. Write `Makefile` with the targets above (incl. `make certs`). Verify `make help` lists all targets. Run `make certs` once on a clean machine; verify `certs/server.crt` and `certs/server.key` exist.
+7. Create `_shared/` package and `AppConfig` (registered in `INSTALLED_APPS` as `"_shared"`).
 8. Implement `exceptions.py` + tests.
 9. Implement `pagination.py` + tests.
 10. Implement `auth.py` (JWT helpers) + tests with stubbed secret.
@@ -494,7 +641,7 @@ media/
 18. Create empty `tests-e2e/README.md` pointing at `.claude/skills/django-patterns/e2e.md`. (Browser layout populated by initiatives that add Tier 2 flows.)
 19. Run `make lint`, `make type`, `make test` — all green.
 20. Run `make e2e-postgres` end-to-end: Compose up → tests run against real Postgres → Compose down -v.
-21. Verify `make up` boots; `/health/` returns 200 from `http://localhost:8000/health/`; mailhog UI reachable at `http://localhost:8025/`.
+21. Verify `make up` boots; `https://localhost/health/` returns 200 (browser shows trusted cert if mkcert was used; warning otherwise); mailhog UI reachable at `https://localhost/__mailhog/`; `http://localhost/health/` 301-redirects to https.
 
 
 ## E2E coverage
@@ -509,7 +656,7 @@ media/
 
 ### Django foundation
 - [ ] `make shell` then `python manage.py check` passes with no warnings.
-- [ ] `make test` green; `apps/_shared/` coverage ≥ 90% line.
+- [ ] `make test` green; `_shared/` coverage ≥ 90% line.
 - [ ] `make lint` and `make type` clean (zero errors).
 - [ ] `make up` boots the stack; `/health/` returns 200 with `{"status":"ok","request_id":"…"}`.
 - [ ] Raising any `AppError` subclass from a throwaway view returns the correct HTTP status, the correct user message, and logs `request_id`.
@@ -522,13 +669,21 @@ media/
 ### Docker — every command goes through it
 - [ ] `docker build .` succeeds for both `--target builder` and `--target runtime`.
 - [ ] `make help` lists all targets with their descriptions.
-- [ ] `make up` brings the dev stack up cleanly; `web`, `db`, `mailhog` all healthy.
+- [ ] `make up` brings the dev stack up cleanly; `nginx-dev`, `web`, `db`, `mailhog` all healthy.
+- [ ] `make certs` produces `certs/server.crt` and `certs/server.key` on a clean machine.
+- [ ] `https://localhost/health/` returns 200 with a valid TLS handshake.
+- [ ] `http://localhost/health/` 301-redirects to `https://localhost/health/`.
+- [ ] `https://localhost/__mailhog/` shows the Mailhog UI.
+- [ ] `web` and `mailhog` services do **not** publish host ports; only `nginx-dev` (443/80) and `db` (5432) do.
+- [ ] nginx forwards `X-Request-ID`; the value appears in Django logs for the same request.
+- [ ] Django sees `request.is_secure() == True` behind nginx (via `SECURE_PROXY_SSL_HEADER`).
+- [ ] `nginx/prod/nginx.conf` enforces TLSv1.3 only, HSTS header present, `server_tokens off`, rate-limit zones defined for `/auth/*`.
 - [ ] `make migrate` runs successfully against the `db` Postgres container.
 - [ ] `make test`, `make lint`, `make type` all run **inside `web`** (host has no Python installed; verify by uninstalling local Python or using a clean VM).
 - [ ] `make e2e-postgres` brings up `docker-compose.test.yml`, runs pytest **inside `web`** against `postgres-test` on the shared `solicitudes-net` network, tears down with `down -v` even on failure (verified by `docker volume ls` showing no leftover test volume).
 - [ ] `docker network ls` shows `solicitudes_solicitudes-net` after `make up`; `docker-compose.test.yml` joins it as `external`.
 - [ ] Hot reload: editing a Python file under `apps/` triggers Django's autoreload inside `web`.
-- [ ] Sending an email via `make shell` in `web` lands in Mailhog UI at `localhost:8025`.
+- [ ] Sending an email via `make shell` in `web` lands in Mailhog UI at `https://localhost/__mailhog/`.
 - [ ] `.dockerignore` excludes secrets and build artifacts (image size for runtime stage ~ < 800 MB).
 - [ ] Container runs as non-root user `app`.
 
