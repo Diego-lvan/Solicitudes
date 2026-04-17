@@ -245,14 +245,14 @@ Bootstrap 5 via vendored CSS (no CDN, per RT-04 and offline-friendliness). Block
 
 `components/alerts.html` renders `messages` from `django.contrib.messages` as Bootstrap alerts. `components/pagination.html` consumes a `Page` DTO.
 
-Visual baseline follows the user-level `frontend-design` skill: institutional/academic look, no AI tells, WCAG 2.2 AA.
+Visual baseline follows the `frontend-design` skill: institutional/academic look, no AI tells, WCAG 2.2 AA.
 
 ### `pyproject.toml` config
 
 - `[tool.ruff]` — `target-version = "py312"`, `line-length = 100`, select `E,F,I,B,UP,SIM,N,C4,RUF`, ignore `E501` only inside docstrings.
 - `[tool.mypy]` — `python_version = "3.12"`, `strict = true`, `plugins = ["pydantic.mypy"]`, exclude `migrations/`.
 - `[tool.pytest.ini_options]` — `DJANGO_SETTINGS_MODULE = "config.settings.dev"`, `python_files = "test_*.py"`, `addopts = "-ra --strict-markers"`, markers (`integration`).
-- `[tool.coverage.run]` — `source = ["apps", "config"]`, `omit = ["*/migrations/*", "*/tests/*"]`.
+- `[tool.coverage.run]` — `source = ["_shared", "config"]` initially; each app is appended to `source` as it ships (002 → `usuarios`, 003 → `solicitudes`, …). `omit = ["*/migrations/*", "*/tests/*"]`.
 
 ### `requirements.txt` (pinned versions chosen at implementation time)
 
@@ -594,7 +594,7 @@ Editor integration: configure your IDE's Python interpreter as the `web` contain
 
 #### `.dockerignore`
 
-Mirrors `.gitignore` plus build excludes: `.git`, `tests-e2e/auth`, `test-results`, `playwright-report`, `media`, `*.sqlite3`, `.env`, `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`.
+Mirrors `.gitignore` plus build excludes: `.git`, `app/tests-e2e/auth`, `test-results`, `playwright-report`, `app/media`, `*.sqlite3`, `.env`, `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`.
 
 #### `.gitignore` additions (beyond a stock Django gitignore)
 
@@ -603,7 +603,7 @@ Mirrors `.gitignore` plus build excludes: `.git`, `tests-e2e/auth`, `test-result
 test-results/
 playwright-report/
 playwright/.cache/
-tests-e2e/auth/*.json
+app/tests-e2e/auth/*.json
 
 # TLS certs (dev = self-signed, prod = mounted from secret store)
 certs/
