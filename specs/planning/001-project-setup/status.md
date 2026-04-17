@@ -1,6 +1,6 @@
 # 001 — Project Setup & Base — Status
 
-**Status:** In Progress
+**Status:** Done
 **Last updated:** 2026-04-25
 
 ## Checklist
