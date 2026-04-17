@@ -1,0 +1,18 @@
+{# Expects `page` (Pydantic Page DTO) and optional `param_name` (default 'page'). #}
+{% with param_name=param_name|default:"page" %}
+  {% if page.total_pages > 1 %}
+    <nav aria-label="Paginación">
+      <ul class="pagination">
+        <li class="page-item {% if not page.has_prev %}disabled{% endif %}">
+          <a class="page-link" href="?{{ param_name }}={{ page.page|add:'-1' }}">Anterior</a>
+        </li>
+        <li class="page-item disabled">
+          <span class="page-link">Página {{ page.page }} de {{ page.total_pages }}</span>
+        </li>
+        <li class="page-item {% if not page.has_next %}disabled{% endif %}">
+          <a class="page-link" href="?{{ param_name }}={{ page.page|add:'1' }}">Siguiente</a>
+        </li>
+      </ul>
+    </nav>
+  {% endif %}
+{% endwith %}

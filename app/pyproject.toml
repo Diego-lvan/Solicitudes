@@ -1,0 +1,44 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["migrations", "static/vendor"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "N", "C4", "RUF"]
+# N818: exception names without "Error" suffix — kept by design (NotFound, Conflict, ...)
+# UP046: PEP 695 generics — defer until Python 3.13 baseline
+ignore = ["N818", "UP046"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["B", "N802"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy", "mypy_django_plugin.main"]
+exclude = ["migrations/", "static/vendor/"]
+
+[[tool.mypy.overrides]]
+module = ["weasyprint.*", "model_bakery.*"]
+ignore_missing_imports = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings.dev"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.dev"
+python_files = ["test_*.py"]
+addopts = "-ra --strict-markers"
+markers = [
+    "integration: cross-layer tests touching the database",
+    "e2e: browser-based end-to-end tests (Playwright)",
+]
+
+[tool.coverage.run]
+# Add each app to `source` as it ships (002 → usuarios, 003 → solicitudes, …).
+source = ["_shared", "config"]
+omit = ["*/migrations/*", "*/tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false

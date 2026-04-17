@@ -1,0 +1,31 @@
+{% load static %}
+<!doctype html>
+<html lang="es-MX">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Sistema de Solicitudes — UAZ{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/app.css' %}" />
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body class="d-flex flex-column min-vh-100">
+    {% block nav %}
+      {% include "components/nav.html" %}
+    {% endblock %}
+
+    <main id="main" class="container py-4 flex-grow-1" role="main">
+      {% include "components/alerts.html" %}
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="border-top py-3 mt-auto bg-light">
+      <div class="container small text-muted">
+        Universidad Autónoma de Zacatecas &middot; Sistema de Solicitudes
+      </div>
+    </footer>
+
+    <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}" defer></script>
+    {% block extra_scripts %}{% endblock %}
+  </body>
+</html>

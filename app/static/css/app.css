@@ -1,0 +1,28 @@
+:root {
+  --uaz-primary: #006341;
+  --uaz-primary-dark: #00472f;
+  --uaz-accent: #b88a44;
+}
+
+a {
+  color: var(--uaz-primary);
+}
+
+.btn-primary {
+  background-color: var(--uaz-primary);
+  border-color: var(--uaz-primary);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--uaz-primary-dark);
+  border-color: var(--uaz-primary-dark);
+}
+
+.navbar-brand {
+  color: var(--uaz-primary) !important;
+}
+
+main:focus {
+  outline: none;
+}

@@ -1,0 +1,12 @@
+-r requirements.txt
+pytest>=8.0
+pytest-django>=4.8
+pytest-cov>=5.0
+pytest-mock>=3.12
+model_bakery>=1.18
+freezegun>=1.5
+responses>=0.25
+ruff>=0.5
+mypy>=1.10
+django-stubs[compatible-mypy]>=5.0
+types-requests
