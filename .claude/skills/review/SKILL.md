@@ -58,27 +58,44 @@ For each completed task, verify against plan.md:
 
 ---
 
-## Step 4 — Architecture compliance (backend only)
+## Step 4 — Architecture compliance
 
 Read `.claude/rules/django-code-architect.md` and verify:
 
-- [ ] 4-layer flow: Router → Handler → Service → Repository
-- [ ] One struct per file
-- [ ] Interface-driven dependencies (constructor injection)
-- [ ] `*gin.Context` never passed to service/repository
-- [ ] Cross-feature deps: service → service, never service → repo
-- [ ] Feature has `dependencies/` folder with container wiring
-- [ ] Shared infra in `internal/infra/`, not in feature packages
-- [ ] Errors use `apperror` sentinels + feature `errors/` package
+- [ ] **3-layer flow**: View → Service → Repository
+- [ ] **One public class per file** (no `models.py` with three models, no `services.py` with five services)
+- [ ] **Interface-driven**: every repository and service has an ABC + concrete implementation
+- [ ] **Constructor DI**: dependencies injected via `__init__`, never instantiated inside the class
+- [ ] **`request` never reaches service or repository** — view extracts what's needed and passes primitives or DTOs
+- [ ] **ORM stays in repository**: no `Model.objects.*` outside `repositories/implementation.py`
+- [ ] **Repositories return Pydantic DTOs**, never models or querysets
+- [ ] **Forms convert `cleaned_data` to a Pydantic DTO** before crossing into the service
+- [ ] **Templates receive DTOs**, never querysets or model instances
+- [ ] **Cross-feature deps: service → service**, never service → another feature's repository
+- [ ] **Feature has `dependencies.py`** wiring its repositories → services as factory functions
+- [ ] **Shared infra in `apps/_shared/`**, not in feature packages, and not named `utils`/`common`/`helpers`
+- [ ] **Custom exceptions** subclass `apps._shared.exceptions.AppError`; repositories raise feature exceptions, never let `Model.DoesNotExist` leak
+- [ ] **English identifiers**; Spanish only in user-facing copy (templates, form labels, exception `user_message`)
 
 ---
 
 ## Step 5 — Test coverage check
 
-- [ ] Every endpoint has at least one happy-path test
-- [ ] Error paths mentioned in plan.md have tests
-- [ ] Tests actually assert behavior (not just "no error")
-- [ ] Tests run and pass (`go test ./...` or appropriate command)
+Read `.claude/rules/django-test-architect.md` and verify:
+
+- [ ] **Per-layer files exist** for each affected feature: `test_views.py`, `test_services.py`, `test_repositories.py`, `test_forms.py`
+- [ ] **Repository tests** use real DB (`pytest.mark.django_db`) and assert returned **Pydantic DTOs**, not model instances
+- [ ] **Service tests** use **in-memory fake repositories** (no DB) and assert behavior + raised feature exceptions
+- [ ] **View tests** use the test `Client`, assert on status/template/context — not on service internals
+- [ ] **Form tests** cover both valid input AND each invalid case (with expected `form.errors`)
+- [ ] **Permission paths tested**: anonymous, wrong-role, right-role for each protected view
+- [ ] **State transitions**: every allowed transition has a test; every forbidden transition raises the feature exception
+- [ ] **Determinism**: time controlled (`freezegun`), email captured (`mail.outbox`), HTTP mocked (`responses`) — no flaky tests
+- [ ] **E2E coverage** (per `plan.md`'s `## E2E coverage` section, if present):
+  - In-process integration (`Client` multi-step) tests for cross-feature flows the initiative introduces
+  - Browser tests (`pytest-playwright`) for the golden paths the initiative is responsible for, in `tests-e2e/`
+- [ ] **Tests run and pass**: `pytest` exits 0 with no skipped/xfailed tests except those explicitly marked. For the browser tier: `pytest -m e2e` exits 0
+- [ ] **Tests assert behavior**, not framework calls (no `mock.called == True` and stop)
 
 ---
 

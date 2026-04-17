@@ -1,5 +1,5 @@
 ---
-globs:
+paths:
   - "apps/**/tests/**/*.py"
   - "apps/**/test_*.py"
 ---
@@ -115,11 +115,162 @@ For complex graphs, hand-roll the factory and document why `baker` wasn't enough
 - **Mocks (for collaborators outside your feature)** — `pytest-mock`'s `mocker.patch` to stub out a notification service or external HTTP client when its behavior is irrelevant.
 - **NEVER mock the system under test.** If you find yourself mocking the service while testing the service, you're testing the mock.
 
-## E2E TESTS (sparingly)
+## END-TO-END TESTING — TWO TIERS
 
-- A handful of E2E tests for the golden paths: "user creates a solicitud", "personal approves a solicitud and PDF is generated", "admin views the dashboard".
-- Tools: `pytest-playwright` against a `pytest-django`-managed live server, OR `pytest-django`'s `Client` with multi-step transactions if a real browser isn't needed.
-- Run E2E in a separate CI job; they're slow.
+E2E means "exercises the full stack." The full stack can be exercised with or without a browser, and the two have different costs and different bug catches. **Use both.** They are not redundant.
+
+### Tier 1 — In-process integration (`Client`, no browser)
+
+Multi-step `pytest-django` test client flows that span features without launching a browser. Fast (~50 ms each), no Playwright dependency, runs everywhere CI does.
+
+**Location:**
+- Single-feature flows → that feature's `test_views.py`
+- Cross-feature flows (touch ≥ 2 apps) → start in the highest-level feature's `test_views.py`. If they grow past ~10 cross-feature tests, promote to a top-level `tests-integration/` folder.
+
+**What they catch:** routing, permissions, view → service → repository wiring, template name and key context values, redirect chains, signal handlers, full-stack data flow.
+
+**What they miss:** CSS layout, JS / HTMX behavior, real browser DOM, focus order, accessibility, real file-upload edge cases.
+
+**Idiom:**
+```python
+@pytest.mark.django_db
+def test_alumno_creates_and_submits_solicitud(client_logged_in_alumno, solicitud_factory):
+    # 1. GET the create page
+    response = client_logged_in_alumno.get(reverse("solicitudes:intake:create"))
+    assert response.status_code == 200
+
+    # 2. POST the form
+    response = client_logged_in_alumno.post(
+        reverse("solicitudes:intake:create"),
+        data={"tipo_solicitud_id": tipo.id, "titulo": "X", "descripcion": "Y" * 20},
+        follow=True,
+    )
+    assert response.redirect_chain[-1][1] == 302
+    folio = response.context["solicitud"].folio
+
+    # 3. Submit (state transition)
+    response = client_logged_in_alumno.post(
+        reverse("solicitudes:intake:submit", args=[folio]),
+        follow=True,
+    )
+    assert response.context["solicitud"].estado == "PENDIENTE"
+```
+
+### Tier 2 — Browser E2E (`pytest-playwright`)
+
+A handful of tests for the golden paths, run in a real browser against a live server.
+
+**Local execution defaults to `pytest-django`'s `live_server` (in-process Django on a free port, test DB managed by pytest-django) — no Compose required for the daily loop.** The dev Compose stack is **forbidden** as a test target; a separate `docker-compose.test.yml` (Postgres only, throwaway volume) is used for the occasional Postgres smoke and CI. Full guidance — three-scenarios table, why-not-dev-compose rationale, `docker-compose.test.yml` shape, `test_postgres` settings, Make targets, `--reuse-db`, browser install — lives in `django-patterns/e2e.md` under "Local execution & infra."
+
+**Location:** top-level `tests-e2e/` (separate from `apps/<app>/<feature>/tests/`).
+
+```
+tests-e2e/
+├── conftest.py                    # shared fixtures (live_server, page, authed contexts)
+├── pages/                         # Page Object Model — one class per page
+│   ├── login_page.py
+│   ├── solicitud_create_page.py
+│   └── solicitud_detail_page.py
+├── flows/                         # multi-page user journeys (compose Page Objects)
+│   └── alumno_creates_and_submits.py
+├── tests/
+│   ├── test_intake_golden_path.py
+│   ├── test_revision_flow.py
+│   └── test_pdf_download.py
+├── fixtures/
+│   ├── sample_files/              # PDFs, images for upload tests
+│   └── seeds.py                   # auth seeders, role-based storage state
+├── auth/                          # storageState .json files (gitignored)
+├── playwright.config.py
+└── README.md
+```
+
+**What they catch:** real browser DOM, CSS layout, JS / HTMX, focus order, ARIA / WCAG basics, real file uploads through the input element, viewport behavior, multi-tab flows.
+
+**What you must NOT do:** reproduce every form-validation case in Playwright. That's `test_forms.py`'s job. Browser E2E is for *golden paths*, not exhaustive validation coverage.
+
+#### Page Object Model — non-negotiable
+
+Tests with raw selectors rot fast. Wrap every page in a class with methods that read like prose. Selectors live in **one place** so a template change = one fix, not thirty.
+
+```python
+# tests-e2e/pages/solicitud_create_page.py
+class SolicitudCreatePage:
+    def __init__(self, page):
+        self.page = page
+
+    def goto(self):
+        self.page.goto("/solicitudes/intake/nueva/")
+
+    def fill(self, *, tipo: str, titulo: str, descripcion: str):
+        self.page.get_by_label("Tipo de solicitud").select_option(label=tipo)
+        self.page.get_by_label("Título").fill(titulo)
+        self.page.get_by_label("Descripción").fill(descripcion)
+
+    def submit(self):
+        self.page.get_by_role("button", name="Guardar").click()
+```
+
+Use `get_by_role` / `get_by_label` over CSS selectors — they're accessibility-aware and double as a smoke test that your WCAG basics are intact.
+
+#### Authentication
+
+**Don't drive UI login per test.** Two options:
+
+- **`storageState`** — one setup test logs in via UI, captures `context.storage_state(path="auth/alumno.json")`, every other test starts with `browser.new_context(storage_state="auth/alumno.json")`. Re-run setup when sessions expire.
+- **Django session bridge** — use `Client.force_login(user)` to materialize a session, read `client.cookies['sessionid']`, inject into Playwright via `context.add_cookies(...)`. Zero login traversal.
+
+Option 1 for "real user flow" tests; Option 2 for "test the page logic, not the auth."
+
+#### Artifacts to capture
+
+Configure in `playwright.config.py`:
+
+| Artifact | Setting | Why |
+|---|---|---|
+| **Trace** | `trace="on-first-retry"` (CI), `"retain-on-failure"` (local) | DOM snapshots, network log, console, screenshots at every action. View with `playwright show-trace`. The killer feature. |
+| **Screenshot** | `screenshot="only-on-failure"` | Cheap PNG per failure, good for triage. |
+| **Video** | `video="retain-on-failure"` | WebM playback. Useful when sharing a regression with non-developers. |
+| **Console logs** | always on (default) | Catches JS errors silently breaking pages. |
+| **HAR** | off by default; enable per-test when debugging external services | Heavy; only when needed. |
+
+Default Playwright output dirs:
+- `test-results/` — per-run artifacts (traces, videos, screenshots)
+- `playwright-report/` — HTML report (browse `index.html` to see everything)
+
+`.gitignore` entries:
+```
+test-results/
+playwright-report/
+playwright/.cache/
+tests-e2e/auth/*.json
+```
+
+#### CI integration
+
+Run browser E2E in a **separate CI job** from unit/integration. Upload `playwright-report/` as a job artifact on failure (14-day retention is plenty). Don't try to read raw traces from the terminal — the HTML report is the UX.
+
+#### Test count guidance
+
+| Tier | Target |
+|---|---|
+| Browser E2E (Playwright) | ~5–15 total across the project |
+| In-process integration (Client multi-step) | ~15–30 total |
+| Per-feature view tests (Client single-page) | ~50+ |
+
+Browser E2E tests have a maintenance cost roughly 10× a unit test. Keep them few and load-bearing.
+
+#### Per-initiative E2E tracking
+
+In each initiative's `plan.md`, add an `## E2E coverage` section listing which golden paths the initiative is responsible for. In `status.md`, list them as tasks:
+
+```markdown
+### E2E
+- [ ] Browser: alumno creates and submits a solicitud
+- [ ] In-process: cross-feature notification email triggered on transition
+```
+
+The `code-reviewer` agent will check these against `plan.md` like any other deliverable.
 
 ## TEST DATA — STAY DETERMINISTIC
 

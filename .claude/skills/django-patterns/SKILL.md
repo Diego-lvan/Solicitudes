@@ -15,6 +15,7 @@ Full code examples for the layered Django architecture (View → Service → Rep
 | `platform.md` | Shared infra: `apps/_shared/` modules, base templates, middleware (request ID, error handler), settings split, URL roots |
 | `errors.md` | Exception hierarchy: `_shared/exceptions.py` base classes, feature-specific subclasses, view-level error handling, middleware fallback |
 | `forms.md` | Form-to-DTO conversion: Django `Form`/`ModelForm` validation → Pydantic DTO → service; multi-step forms; file uploads |
+| `e2e.md` | End-to-end testing: in-process integration with `Client` (multi-step flows) and browser tests with `pytest-playwright` (Page Object Model, auth via storage state, artifact capture, CI) |
 
 ## When to consult these files
 
@@ -24,6 +25,7 @@ Full code examples for the layered Django architecture (View → Service → Rep
 | Adding/changing middleware, base templates, request-id propagation, error handler middleware, or settings layout | `platform.md` |
 | Defining new exception types, feature `exceptions.py`, or handling errors at the view/middleware boundary | `errors.md` |
 | Wiring a Django Form/ModelForm to a Pydantic DTO that crosses into the service | `forms.md` |
+| Writing in-process multi-step integration tests (Django `Client`) or browser tests (Playwright) | `e2e.md` |
 
 **Read only the file you need.** These files are large; loading all four wastes context.
 

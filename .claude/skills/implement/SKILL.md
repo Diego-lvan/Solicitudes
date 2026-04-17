@@ -76,10 +76,14 @@ If the task falls in any of those, invoke `/tdd` for this task and follow its re
 
 Evidence before claims. Do not check `[x]` based on a previous run, a hunch, or "the linter passed."
 
-- Run the test command **fresh, in this message** — full package, not just the one file
+- Run the test command **fresh, in this message** — full package/marker, not just the one file
+- For tasks under `### E2E` in status.md, the right command depends on the tier:
+  - **Tier 1 (in-process integration)** — runs as part of normal `pytest` (no marker required); the test files are inside `apps/<app>/<feature>/tests/test_views.py` (or `tests-integration/` if it grew)
+  - **Tier 2 (browser, Playwright)** — `pytest -m e2e` (or the project's E2E pytest config); needs `playwright install chromium` once and a live server
 - Read the full output: exit code, failure count, any warnings or skipped tests
 - Confirm no regressions: tests outside what you touched still pass
 - Confirm the output is pristine — no leftover debug prints, no warnings introduced by your change
+- For Tier 2 failures, capture the artifacts: trace zip, video, HTML report. Cite their paths in the failure analysis. View traces with `playwright show-trace <path>`.
 - If verification fails:
   - **Trivial cause** (typo, obvious mistake) → fix and re-verify
   - **Non-trivial failure** (unexpected behavior, intermittent failure, mysterious diff) → STOP. Invoke `/debug` to find the root cause before attempting any fix. Do not guess.

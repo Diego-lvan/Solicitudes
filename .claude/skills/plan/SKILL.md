@@ -114,6 +114,20 @@ Brief description of what this initiative accomplishes.
 
 {Organize by logical concern. Use tables, code blocks, and diagrams freely.}
 
+## E2E coverage
+
+{List the cross-feature flows and golden paths this initiative is responsible for. Drives status.md tasks. Two tiers — see `.claude/rules/django-test-architect.md` and `django-patterns/e2e.md` for patterns.}
+
+### In-process integration (Tier 1 — Django `Client`, no browser)
+- {cross-feature flow A — what gets exercised}
+- {cross-feature flow B}
+
+### Browser (Tier 2 — `pytest-playwright`)
+- {golden path A — described as "as actor X, do Y, expect Z"}
+- {golden path B}
+
+(If the initiative introduces no new cross-feature behavior, write `_None._` under each subsection — but do not omit the section.)
+
 ## Acceptance Criteria
 - [ ] Criterion 1
 - [ ] Criterion 2
@@ -133,12 +147,18 @@ Brief description of what this initiative accomplishes.
 - [ ] [P] Task description
 - [ ] Task description
 
+### E2E
+- [ ] Tier 1 (Client): {flow described in plan.md's E2E coverage section}
+- [ ] Tier 2 (browser/Playwright): {golden path}
+
 ## Blockers
 
 None.
 
 [P] = can run in parallel
 ```
+
+The `### E2E` group must mirror what the plan's `## E2E coverage` section listed, one task per item. If `## E2E coverage` had `_None._`, omit the `### E2E` group from status.
 
 4. Create `specs/planning/{number}-{name}/changelog.md`:
 
@@ -179,6 +199,8 @@ Apply the `/verify` discipline: evidence before claims. Before announcing the pl
 - [ ] Every cross-reference in `## References` resolves (no dead links)
 - [ ] Every acceptance criterion in the brainstorm `requirements.md` has a corresponding task or task group in `status.md` — nothing silently dropped
 - [ ] Every `[P]` task is genuinely independent of its siblings (no shared file, no ordering dependency)
+- [ ] `plan.md` has a `## E2E coverage` section with both Tier 1 (in-process) and Tier 2 (browser) subsections — even if one says `_None._`
+- [ ] Every E2E entry in `## E2E coverage` has a corresponding task in `status.md`'s `### E2E` group
 - [ ] `plan.md` is unambiguous enough that the `code-reviewer` agent could compare an implementation against it without needing the conversation history
 - [ ] If any open question remains, it lives in `plan.md` under a `## Open Questions` section — not in your head
 
