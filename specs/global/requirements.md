@@ -17,7 +17,14 @@ Sistema web para gestionar solicitudes académicas y administrativas de la Unive
 ## Requerimientos Funcionales
 
 ### RF-01: Catálogo dinámico de tipos de solicitud
-El administrador crea/edita/elimina tipos de solicitud sin tocar código. Cada tipo define: nombre, descripción, rol responsable, si requiere pago, roles creadores (alumno/docente/ambos), y plantilla opcional.
+El administrador crea/edita/elimina tipos de solicitud sin tocar código. Cada tipo define:
+- Nombre y descripción.
+- `responsible_role` — el rol que atiende este tipo (Control Escolar, Responsable de Programa, Docente).
+- `creator_roles` — conjunto de roles autorizados a crear este tipo (subconjunto de {Alumno, Docente}). Un tipo puede ser creado por uno o por ambos.
+- `requires_payment: bool` — si requiere comprobante de pago.
+- `mentor_exempt: bool` — si los mentores están exentos de comprobante (solo aplica cuando `requires_payment = true`).
+- Plantilla opcional (ver RF-03).
+- Definición de campos dinámicos (ver RF-02).
 
 ### RF-02: Formularios dinámicos
 Cada tipo tiene campos configurables: texto, textarea, número, fecha, select, archivo. Cada campo: etiqueta, tipo, requerido, opciones, orden.
@@ -26,7 +33,7 @@ Cada tipo tiene campos configurables: texto, textarea, número, fecha, select, a
 Plantillas de documento con variables (`{{nombre}}`, `{{matricula}}`, etc.). El sistema genera PDF sustituyendo variables. Opcional por tipo.
 
 ### RF-04: Creación de solicitudes
-Usuario autenticado selecciona tipo → ve formulario dinámico → llena y adjunta archivos → se genera folio único → estado "Creada". Si requiere pago y no es mentor, adjunta comprobante.
+Usuario autenticado selecciona un tipo del catálogo (filtrado por `creator_roles ⊇ {user.role}`) → ve formulario dinámico → llena y adjunta archivos → el sistema genera folio único `SOL-YYYY-NNNNN` (secuencial por año) → estado **Creada**. Comprobante de pago: requerido si `tipo.requires_payment = true`, **excepto** cuando `tipo.mentor_exempt = true` y el solicitante está en la lista de mentores activos. La definición de campos del tipo se **fotografía** dentro de la solicitud al momento de creación: ediciones posteriores al tipo no alteran solicitudes existentes.
 
 ### RF-05: Ciclo de vida (estados)
 Creada → En proceso → Finalizada. Creada → Cancelada. En proceso → Cancelada. Solicitante cancela solo en "Creada". Cada transición: fecha + responsable + observaciones.

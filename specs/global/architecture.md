@@ -10,12 +10,13 @@
 | Framework | Django 5.x (server-side templates, no DRF) |
 | DTOs | Pydantic v2 (every layer boundary) |
 | Rendering | Django Templates + Bootstrap 5 |
-| Database | PostgreSQL (prod) / SQLite (dev) via Django ORM (contained in repositories) |
-| PDF Generation | WeasyPrint |
-| Async Tasks | Celery + Redis (emails) |
-| File Storage | Local filesystem (`media/`) for dev; pluggable in prod |
+| Database | PostgreSQL 16 (dev via Compose, prod via env) — SQLite only for the default in-process test loop. Django ORM contained in repositories. |
+| PDF Generation | WeasyPrint (system deps baked into the image) |
+| Async Tasks | None in v1 — RF-07 uses sync email with try/except. Celery + Redis are deferred until volume justifies them. |
+| File Storage | Local filesystem (`media/`) under bind-mounted volume in dev; pluggable in prod |
 | Auth | JWT validation middleware (external provider) |
-| Tests | `pytest` + `pytest-django`, `model_bakery`, `freezegun`, `responses` |
+| Tests | `pytest` + `pytest-django`, `model_bakery`, `freezegun`, `responses`, `pytest-playwright` (Tier 2). Default loop uses `live_server` (in-process); `docker-compose.test.yml` provides Postgres-only for opt-in real-DB smokes. |
+| Runtime | Multi-stage `Dockerfile` (Python 3.12-slim + WeasyPrint OS deps); `docker-compose.dev.yml` (`web` + `db` + `mailhog`); `docker-compose.test.yml` (Postgres-only, tmpfs, port 55432). Makefile is the entry point. See [`e2e.md`](../../.claude/skills/django-patterns/e2e.md) for the canonical test-infra rules. |
 
 ## Architectural Style
 
@@ -100,12 +101,12 @@ Cross-cutting infrastructure. **No domain logic.**
 
 ### `solicitudes` (core)
 Multiple features:
-- **`tipos`** — TipoSolicitud catalog with dynamic field schema (FieldDefinition)
-- **`intake`** — Solicitante creates a draft, fills the dynamic form, submits
-- **`revision`** — Personal reviews, approves, or rejects with observations
-- **`lifecycle`** — State machine (BORRADOR → PENDIENTE → APROBADA / RECHAZADA / CANCELADA), folio generation
-- **`archivos`** — Attachment uploads (validated by extension/size) and downloads (permission-checked)
-- **`pdf`** — WeasyPrint rendering of approved solicitudes from per-tipo templates
+- **`tipos`** — TipoSolicitud catalog with dynamic field schema (FieldDefinition); per-tipo flags `requires_payment` and `mentor_exempt`; `creator_roles` (set) and `responsible_role` (single)
+- **`intake`** — Solicitante creates a solicitud, fills the dynamic form, submits; field definitions are **snapshot** into the solicitud at creation time
+- **`revision`** — Personal in the responsible role atiende, finaliza, or cancela the solicitud (shared queue, no exclusive ownership)
+- **`lifecycle`** — State machine (CREADA → EN_PROCESO → FINALIZADA; CREADA → CANCELADA; EN_PROCESO → CANCELADA), folio generation (`SOL-YYYY-NNNNN`)
+- **`archivos`** — Attachment uploads (validated by extension/size, ZIP stored as-is) and downloads (permission-checked)
+- **`pdf`** — WeasyPrint rendering on demand from per-tipo templates; data persisted in DB so the document can always be re-generated
 
 ### `notificaciones`
 - Email dispatch on state transitions (Celery + Redis async; sync fallback)
@@ -148,13 +149,18 @@ TipoSolicitud → [FieldDefinition...] → DynamicForm (built at runtime by inta
 
 ### State machine
 ```
-Solicitud.estado: BORRADOR → PENDIENTE → APROBADA
-                                       → RECHAZADA
-                  BORRADOR → CANCELADA
-                  PENDIENTE → CANCELADA
+Solicitud.estado: CREADA → EN_PROCESO → FINALIZADA
+                  CREADA → CANCELADA
+                  EN_PROCESO → CANCELADA
 
 Forbidden transitions raise InvalidStateTransition(current, requested).
-Each successful transition emits a Notification (apps.notificaciones service).
+Each successful transition writes a HistorialEstado row (actor, fecha, observaciones)
+and emits a Notification (apps.notificaciones service, sync, swallow SMTP failures).
+
+Cancellation rules:
+- Solicitante can cancel only while estado == CREADA.
+- Personal in the responsible role can cancel from CREADA or EN_PROCESO.
+- Admin can cancel from any non-terminal estado.
 ```
 
 ### Cross-app dependency rule
