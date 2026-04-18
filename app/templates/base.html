@@ -6,10 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}Sistema de Solicitudes — UAZ{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.css' %}" />
     <link rel="stylesheet" href="{% static 'css/app.css' %}" />
     {% block extra_head %}{% endblock %}
   </head>
   <body class="d-flex flex-column min-vh-100">
+    <a href="#main" class="visually-hidden-focusable">Saltar al contenido</a>
+
     {% block nav %}
       {% include "components/nav.html" %}
     {% endblock %}
