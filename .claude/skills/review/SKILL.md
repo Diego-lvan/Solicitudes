@@ -1,8 +1,8 @@
 ---
 name: review
-description: Validate implementation against plan.md. Compares what was built vs what was specified, checks test coverage, architecture compliance, and reports issues by severity.
+description: Validate implementation against plan.md. Compares what was built vs what was specified, checks test coverage, architecture compliance, and reports issues by severity. When the full initiative passes clean, prompts for the SDD closeout (design.md updates + roadmap flip).
 argument-hint: "[optional: section name or 'full' for entire initiative]"
-allowed-tools: Bash, Read, Glob, Grep
+allowed-tools: Bash, Read, Edit, Write, Glob, Grep
 ---
 
 # SDD Implementation Review
@@ -121,6 +121,32 @@ Present findings in this format:
 
 ---
 
+## Step 7 — Initiative closeout (only when scope is full AND no CRITICAL issues)
+
+Per CLAUDE.md's SDD lifecycle, an initiative is **not done** when the review passes — three more spec updates have to land. Skip this step if scope was a single section, or if any CRITICAL issue is open.
+
+If all of the above hold, **announce** the closeout list to the user and ask for confirmation before editing:
+
+> Review passed clean. Per the SDD lifecycle, three closeout edits are due:
+>   1. Update `design.md` for each module in plan.md's "Affected Apps / Modules" — promote stable details out of plan.md.
+>   2. Update `flows/*.md` for any cross-app flow this initiative introduced or changed.
+>   3. Flip `specs/global/roadmap.md` row from `In Progress` to `Done`, and the `Status:` line in the initiative's `status.md`.
+>
+> Want me to do these now, or wait?
+
+If the user confirms, perform the edits in this order:
+
+1. **design.md** — for each app/area in plan.md's `## Affected Apps / Modules`, locate the matching `design.md` (typically `specs/apps/<app>/design.md` or `specs/shared/<area>/design.md`). Promote the now-stable bits of `plan.md` that future code should follow (data shapes, layer wiring, contracts, env vars, exception types). Do not duplicate plan.md verbatim — only the parts that won't change in the next initiative. Keep the `## Related Specs` section intact (or add it if missing).
+2. **flows/*.md** — only if the initiative crosses ≥ 2 apps or touches an end-to-end path described in `specs/flows/`. For pure infra/bootstrap initiatives, skip and say so explicitly in the report.
+3. **roadmap.md** — flip the initiative's `Status` cell to `Done`. Do not delete the row.
+4. **status.md** — flip the top-of-file `Status:` line to `Done`. Bump `Last updated:`.
+
+Then **report** what was changed in one paragraph and stop. Do **not** run `/commit` and do not suggest a commit message — `/commit` is always user-invoked.
+
+If the user declines closeout (or asks to defer), append a TODO note at the bottom of the review report (`### Closeout pending`) listing the three edits that still need to happen. The next session picks them up.
+
+---
+
 ## Rules
 
 - **plan.md is the source of truth** — if code differs from plan.md, it's the code that's wrong (unless plan.md was explicitly updated).
@@ -128,4 +154,5 @@ Present findings in this format:
 - **Be specific** — include file paths, line numbers, and what plan.md says.
 - **CRITICAL means blocking** — only use for missing functionality, wrong behavior, or broken tests.
 - **If everything passes** — say so clearly. Don't invent issues.
-- **Never modify code** — this skill only reads and reports. Use `/implement` to fix issues.
+- **Never modify implementation code** — this skill only reads and reports for code. The Step 7 edits are scoped to spec/planning files (`specs/**/design.md`, `specs/global/roadmap.md`, the initiative's `status.md`) and only after the user confirms.
+- **Never run `/commit`** — the closeout edits leave the working tree dirty for the user to commit when they choose.
