@@ -3,7 +3,7 @@ DC_TEST := docker compose -f docker-compose.test.yml
 EXEC    := $(DC_DEV) exec -T web
 
 .PHONY: help up down build logs shell migrate makemigrations \
-        lint type test e2e e2e-postgres e2e-headed clean certs
+        lint type test e2e e2e-install e2e-postgres e2e-headed clean certs
 
 help:  ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -52,7 +52,11 @@ type:  ## mypy inside web
 test:  ## Unit + integration tests (in-process, SQLite)
 	$(EXEC) pytest
 
-e2e:  ## All Tier 1 + Tier 2 tests (in-process, SQLite, Playwright if installed)
+e2e-install:  ## Bootstrap Chromium + system deps for browser tests (run once after `make build`)
+	$(DC_DEV) exec -T -u root web python -m playwright install-deps chromium
+	$(EXEC) python -m playwright install chromium
+
+e2e:  ## All Tier 1 + Tier 2 tests (in-process, SQLite, Playwright). Run `make e2e-install` first.
 	$(EXEC) pytest -m e2e
 
 e2e-postgres:  ## Same as e2e against ephemeral Postgres

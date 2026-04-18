@@ -6,6 +6,7 @@ pytest-mock>=3.12
 model_bakery>=1.18
 freezegun>=1.5
 responses>=0.25
+pytest-playwright>=0.5
 ruff>=0.5
 mypy>=1.10
 django-stubs[compatible-mypy]>=5.0

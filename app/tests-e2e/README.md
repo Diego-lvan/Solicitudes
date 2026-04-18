@@ -9,6 +9,20 @@ shape, the opt-in `config.settings.test_postgres`, and the Make targets —
 live in `.claude/skills/django-patterns/e2e.md`. Read that before adding
 flows here.
 
+## Quick start
+
+```bash
+make up               # bring up the dev stack
+make e2e-install      # bootstrap Chromium + apt deps (once per workstation/image)
+make e2e              # run the browser tests
+make e2e-headed       # debug a flaky test by watching Chromium
+```
+
+`pytest-playwright` is in `requirements-dev.txt`; the Chromium binary is
+*not* baked into the Docker image (~250 MB). `make e2e-install` downloads
+it into the running container's filesystem; re-run after `make build`
+rebuilds the image.
+
 ## IDE remote interpreter
 
 All Python runs **inside the `web` container**. Configure your IDE to use
