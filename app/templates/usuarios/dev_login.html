@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Login de desarrollo — {{ block.super }}{% endblock %}
+
+{% block content %}
+<header class="mb-4">
+  <h1 class="h3 mb-1">Login de desarrollo</h1>
+  <p class="text-muted small mb-0">
+    Selecciona un rol o un usuario existente para iniciar sesión sin pasar
+    por el proveedor de autenticación externo.
+  </p>
+</header>
+
+<div class="alert alert-warning d-flex align-items-start" role="status">
+  <i class="bi bi-exclamation-triangle me-2 fs-5" aria-hidden="true"></i>
+  <div class="small">
+    Este formulario solo está disponible cuando <code>DEBUG=True</code>.
+    Sustituye temporalmente al proveedor de autenticación externo mientras
+    se resuelve <strong>OQ-002-1</strong>. La integración real se hará en la
+    iniciativa 010.
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-6">
+    <div class="card">
+      <div class="card-header"><strong>Ingreso rápido por rol</strong></div>
+      <ul class="list-group list-group-flush">
+        {% for q in quickstart %}
+        <li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div>
+            <div class="fw-semibold">{{ q.role }}</div>
+            <small class="text-muted">{{ q.matricula }} · {{ q.email }}</small>
+          </div>
+          <form method="post" class="m-0">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="quickstart" />
+            <input type="hidden" name="role" value="{{ q.role }}" />
+            <button class="btn btn-sm btn-outline-primary" type="submit">
+              Entrar
+            </button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="card">
+      <div class="card-header"><strong>Usuarios existentes</strong></div>
+      {% if existing_users %}
+      <ul class="list-group list-group-flush">
+        {% for u in existing_users %}
+        <li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div>
+            <div class="fw-semibold">{{ u.matricula }}</div>
+            <small class="text-muted">
+              {{ u.role }} · {{ u.email }}{% if u.full_name %} · {{ u.full_name }}{% endif %}
+            </small>
+          </div>
+          <form method="post" class="m-0">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="login" />
+            <input type="hidden" name="matricula" value="{{ u.matricula }}" />
+            <button class="btn btn-sm btn-outline-primary" type="submit">
+              Entrar
+            </button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      {% include "components/empty_state.html" with icon="people" title="Aún no hay usuarios persistidos" description="Usa el ingreso rápido por rol para crear uno." %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

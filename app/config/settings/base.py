@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "_shared",
+    "usuarios",
 ]
 
 MIDDLEWARE = [
@@ -29,7 +30,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "_shared.middleware.request_id.RequestIDMiddleware",
     "_shared.middleware.logging.StructuredLoggingMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "usuarios.middleware.JwtAuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "_shared.middleware.error_handler.AppErrorMiddleware",
@@ -85,10 +86,23 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+AUTH_USER_MODEL = "usuarios.User"
+
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "no-reply@uaz.edu.mx")
 
-LOGIN_REDIRECT_URL = os.environ.get("AUTH_PROVIDER_LOGIN_URL", "/auth/login/")
+LOGIN_URL = os.environ.get("AUTH_PROVIDER_LOGIN_URL", "/auth/login/")
+LOGIN_REDIRECT_URL = LOGIN_URL
+
+# Auth provider integration (initiative 002).
+JWT_SECRET = os.environ.get("JWT_SECRET", "")
+JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
+AUTH_PROVIDER_LOGIN_URL = LOGIN_URL
+AUTH_PROVIDER_LOGOUT_URL = os.environ.get("AUTH_PROVIDER_LOGOUT_URL", "")
+
+# SIGA (academic information system) integration.
+SIGA_BASE_URL = os.environ.get("SIGA_BASE_URL", "")
+SIGA_TIMEOUT_SECONDS = float(os.environ.get("SIGA_TIMEOUT_SECONDS", "5"))
 
 SITE_BASE_URL = os.environ.get("SITE_BASE_URL", "https://localhost")
 

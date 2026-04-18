@@ -61,3 +61,10 @@ X_FRAME_OPTIONS = "DENY"
 CSRF_TRUSTED_ORIGINS = [
     f"https://{host}" for host in ALLOWED_HOSTS if host not in ("*",)
 ]
+
+# Initiative 002 — fail fast if auth provider config is missing in production.
+JWT_SECRET = _required("JWT_SECRET")
+AUTH_PROVIDER_LOGIN_URL = _required("AUTH_PROVIDER_LOGIN_URL")
+LOGIN_URL = AUTH_PROVIDER_LOGIN_URL
+LOGIN_REDIRECT_URL = AUTH_PROVIDER_LOGIN_URL
+SIGA_BASE_URL = _required("SIGA_BASE_URL")

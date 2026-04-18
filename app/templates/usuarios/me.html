@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Mi perfil — {{ block.super }}{% endblock %}
+
+{% block content %}
+<section class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6">
+    <header class="mb-4">
+      <h1 class="h3 mb-1">Mi perfil</h1>
+      <p class="text-muted small mb-0">Información proveniente del sistema de autenticación y de SIGA.</p>
+    </header>
+
+    <dl class="row mb-0">
+      <dt class="col-sm-4">Matrícula</dt>
+      <dd class="col-sm-8">{{ user.matricula }}</dd>
+
+      <dt class="col-sm-4">Correo</dt>
+      <dd class="col-sm-8">{{ user.email }}</dd>
+
+      <dt class="col-sm-4">Rol</dt>
+      <dd class="col-sm-8">{{ user.role.value }}</dd>
+
+      <dt class="col-sm-4">Nombre</dt>
+      <dd class="col-sm-8">{{ user.full_name|default:"—" }}</dd>
+
+      <dt class="col-sm-4">Programa</dt>
+      <dd class="col-sm-8">{{ user.programa|default:"—" }}</dd>
+
+      <dt class="col-sm-4">Semestre</dt>
+      <dd class="col-sm-8">{{ user.semestre|default:"—" }}</dd>
+    </dl>
+
+    <div class="mt-4">
+      <a href="{% url 'usuarios:logout' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i>
+        Cerrar sesión
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

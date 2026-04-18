@@ -75,7 +75,9 @@ class AppErrorMiddleware:
         )
 
         if isinstance(exception, AuthenticationRequired) and not _wants_json(request):
-            login_url = getattr(settings, "LOGIN_REDIRECT_URL", "/auth/login/")
+            # Use Django's documented setting for "where to send anonymous users".
+            # JwtAuthenticationMiddleware uses the same name; keeping them aligned.
+            login_url = getattr(settings, "LOGIN_URL", "/auth/login/")
             return redirect(login_url)
 
         if _wants_json(request):
