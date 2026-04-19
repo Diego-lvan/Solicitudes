@@ -7,7 +7,7 @@
 | #   | Initiative                | Status      | Depends on    | Added      | Plan                                                       | Affects                                                                 |
 | --- | ------------------------- | ----------- | ------------- | ---------- | ---------------------------------------------------------- | ----------------------------------------------------------------------- |
 | 001 | Project Setup & Base      | Done        | —             | 2026-04-25 | [plan](../planning/001-project-setup/plan.md)              | `config`, `_shared`, `templates`, `shared/infrastructure`, `shared/best-practices` |
-| 002 | Auth & Users              | Not Started | 001           | 2026-04-25 | [plan](../planning/002-auth-users/plan.md)                 | `usuarios`, `_shared/auth`                                    |
+| 002 | Auth & Users              | Done        | 001           | 2026-04-25 | [plan](../planning/002-auth-users/plan.md)                 | `usuarios`, `_shared/auth`                                    |
 | 003 | Catalog & Dynamic Forms   | Not Started | 002           | 2026-04-25 | [plan](../planning/003-catalog-forms/plan.md)              | `solicitudes/tipos`, `solicitudes/formularios`                |
 | 004 | Solicitud Lifecycle       | Not Started | 003           | 2026-04-25 | [plan](../planning/004-solicitud-lifecycle/plan.md)        | `solicitudes/intake`, `solicitudes/revision`, `solicitudes/lifecycle`, `flows` |
 | 005 | File Management           | Not Started | 004           | 2026-04-25 | [plan](../planning/005-file-management/plan.md)            | `solicitudes/archivos`, `_shared` (storage)                   |
@@ -15,6 +15,7 @@
 | 007 | Notifications             | Not Started | 004           | 2026-04-25 | [plan](../planning/007-notifications/plan.md)              | `notificaciones`, `flows`                                          |
 | 008 | Mentors                   | Not Started | 002           | 2026-04-25 | [plan](../planning/008-mentors/plan.md)                    | `mentores`                                                         |
 | 009 | Reports & Dashboard       | Not Started | 004           | 2026-04-25 | [plan](../planning/009-reports/plan.md)                    | `reportes`                                                         |
+| 010 | External Auth Provider    | Blocked     | 002 + OQ-002-1 | 2026-04-25 | [plan](../planning/010-external-auth-provider/plan.md)     | `usuarios`, `flows`                                                  |
 
 **Status values:** `Not Started` · `In Progress` · `Blocked` · `Done`
 
@@ -29,13 +30,15 @@
       │         ├── 006 PDF Generation
       │         ├── 007 Notifications
       │         └── 009 Reports & Dashboard
-      └── 008 Mentors
+      ├── 008 Mentors
+      └── 010 External Auth Provider   (blocked on OQ-002-1)
 ```
 
 ## Notes
 
 - After 004 lands, **005, 006, 007, 009 can run in parallel** — they share no critical-path files.
 - **008 (Mentors)** depends only on 002, so it can run in parallel with 003/004.
+- **010 (External Auth Provider)** swaps the DEBUG-only `/auth/dev-login` picker shipped in 002 for the real provider handshake; blocked on OQ-002-1. Can run any time after 002 once the provider contract is known.
 - Each initiative is sized for 1–3 implementation sessions. If a `plan.md` grows past that, decompose into sub-initiatives before starting `/implement`.
 
 ## Update protocol
