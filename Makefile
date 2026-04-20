@@ -3,7 +3,8 @@ DC_TEST := docker compose -f docker-compose.test.yml
 EXEC    := $(DC_DEV) exec -T web
 
 .PHONY: help up down build logs shell migrate makemigrations \
-        lint type test e2e e2e-install e2e-postgres e2e-headed clean certs
+        lint type test e2e e2e-install e2e-postgres e2e-headed clean certs \
+        seed seed-fresh
 
 help:  ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -42,6 +43,12 @@ migrate:  ## Apply migrations against dev DB
 
 makemigrations:  ## Generate migrations
 	$(EXEC) python manage.py makemigrations
+
+seed:  ## Idempotent dev seed (users + tipos); preserves manually-added rows
+	$(EXEC) python manage.py seed
+
+seed-fresh:  ## Wipe seeded rows and rebuild from scratch
+	$(EXEC) python manage.py seed --fresh
 
 lint:  ## ruff inside web
 	$(EXEC) ruff check .
