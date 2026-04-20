@@ -86,6 +86,8 @@ ABC with one method `fetch_profile(matricula) -> SigaProfile`.
   - 5xx, timeout, connection error, malformed JSON, missing/invalid URL → `SigaUnavailable` (broadened to `requests.RequestException` so dev/test runs with empty `SIGA_BASE_URL` are tolerated).
 - `JwtFallbackSigaService` — builds a minimal profile from the captured JWT claims; used for offline / dev environments. Currently unwired; available as a drop-in replacement.
 
+> **Profile shape is alumno-only today.** `SigaProfile` carries `matricula, email, full_name, programa, semestre`. Whether SIGA exposes the same shape (or a different one with `departamento`, `categoria`, etc.) for docentes / control escolar is **OQ-002-5** in `requirements.md`. Until SIGA confirms, the system degrades gracefully because every academic field on `UserDTO` is optional — a docente login simply gets empty `programa`/`semestre`. When the docente shape lands, extend `SigaProfile` additively and downstream consumers (e.g., initiative 011's `FieldSource` enum) gain new variants.
+
 ### `UserService` (`services/user_service/`)
 
 ABC with three methods:

@@ -50,6 +50,7 @@ Provide identity and authorization for the Sistema de Solicitudes. Authenticatio
 - **OQ-002-2** (personal roles) — does the provider's JWT carry `CONTROL_ESCOLAR`/`RESPONSABLE_PROGRAMA`? If not, a `DirectoryRoleResolver` backed by an admin-managed mapping table will be added — the `RoleResolver` ABC already absorbs the change.
 - **OQ-002-3** (refresh) — does the provider issue short-lived tokens? If yes, a refresh flow lands in 010.
 - **OQ-002-4** (deactivation) — provider-side revocations only take effect on the next failed JWT check today. Acceptable for v1.
+- **OQ-002-5** (SIGA shape per role) — `SigaProfile` is alumno-shaped today (`matricula`, `email`, `full_name`, `programa`, `semestre`). The SIGA team has not confirmed whether docente / control escolar profiles share the schema or expose distinct fields (`departamento`, `categoria`, `materias`, etc.). Action when answered: extend `SigaProfile` with the new fields (additive — existing optional fields stay), and any feature that surfaces docente data extends its consumers (e.g., initiative 011's `FieldSource` enum gains `USER_DEPARTAMENTO`). Until confirmed, the system degrades gracefully because all academic fields on `UserDTO` are optional. Cross-referenced from initiative 011 as **OQ-011-2**.
 
 ## Related Specs
 

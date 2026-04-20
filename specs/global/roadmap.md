@@ -16,6 +16,7 @@
 | 008 | Mentors                   | Not Started | 002           | 2026-04-25 | [plan](../planning/008-mentors/plan.md)                    | `mentores`                                                         |
 | 009 | Reports & Dashboard       | Not Started | 004           | 2026-04-25 | [plan](../planning/009-reports/plan.md)                    | `reportes`                                                         |
 | 010 | External Auth Provider    | Blocked     | 002 + OQ-002-1 | 2026-04-25 | [plan](../planning/010-external-auth-provider/plan.md)     | `usuarios`, `flows`                                                  |
+| 011 | Field Auto-fill from User | Not Started | 003 + 004     | 2026-04-25 | [plan](../planning/011-field-autofill/plan.md)             | `solicitudes/tipos`, `solicitudes/formularios`, `solicitudes/intake` |
 
 **Status values:** `Not Started` · `In Progress` · `Blocked` · `Done`
 
@@ -29,7 +30,8 @@
       │         ├── 005 File Management
       │         ├── 006 PDF Generation
       │         ├── 007 Notifications
-      │         └── 009 Reports & Dashboard
+      │         ├── 009 Reports & Dashboard
+      │         └── 011 Field Auto-fill from User Data   (extends 003 + intake)
       ├── 008 Mentors
       └── 010 External Auth Provider   (blocked on OQ-002-1)
 ```

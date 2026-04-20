@@ -43,6 +43,12 @@ Out:
 - The output `<input>`/`<select>`/`<textarea>` markup follows Bootstrap conventions (`form-control`, `form-select`).
 - No ORM access. The builder takes a Pydantic DTO and returns a Django form class — pure transformation.
 
+## Acceptance criteria added 2026-04-25 (initiative 011)
+
+- `FieldSnapshot` carries the field's `source` (`FieldSource` enum from `tipos/constants.py`).
+- `build_django_form(snapshot)` **skips** any field whose `source != USER_INPUT` — those values are not collected from the alumno; they are merged in by the intake service from the resolved `UserDTO`.
+- Auto-fill fields still appear in the snapshot and in the persisted `valores`; the only difference is who provides the value.
+
 ## Related Specs
 
 - [global/requirements.md](../../../global/requirements.md) — RF-02
