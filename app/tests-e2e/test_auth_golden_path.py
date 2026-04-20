@@ -72,7 +72,9 @@ def test_alumno_dev_login_lands_on_profile_and_logs_out(
     assert cookies_by_name["stk"]["httpOnly"] is True
 
     # 5. Click "Cerrar sesión" — should clear the cookie and bounce away.
-    page.get_by_role("link", name="Cerrar sesión").click()
+    #    The sidebar and the in-page button both expose this link, so scope
+    #    to the main content area to avoid strict-mode ambiguity.
+    page.locator("main").get_by_role("link", name="Cerrar sesión").click()
 
     # 6. Cookie is gone and we land back on the picker (dev's logout target).
     after_cookies = {c["name"]: c for c in page.context.cookies()}

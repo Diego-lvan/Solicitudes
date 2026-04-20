@@ -2,6 +2,10 @@
   --uaz-primary: #006341;
   --uaz-primary-dark: #00472f;
   --uaz-accent: #b88a44;
+  --bs-primary: var(--uaz-primary);
+  --bs-primary-rgb: 0, 99, 65;
+  --bs-link-color: var(--uaz-primary);
+  --app-sidebar-width: 16rem;
 }
 
 a {
@@ -19,10 +23,214 @@ a {
   border-color: var(--uaz-primary-dark);
 }
 
+.btn-outline-primary {
+  color: var(--uaz-primary);
+  border-color: var(--uaz-primary);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  background-color: var(--uaz-primary);
+  border-color: var(--uaz-primary);
+  color: #fff;
+}
+
+.text-primary {
+  color: var(--uaz-primary) !important;
+}
+
+.bg-primary-subtle {
+  background-color: rgba(0, 99, 65, 0.12) !important;
+}
+.text-primary,
+.bg-primary-subtle.text-primary {
+  color: var(--uaz-primary) !important;
+}
+
 .navbar-brand {
   color: var(--uaz-primary) !important;
 }
 
-main:focus {
+main:focus,
+.app-main:focus {
   outline: none;
+}
+
+/* ---------- Sidebar layout ---------- */
+
+.app-body {
+  /* On large screens we lay out as [sidebar][main]. Below lg, the sidebar is
+     hidden; mobile users open it via the offcanvas drawer in the navbar. */
+  width: 100%;
+  min-width: 0;
+}
+
+.app-sidebar {
+  width: var(--app-sidebar-width);
+  flex-shrink: 0;
+  display: none;
+}
+
+@media (min-width: 992px) {
+  .app-shell.has-sidebar .app-sidebar {
+    display: block;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: calc(100vh - 0px);
+    overflow-y: auto;
+  }
+}
+
+.app-sidebar-link {
+  color: #495057;
+  border-radius: .375rem;
+  padding: .5rem .75rem;
+  font-size: .9375rem;
+  display: flex;
+  align-items: center;
+}
+
+.app-sidebar-link:hover,
+.app-sidebar-link:focus-visible {
+  background-color: rgba(0, 99, 65, 0.08);
+  color: var(--uaz-primary-dark);
+  text-decoration: none;
+}
+
+.app-sidebar-link.active {
+  background-color: rgba(0, 99, 65, 0.12);
+  color: var(--uaz-primary-dark);
+  font-weight: 500;
+}
+
+.app-sidebar-link.text-danger:hover,
+.app-sidebar-link.text-danger:focus-visible {
+  background-color: rgba(220, 53, 69, 0.08);
+  color: #b02a37 !important;
+}
+
+/* The offcanvas drawer reuses the sidebar component; trim its top padding so
+   the sidebar's own padding still controls spacing. */
+.app-offcanvas .app-sidebar {
+  display: block;
+  width: 100%;
+  border-right: 0 !important;
+}
+
+/* ---------- Chip-style options input ---------- */
+
+.chip-input {
+  border: 1px solid #ced4da;
+  border-radius: .375rem;
+  padding: .375rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .375rem;
+  background-color: #fff;
+  min-height: 2.5rem;
+  align-items: center;
+}
+
+.chip-input:focus-within {
+  border-color: var(--uaz-primary);
+  box-shadow: 0 0 0 .2rem rgba(0, 99, 65, .25);
+}
+
+.chip-input input {
+  border: 0;
+  outline: 0;
+  flex: 1 0 8rem;
+  min-width: 8rem;
+  padding: .25rem .25rem;
+  font-size: .9375rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  background-color: rgba(0, 99, 65, 0.12);
+  color: var(--uaz-primary-dark);
+  border-radius: 999px;
+  padding: .15rem .5rem .15rem .75rem;
+  font-size: .875rem;
+  gap: .25rem;
+}
+
+.chip button {
+  background: none;
+  border: 0;
+  padding: 0 .25rem;
+  color: inherit;
+  line-height: 1;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.chip button:hover,
+.chip button:focus-visible {
+  color: #b02a37;
+}
+
+
+/* ---------- Tipo form: collapsible field rows + drag handle ---------- */
+.field-row {
+  transition: box-shadow .15s ease;
+}
+.field-row .field-row-header {
+  padding: .5rem .75rem;
+  border-bottom: 1px solid transparent;
+}
+.field-row.is-open .field-row-header {
+  border-bottom-color: var(--bs-border-color);
+}
+.field-row .field-drag-handle {
+  cursor: grab;
+}
+.field-row .field-drag-handle:active {
+  cursor: grabbing;
+}
+.field-row .field-row-toggle {
+  min-width: 0;
+}
+.field-row .field-row-summary-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The caret icon class is swapped in JS (bi-chevron-down ↔ bi-chevron-right);
+   no rotate transform — that would mislead if CSS transforms are disabled. */
+.field-row:not(.is-open) .field-row-body {
+  display: none;
+}
+.field-row.is-dragging {
+  box-shadow: 0 .5rem 1rem rgba(0,0,0,.1);
+}
+.field-row.is-ghost {
+  opacity: .4;
+}
+
+
+/* ---------- Tipo form: live preview pane ---------- */
+.tipo-preview-col {
+  /* On <xl, the aside stacks below the editor — no special styling needed. */
+}
+@media (min-width: 1200px) {
+  .tipo-preview-sticky {
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+}
+.tipo-preview-empty {
+  color: var(--bs-secondary-color);
+  font-style: italic;
+}
+.tipo-preview-field + .tipo-preview-field {
+  margin-top: 1rem;
+}
+.tipo-preview-required-mark {
+  color: var(--bs-danger);
+  margin-left: .15rem;
 }

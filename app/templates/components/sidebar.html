@@ -1,0 +1,42 @@
+{% comment %}
+Persistent left rail with role-aware navigation. Hidden for anonymous users
+(the layout collapses cleanly to a single-column page).
+{% endcomment %}
+{% comment %}
+`variant` arg distinguishes the persistent rail (default) from the offcanvas
+instance so screen-reader rotors don't show two identically-labelled landmarks.
+{% endcomment %}
+{% if request.user.is_authenticated %}
+<aside class="app-sidebar border-end bg-white"
+       aria-label="{% if variant == 'mobile' %}Navegación móvil{% else %}Navegación lateral{% endif %}">
+  <nav class="nav flex-column p-3 gap-1">
+    <a class="nav-link app-sidebar-link {% if request.path == '/' or request.path == '/auth/me' %}active{% endif %}"
+       href="{% url 'home' %}">
+      <i class="bi bi-house me-2" aria-hidden="true"></i>Inicio
+    </a>
+
+    {% if request.user.role == 'ADMIN' %}
+      <div class="text-muted text-uppercase small fw-semibold mt-3 mb-1 px-2"
+           style="letter-spacing:.08em;">
+        Catálogo
+      </div>
+      <a class="nav-link app-sidebar-link {% if '/solicitudes/admin/tipos' in request.path %}active{% endif %}"
+         href="{% url 'solicitudes:tipos:list' %}">
+        <i class="bi bi-collection me-2" aria-hidden="true"></i>Tipos de solicitud
+      </a>
+    {% endif %}
+
+    <div class="text-muted text-uppercase small fw-semibold mt-3 mb-1 px-2"
+         style="letter-spacing:.08em;">
+      Cuenta
+    </div>
+    <a class="nav-link app-sidebar-link {% if request.path == '/auth/me' %}active{% endif %}"
+       href="{% url 'usuarios:me' %}">
+      <i class="bi bi-person me-2" aria-hidden="true"></i>Mi perfil
+    </a>
+    <a class="nav-link app-sidebar-link text-danger" href="{% url 'usuarios:logout' %}">
+      <i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>Cerrar sesión
+    </a>
+  </nav>
+</aside>
+{% endif %}

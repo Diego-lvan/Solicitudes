@@ -10,23 +10,44 @@
     <link rel="stylesheet" href="{% static 'css/app.css' %}" />
     {% block extra_head %}{% endblock %}
   </head>
-  <body class="d-flex flex-column min-vh-100">
+  <body class="d-flex flex-column min-vh-100 app-shell {% if request.user.is_authenticated %}has-sidebar{% endif %}">
     <a href="#main" class="visually-hidden-focusable">Saltar al contenido</a>
 
     {% block nav %}
       {% include "components/nav.html" %}
     {% endblock %}
 
-    <main id="main" class="container py-4 flex-grow-1" role="main">
-      {% include "components/alerts.html" %}
-      {% block content %}{% endblock %}
-    </main>
+    <div class="app-body flex-grow-1 d-flex">
+      {% block sidebar %}
+        {% include "components/sidebar.html" %}
+      {% endblock %}
+
+      <main id="main" class="app-main flex-grow-1" role="main" tabindex="-1">
+        <div class="container-fluid container-xl py-4">
+          {% include "components/alerts.html" %}
+          {% block content %}{% endblock %}
+        </div>
+      </main>
+    </div>
 
     <footer class="border-top py-3 mt-auto bg-light">
       <div class="container small text-muted">
         Universidad Autónoma de Zacatecas &middot; Sistema de Solicitudes
       </div>
     </footer>
+
+    {# Offcanvas drawer holds the same sidebar for mobile (toggled by the navbar hamburger). #}
+    {% if request.user.is_authenticated %}
+    <div class="offcanvas offcanvas-start app-offcanvas" tabindex="-1" id="appOffcanvas" aria-labelledby="appOffcanvasLabel">
+      <div class="offcanvas-header border-bottom">
+        <h2 class="offcanvas-title h6 mb-0" id="appOffcanvasLabel">Navegación</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+      </div>
+      <div class="offcanvas-body p-0">
+        {% include "components/sidebar.html" with variant="mobile" %}
+      </div>
+    </div>
+    {% endif %}
 
     <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}" defer></script>
     {% block extra_scripts %}{% endblock %}
