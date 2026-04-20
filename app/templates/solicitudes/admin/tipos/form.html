@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}{{ form_title }} · {{ block.super }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'solicitudes:tipos:list' %}">Tipos</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ form_title }}</li>
+  </ol>
+</nav>
+
+<h1 class="h3 mb-4">{{ form_title }}</h1>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  {% if tipo_form.non_field_errors %}
+    <div class="alert alert-danger" role="alert">
+      {{ tipo_form.non_field_errors }}
+    </div>
+  {% endif %}
+
+  <div class="row g-4">
+  <div class="col-12 col-xl-7 tipo-editor-col">
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h2 class="h5 mb-3">Información general</h2>
+
+      <div class="row g-3">
+        <div class="col-12 col-md-8">
+          <label for="{{ tipo_form.nombre.id_for_label }}" class="form-label">
+            {{ tipo_form.nombre.label }} <span class="text-danger" aria-hidden="true">*</span>
+          </label>
+          {{ tipo_form.nombre }}
+          {% if tipo_form.nombre.errors %}
+            <div class="invalid-feedback d-block" role="alert">{{ tipo_form.nombre.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-12">
+          <label for="{{ tipo_form.descripcion.id_for_label }}" class="form-label">{{ tipo_form.descripcion.label }}</label>
+          {{ tipo_form.descripcion }}
+          {% if tipo_form.descripcion.errors %}
+            <div class="invalid-feedback d-block" role="alert">{{ tipo_form.descripcion.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-12 col-md-6">
+          <label for="{{ tipo_form.responsible_role.id_for_label }}" class="form-label">
+            {{ tipo_form.responsible_role.label }} <span class="text-danger" aria-hidden="true">*</span>
+          </label>
+          {{ tipo_form.responsible_role }}
+          {% if tipo_form.responsible_role.errors %}
+            <div class="invalid-feedback d-block" role="alert">{{ tipo_form.responsible_role.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-12 col-md-6">
+          <fieldset>
+            {# Bootstrap reboot ships <legend> at ~1.5rem; force it back to label size. #}
+            <legend class="form-label fs-6 fw-normal mb-2 float-none w-auto p-0">
+              {{ tipo_form.creator_roles.label }} <span class="text-danger" aria-hidden="true">*</span>
+            </legend>
+            {{ tipo_form.creator_roles }}
+            {% if tipo_form.creator_roles.errors %}
+              <div class="invalid-feedback d-block" role="alert">{{ tipo_form.creator_roles.errors.0 }}</div>
+            {% endif %}
+          </fieldset>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <div class="form-check">
+            {{ tipo_form.requires_payment }}
+            <label class="form-check-label" for="{{ tipo_form.requires_payment.id_for_label }}">{{ tipo_form.requires_payment.label }}</label>
+          </div>
+          <div class="form-check">
+            {{ tipo_form.mentor_exempt }}
+            <label class="form-check-label" for="{{ tipo_form.mentor_exempt.id_for_label }}">{{ tipo_form.mentor_exempt.label }}</label>
+            {% if tipo_form.mentor_exempt.help_text %}
+              <div class="form-text">{{ tipo_form.mentor_exempt.help_text }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h5 mb-0">Campos del formulario</h2>
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="add-field-row">
+      <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Agregar campo
+    </button>
+  </div>
+
+  {{ field_formset.management_form }}
+
+  {% if field_formset.non_form_errors %}
+    <div class="alert alert-danger" role="alert">
+      {{ field_formset.non_form_errors }}
+    </div>
+  {% endif %}
+
+  <div id="field-rows">
+    {% for f in field_formset %}
+      {% include "solicitudes/admin/tipos/_field_row.html" with form=f %}
+    {% endfor %}
+  </div>
+
+  {# Hidden empty form template — JS clones this when adding a row. #}
+  <template id="empty-field-row">
+    {% include "solicitudes/admin/tipos/_field_row.html" with form=field_formset.empty_form %}
+  </template>
+
+  <div class="d-flex flex-column flex-md-row gap-2 justify-content-end mt-4">
+    <a href="{% url 'solicitudes:tipos:list' %}" class="btn btn-outline-secondary order-2 order-md-1">Cancelar</a>
+    <button type="submit" class="btn btn-primary order-1 order-md-2">{{ submit_label }}</button>
+  </div>
+
+  </div>{# /col-xl-7 editor #}
+
+  <aside class="col-12 col-xl-5 tipo-preview-col" aria-label="Vista previa del formulario">
+    <div class="tipo-preview-sticky">
+      <div class="card">
+        <div class="card-header bg-light-subtle d-flex align-items-center gap-2">
+          <i class="bi bi-eye" aria-hidden="true"></i>
+          <h2 class="h6 mb-0">Vista previa</h2>
+          <span class="badge text-bg-light border ms-auto small">En vivo</span>
+        </div>
+        <div class="card-body" id="tipo-preview-body">
+          {# Rendered by tipo_form.js — kept tiny on purpose. #}
+        </div>
+      </div>
+      <p class="form-text mt-2 mb-0">
+        Así verá el formulario quien cree una solicitud de este tipo.
+      </p>
+    </div>
+  </aside>
+
+  </div>{# /row #}
+</form>
+{% endblock %}
+
+{% block extra_scripts %}
+{% load static %}
+<script src="{% static 'vendor/sortablejs/Sortable.min.js' %}" defer></script>
+<script src="{% static 'js/tipo_form.js' %}" defer></script>
+{% endblock %}

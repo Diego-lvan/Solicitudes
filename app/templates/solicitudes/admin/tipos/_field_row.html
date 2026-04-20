@@ -1,0 +1,180 @@
+{% comment %}
+One row of the dynamic-fields formset. Cloned by tipo_form.js for new rows.
+Card has two halves:
+  - .field-row-header — always visible: drag handle, label/type summary,
+    up/down/expand/delete controls.
+  - .field-row-body — collapsible; holds the editable fields.
+{% endcomment %}
+<div class="card mb-2 field-row" data-form-index="{{ form.prefix }}">
+  <div class="card-header bg-white d-flex align-items-center gap-2 field-row-header">
+    <button type="button"
+            class="btn btn-sm btn-link text-secondary p-1 field-drag-handle"
+            aria-label="Reordenar arrastrando"
+            tabindex="-1">
+      <i class="bi bi-grip-vertical fs-5" aria-hidden="true"></i>
+    </button>
+
+    <button type="button"
+            class="btn btn-sm btn-link text-decoration-none text-body p-0 flex-grow-1 d-flex align-items-center gap-2 text-start field-row-toggle"
+            aria-expanded="true"
+            aria-controls="field-body-{{ form.prefix }}">
+      <i class="bi bi-chevron-down field-row-caret" aria-hidden="true"></i>
+      <span class="field-row-summary-label fw-medium text-truncate">
+        {{ form.label.value|default:"Campo sin etiqueta" }}
+      </span>
+      <span class="badge text-bg-light border field-row-summary-type">
+        {{ form.field_type.value|default:"TEXT" }}
+      </span>
+    </button>
+
+    <div class="btn-group btn-group-sm" role="group" aria-label="Reordenar">
+      <button type="button" class="btn btn-outline-secondary field-move-up" aria-label="Subir campo">
+        <i class="bi bi-chevron-up" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="btn btn-outline-secondary field-move-down" aria-label="Bajar campo">
+        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <button type="button"
+            class="btn btn-sm btn-outline-danger field-row-delete-btn"
+            aria-label="Eliminar este campo">
+      <i class="bi bi-trash" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div class="card-body field-row-body" id="field-body-{{ form.prefix }}">
+    {{ form.field_id }}
+    {{ form.order }}
+
+    <div class="row g-3">
+      <div class="col-12 col-md-7">
+        <label for="{{ form.label.id_for_label }}" class="form-label">
+          Etiqueta <span class="text-danger" aria-hidden="true">*</span>
+        </label>
+        <input
+          type="text"
+          name="{{ form.label.html_name }}"
+          id="{{ form.label.id_for_label }}"
+          value="{{ form.label.value|default_if_none:'' }}"
+          class="form-control field-label-input"
+          maxlength="120"
+          required
+        />
+        {% if form.label.errors %}
+          <div class="invalid-feedback d-block" role="alert">{{ form.label.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-12 col-md-3">
+        <label for="{{ form.field_type.id_for_label }}" class="form-label">Tipo</label>
+        {{ form.field_type }}
+        {% if form.field_type.errors %}
+          <div class="invalid-feedback d-block" role="alert">{{ form.field_type.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-12 col-md-2 d-flex align-items-end">
+        <div class="form-check">
+          {{ form.required }}
+          <label class="form-check-label" for="{{ form.required.id_for_label }}">Obligatorio</label>
+        </div>
+      </div>
+
+      {% comment %}
+      SELECT options — chip-style editor with live <select> preview. The
+      `options_csv` input below is hidden but still posted; the JS keeps it
+      in sync with the chips.
+      {% endcomment %}
+      <div class="col-12 col-md-6 chip-options-cell" data-shows-for="SELECT" data-options-for="{{ form.options_csv.id_for_label }}">
+        <label class="form-label">Opciones del SELECT</label>
+        <div class="chip-input" role="group" aria-label="Opciones del menú desplegable">
+          <input type="text" class="chip-input-text" placeholder="Escribe una opción y presiona Enter" />
+        </div>
+        <div class="form-text">Presiona Enter o coma para agregar. La vista previa de la derecha se actualiza al instante.</div>
+        <div class="d-none">{{ form.options_csv }}</div>
+        {% if form.options_csv.errors %}
+          <div class="invalid-feedback d-block" role="alert">{{ form.options_csv.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      {% load tipos_tags %}
+      {% common_file_extensions as ext_groups %}
+      <div class="col-12 col-md-6 ext-multiselect-cell"
+           data-shows-for="FILE"
+           data-options-for="{{ form.accepted_extensions_csv.id_for_label }}">
+        <label class="form-label">Extensiones aceptadas (FILE)</label>
+        <div class="border rounded p-2 bg-light-subtle ext-multiselect">
+          {% for group_label, exts in ext_groups %}
+            <div class="ext-group {% if not forloop.first %}mt-2{% endif %}">
+              <div class="text-muted text-uppercase small fw-semibold mb-1"
+                   style="letter-spacing:.05em;">{{ group_label }}</div>
+              <div class="d-flex flex-wrap gap-1">
+                {% for ext in exts %}
+                  <input type="checkbox"
+                         class="btn-check ext-check"
+                         id="ext-{{ form.prefix }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"
+                         data-ext="{{ ext }}"
+                         autocomplete="off" />
+                  <label class="btn btn-sm btn-outline-secondary"
+                         for="ext-{{ form.prefix }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
+                    {{ ext }}
+                  </label>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="form-text">Selecciona uno o más tipos de archivo permitidos.</div>
+        <div class="d-none">{{ form.accepted_extensions_csv }}</div>
+        {% if form.accepted_extensions_csv.errors %}
+          <div class="invalid-feedback d-block" role="alert">{{ form.accepted_extensions_csv.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-6 col-md-3 size-mb-cell" data-shows-for="FILE">
+        <label for="{{ form.max_size_mb.id_for_label }}" class="form-label">Tamaño máx. (MB)</label>
+        {{ form.max_size_mb }}
+        {% if form.max_size_mb.help_text %}
+          <div class="form-text">{{ form.max_size_mb.help_text }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-6 col-md-3 max-chars-cell" data-shows-for="TEXT,TEXTAREA">
+        <label for="{{ form.max_chars.id_for_label }}" class="form-label">Largo máx. (caracteres)</label>
+        {{ form.max_chars }}
+        {% if form.max_chars.help_text %}
+          <div class="form-text">{{ form.max_chars.help_text }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-12 col-md-9">
+        <label for="{{ form.placeholder.id_for_label }}" class="form-label">{{ form.placeholder.label }}</label>
+        {{ form.placeholder }}
+        {% if form.placeholder.help_text %}
+          <div class="form-text">{{ form.placeholder.help_text }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-12">
+        <label for="{{ form.help_text.id_for_label }}" class="form-label">{{ form.help_text.label }}</label>
+        {{ form.help_text }}
+      </div>
+
+      {# DELETE checkbox kept off-screen; the trash button in the header drives it. #}
+      {% if form.DELETE %}
+        <div class="d-none">
+          {{ form.DELETE }}
+        </div>
+      {% endif %}
+
+      {% if form.non_field_errors %}
+      <div class="col-12">
+        <div class="alert alert-danger mb-0" role="alert">
+          {{ form.non_field_errors }}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>

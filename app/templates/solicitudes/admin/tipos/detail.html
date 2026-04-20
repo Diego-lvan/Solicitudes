@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load role_display %}
+
+{% block title %}{{ tipo.nombre }} · {{ block.super }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'solicitudes:tipos:list' %}">Tipos</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ tipo.nombre }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-4">
+  <div>
+    <h1 class="h3 mb-1">{{ tipo.nombre }}</h1>
+    <div class="text-muted small">{{ tipo.slug }}</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{% url 'solicitudes:tipos:edit' tipo_id=tipo.id %}">
+      <i class="bi bi-pencil me-1" aria-hidden="true"></i> Editar
+    </a>
+    {% if tipo.activo %}
+    <a class="btn btn-outline-danger" href="{% url 'solicitudes:tipos:deactivate' tipo_id=tipo.id %}">
+      <i class="bi bi-archive me-1" aria-hidden="true"></i> Desactivar
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <dl class="row mb-0">
+      <dt class="col-sm-4 col-md-3">Estado</dt>
+      <dd class="col-sm-8 col-md-9">
+        {% if tipo.activo %}
+          <span class="badge text-bg-success">Activo</span>
+        {% else %}
+          <span class="badge text-bg-secondary">Inactivo</span>
+        {% endif %}
+      </dd>
+
+      <dt class="col-sm-4 col-md-3">Rol responsable</dt>
+      <dd class="col-sm-8 col-md-9">{{ tipo.responsible_role|role_label }}</dd>
+
+      <dt class="col-sm-4 col-md-3">Roles creadores</dt>
+      <dd class="col-sm-8 col-md-9">
+        {% for r in tipo.creator_roles %}
+          <span class="badge text-bg-secondary">{{ r.value|title }}</span>
+        {% endfor %}
+      </dd>
+
+      <dt class="col-sm-4 col-md-3">Requiere pago</dt>
+      <dd class="col-sm-8 col-md-9">
+        {% if tipo.requires_payment %}Sí{% else %}No{% endif %}
+        {% if tipo.requires_payment and tipo.mentor_exempt %}
+          <span class="badge text-bg-info ms-2">Mentores exentos</span>
+        {% endif %}
+      </dd>
+
+      {% if tipo.descripcion %}
+      <dt class="col-sm-4 col-md-3">Descripción</dt>
+      <dd class="col-sm-8 col-md-9">{{ tipo.descripcion }}</dd>
+      {% endif %}
+    </dl>
+  </div>
+</div>
+
+<h2 class="h5 mb-3">Vista previa del formulario</h2>
+
+{% if preview_form %}
+  <div class="card">
+    <div class="card-body">
+      <p class="text-muted small mb-3">
+        Esta es la vista que verán los creadores autorizados al iniciar una solicitud de este tipo.
+      </p>
+      <form aria-label="Vista previa del formulario dinámico" onsubmit="return false;">
+        {% for field in preview_form %}
+          <div class="mb-3">
+            <label for="{{ field.id_for_label }}" class="form-label">
+              {{ field.label }}
+              {% if field.field.required %}<span class="text-danger" aria-hidden="true">*</span>{% endif %}
+            </label>
+            {{ field }}
+            {% if field.help_text %}
+              <div class="form-text">{{ field.help_text }}</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary" disabled>Enviar (vista previa)</button>
+      </form>
+    </div>
+  </div>
+{% else %}
+  <div class="text-center py-5 border rounded bg-light">
+    <i class="bi bi-input-cursor-text fs-1 text-muted" aria-hidden="true"></i>
+    <p class="mt-3 mb-2">
+      {% if not tipo.activo %}
+        El tipo está inactivo; la vista previa no está disponible.
+      {% else %}
+        Este tipo aún no tiene campos definidos.
+      {% endif %}
+    </p>
+    {% if tipo.activo %}
+    <a class="btn btn-outline-primary btn-sm" href="{% url 'solicitudes:tipos:edit' tipo_id=tipo.id %}">Agregar campos</a>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

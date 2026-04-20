@@ -10,7 +10,11 @@ select = ["E", "F", "I", "B", "UP", "SIM", "N", "C4", "RUF"]
 ignore = ["N818", "UP046"]
 
 [tool.ruff.lint.per-file-ignores]
-"**/tests/**" = ["B", "N802"]
+"**/tests/**" = ["B", "N802", "N806", "E501"]
+# Django model `Meta` classes use list literals (`ordering`, `indexes`,
+# `constraints`); RUF012 wants ClassVar annotations that don't survive
+# Django's metaclass. Skip RUF012 in the models layer.
+"**/models/**" = ["RUF012"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -36,7 +40,7 @@ markers = [
 
 [tool.coverage.run]
 # Add each app to `source` as it ships (002 → usuarios, 003 → solicitudes, …).
-source = ["_shared", "config", "usuarios"]
+source = ["_shared", "config", "usuarios", "solicitudes"]
 omit = ["*/migrations/*", "*/tests/*"]
 
 [tool.coverage.report]
