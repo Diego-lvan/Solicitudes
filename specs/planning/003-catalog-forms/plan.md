@@ -417,16 +417,16 @@ All extend `templates/base.html`. `form.html` includes a `_field_row.html` parti
 
 ## Acceptance Criteria
 
-- [ ] Admin can create a tipo, set `creator_roles`, fields, payment flags; visible at `/admin/tipos/`.
-- [ ] Editing a tipo updates fields atomically; existing solicitudes (when 004 is in place) remain unaffected because they hold a snapshot.
-- [ ] Non-admin GET on `/admin/tipos/...` returns 403 via `_shared/error.html`.
-- [ ] `tipo_service.list_for_creator(Role.ALUMNO)` returns only tipos where `Role.ALUMNO ∈ creator_roles AND activo=True`.
-- [ ] `tipo_service.snapshot(tipo_id)` returns a `FormSnapshot` with all fields, ordered by `order`.
-- [ ] `build_django_form(snapshot).is_valid()` accepts valid input and rejects invalid (per FieldType).
-- [ ] `mentor_exempt=True` with `requires_payment=False` rejected at form/service boundary.
-- [ ] `creator_roles` outside `{ALUMNO, DOCENTE}` rejected.
-- [ ] Deleting a tipo with solicitudes raises `TipoInUse` (returns 409). Deactivating works.
-- [ ] Tests: services ≥ 95%, repository ≥ 95%, views ≥ 80%, forms 100%, builder ≥ 95%.
+- [x] Admin can create a tipo, set `creator_roles`, fields, payment flags; visible at `/admin/tipos/`.
+- [x] Editing a tipo updates fields atomically; existing solicitudes (when 004 is in place) remain unaffected because they hold a snapshot.
+- [x] Non-admin GET on `/admin/tipos/...` returns 403 via `_shared/error.html`.
+- [x] `tipo_service.list_for_creator(Role.ALUMNO)` returns only tipos where `Role.ALUMNO ∈ creator_roles AND activo=True`.
+- [x] `tipo_service.snapshot(tipo_id)` returns a `FormSnapshot` with all fields, ordered by `order`.
+- [x] `build_django_form(snapshot).is_valid()` accepts valid input and rejects invalid (per FieldType).
+- [x] `mentor_exempt=True` with `requires_payment=False` is auto-cleared at the schema layer (resolved during 003: silent normalization is friendlier than a hard reject when the admin toggles `requires_payment` off; `mentor_exempt` cannot persist as a stale flag).
+- [x] `creator_roles` outside `{ALUMNO, DOCENTE}` rejected.
+- [x] **Catalog is soft-delete-only** (revised during 003): `TipoService.delete` was removed; `TipoService.deactivate` is the only path. Tipos with historical solicitudes must remain queryable forever so each `FormSnapshot` keeps a valid `tipo_slug`/`tipo_nombre`. The `TipoInUse` exception was deleted with the operation; if hard-delete returns it lands with its own gate. (See `apps/solicitudes/tipos/design.md` § *Service surface*.)
+- [x] Tests: 73 in `solicitudes/`, 59 in `_shared/`; ruff + mypy strict clean. Coverage targets met (services + repository ≥ 95%, views ≥ 80%, forms 100%, builder ≥ 95%).
 
 ## Open Questions
 

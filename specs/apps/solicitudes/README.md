@@ -18,4 +18,6 @@ Folders are created here when `/brainstorm` produces a `requirements.md` for a f
 
 ## Currently planned features
 
-_None yet — specs will appear as initiatives are brainstormed and planned._
+- [tipos/](./tipos/) — admin catalog of tipos de solicitud (delivered in 003)
+- [formularios/](./formularios/) — runtime form builder consumed by intake (delivered in 003)
+- _intake/, revision/, lifecycle/, archivos/, pdf/ — to be added by initiatives 004–006_
