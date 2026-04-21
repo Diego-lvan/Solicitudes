@@ -15,11 +15,16 @@ def health(request: HttpRequest) -> JsonResponse:
     )
 
 
-# Per-role landing pages. Roles without a real "home" yet (alumno/docente
-# solicitud lists arrive in 004; staff review queue arrives in 004) bounce to
-# the profile page so the user sees something sensible instead of a 404.
+# Per-role landing pages. Creators land on the intake catalog so they can file
+# a new solicitud in one click; personal lands on the revision queue; admins
+# keep the tipos catalog as home since they typically curate the catalog
+# before anything else.
 _HOME_FOR_ROLE: dict[str, str] = {
     Role.ADMIN.value: "/solicitudes/admin/tipos/",
+    Role.ALUMNO.value: "/solicitudes/",
+    Role.DOCENTE.value: "/solicitudes/",
+    Role.CONTROL_ESCOLAR.value: "/solicitudes/revision/",
+    Role.RESPONSABLE_PROGRAMA.value: "/solicitudes/revision/",
 }
 _DEFAULT_AUTHED_HOME = "/auth/me"
 
@@ -28,8 +33,9 @@ def home(request: HttpRequest) -> HttpResponse:
     """Role-aware landing page for the project root.
 
     Anonymous → bounce to the auth provider login. Authenticated → role-specific
-    home (admins land on the catalog; everyone else lands on their profile
-    until their feature ships).
+    home: alumnos/docentes land on the intake catalog, control-escolar /
+    responsable-programa land on the revision queue, admins land on the tipos
+    catalog. Roles without a mapped home fall back to the profile page.
     """
     user = getattr(request, "user", None)
     if user is None or not user.is_authenticated:

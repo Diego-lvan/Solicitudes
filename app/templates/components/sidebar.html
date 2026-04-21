@@ -10,10 +10,36 @@ instance so screen-reader rotors don't show two identically-labelled landmarks.
 <aside class="app-sidebar border-end bg-white"
        aria-label="{% if variant == 'mobile' %}Navegación móvil{% else %}Navegación lateral{% endif %}">
   <nav class="nav flex-column p-3 gap-1">
-    <a class="nav-link app-sidebar-link {% if request.path == '/' or request.path == '/auth/me' %}active{% endif %}"
+    <a class="nav-link app-sidebar-link {% if request.path == '/' %}active{% endif %}"
        href="{% url 'home' %}">
       <i class="bi bi-house me-2" aria-hidden="true"></i>Inicio
     </a>
+
+    {% if request.user.role == 'ALUMNO' or request.user.role == 'DOCENTE' %}
+      <div class="text-muted text-uppercase small fw-semibold mt-3 mb-1 px-2"
+           style="letter-spacing:.08em;">
+        Solicitudes
+      </div>
+      <a class="nav-link app-sidebar-link {% if request.path == '/solicitudes/' or '/solicitudes/crear/' in request.path %}active{% endif %}"
+         href="{% url 'solicitudes:intake:catalog' %}">
+        <i class="bi bi-plus-square me-2" aria-hidden="true"></i>Crear solicitud
+      </a>
+      <a class="nav-link app-sidebar-link {% if '/solicitudes/mis/' in request.path %}active{% endif %}"
+         href="{% url 'solicitudes:intake:mis_solicitudes' %}">
+        <i class="bi bi-list-check me-2" aria-hidden="true"></i>Mis solicitudes
+      </a>
+    {% endif %}
+
+    {% if request.user.role == 'CONTROL_ESCOLAR' or request.user.role == 'RESPONSABLE_PROGRAMA' or request.user.role == 'DOCENTE' or request.user.role == 'ADMIN' %}
+      <div class="text-muted text-uppercase small fw-semibold mt-3 mb-1 px-2"
+           style="letter-spacing:.08em;">
+        Revisión
+      </div>
+      <a class="nav-link app-sidebar-link {% if '/solicitudes/revision/' in request.path %}active{% endif %}"
+         href="{% url 'solicitudes:revision:queue' %}">
+        <i class="bi bi-inbox me-2" aria-hidden="true"></i>Cola de revisión
+      </a>
+    {% endif %}
 
     {% if request.user.role == 'ADMIN' %}
       <div class="text-muted text-uppercase small fw-semibold mt-3 mb-1 px-2"

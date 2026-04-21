@@ -56,20 +56,24 @@ def test_home_redirects_admin_to_tipos_catalog() -> None:
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    ("role", "matricula"),
+    ("role", "matricula", "expected_path"),
     [
-        (Role.ALUMNO, "AL1"),
-        (Role.DOCENTE, "DC1"),
-        (Role.CONTROL_ESCOLAR, "CE1"),
-        (Role.RESPONSABLE_PROGRAMA, "RP1"),
+        # Creators land on the intake catalog so they can file a solicitud.
+        (Role.ALUMNO, "AL1", "/solicitudes/"),
+        (Role.DOCENTE, "DC1", "/solicitudes/"),
+        # Personal lands on the revision queue.
+        (Role.CONTROL_ESCOLAR, "CE1", "/solicitudes/revision/"),
+        (Role.RESPONSABLE_PROGRAMA, "RP1", "/solicitudes/revision/"),
     ],
 )
-def test_home_redirects_non_admin_roles_to_profile(role: Role, matricula: str) -> None:
+def test_home_redirects_non_admin_roles_to_role_specific_landing(
+    role: Role, matricula: str, expected_path: str
+) -> None:
     client = Client()
     client.cookies[SESSION_COOKIE_NAME] = _mint(matricula, role)
     response = client.get("/")
     assert response.status_code == 302
-    assert response["Location"] == "/auth/me"
+    assert response["Location"] == expected_path
 
 
 def test_home_redirects_anonymous_to_login() -> None:
