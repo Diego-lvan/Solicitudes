@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tipo.nombre }} · {{ block.super }}{% endblock %}
+
+{% block content %}
+<nav aria-label="Ruta" class="mb-3">
+  <ol class="breadcrumb small mb-0">
+    <li class="breadcrumb-item">
+      <a href="{% url 'solicitudes:intake:catalog' %}">Crear solicitud</a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">{{ tipo.nombre }}</li>
+  </ol>
+</nav>
+
+<h1 class="h3 mb-1">{{ tipo.nombre }}</h1>
+{% if tipo.descripcion %}
+  <p class="text-muted">{{ tipo.descripcion }}</p>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" novalidate class="mt-4" style="max-width: 720px;">
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger" role="alert">
+      {{ form.non_field_errors }}
+    </div>
+  {% endif %}
+
+  {% for field in form %}
+    <div class="mb-3">
+      <label for="{{ field.id_for_label }}" class="form-label">
+        {{ field.label }}
+        {% if field.field.required %}
+          <span class="text-danger" aria-hidden="true">*</span>
+        {% endif %}
+      </label>
+      {{ field }}
+      {% if field.help_text %}
+        <div class="form-text">{{ field.help_text }}</div>
+      {% endif %}
+      {% if field.errors %}
+        <div class="invalid-feedback d-block" role="alert">
+          {{ field.errors|join:" " }}
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  <div class="d-flex flex-column flex-md-row gap-2 justify-content-md-end mt-4">
+    <a href="{% url 'solicitudes:intake:catalog' %}" class="btn btn-outline-secondary order-md-1">Cancelar</a>
+    <button type="submit" class="btn btn-primary order-md-2">Enviar solicitud</button>
+  </div>
+</form>
+{% endblock %}

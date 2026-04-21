@@ -1,0 +1,25 @@
+{% load solicitudes_tags %}
+{# Renders snapshot fields with their submitted values. #}
+{# Expects `snapshot` (FormSnapshot) and `valores` (dict[str, Any]). #}
+<dl class="row mb-0">
+  {% for field in snapshot.fields %}
+    <dt class="col-sm-4 text-sm-end fw-semibold">{{ field.label }}</dt>
+    <dd class="col-sm-8">
+      {% with value=valores|get_valor:field.field_id %}
+        {% if field.field_type.value == "FILE" %}
+          {% if value %}
+            <span class="text-body">{{ value }}</span>
+          {% else %}
+            <span class="text-muted">Sin archivo</span>
+          {% endif %}
+        {% else %}
+          {% if value %}
+            <span class="text-body">{{ value|linebreaksbr }}</span>
+          {% else %}
+            <span class="text-muted">—</span>
+          {% endif %}
+        {% endif %}
+      {% endwith %}
+    </dd>
+  {% endfor %}
+</dl>

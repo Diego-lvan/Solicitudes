@@ -1,0 +1,28 @@
+{# Timeline of HistorialEntry rows. Expects `historial` (list[HistorialEntry]). #}
+{% if historial %}
+<ol class="list-unstyled mb-0">
+  {% for entry in historial %}
+  <li class="d-flex gap-3 pb-3 mb-3 border-bottom">
+    <div class="flex-shrink-0">
+      {% include "solicitudes/_partials/_estado_badge.html" with estado=entry.estado_nuevo %}
+    </div>
+    <div class="flex-grow-1">
+      <div class="small text-muted">
+        {{ entry.created_at|date:"d/m/Y H:i" }} ·
+        {{ entry.actor_nombre }} ({{ entry.actor_role.value|title }})
+      </div>
+      {% if entry.estado_anterior %}
+        <div>De <code>{{ entry.estado_anterior.value }}</code> a <code>{{ entry.estado_nuevo.value }}</code></div>
+      {% else %}
+        <div>Solicitud creada</div>
+      {% endif %}
+      {% if entry.observaciones %}
+        <p class="mb-0 mt-1">{{ entry.observaciones }}</p>
+      {% endif %}
+    </div>
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<p class="text-muted mb-0">Sin historial.</p>
+{% endif %}
