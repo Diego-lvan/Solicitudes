@@ -70,7 +70,7 @@ TERMINAL = frozenset({Estado.FINALIZADA, Estado.CANCELADA})
 ### DTOs (`lifecycle/schemas.py`)
 
 - **`SolicitudRow`** — frozen list-view DTO: `folio, tipo_id, tipo_nombre, solicitante_matricula, solicitante_nombre, estado, requiere_pago, created_at, updated_at`.
-- **`SolicitudDetail`** — frozen hydrated DTO: `folio, tipo: TipoSolicitudRow, solicitante: UserDTO, estado, form_snapshot: FormSnapshot, valores: dict[str, Any], requiere_pago, pago_exento, created_at, updated_at, historial: list[HistorialEntry]`.
+- **`SolicitudDetail`** — frozen hydrated DTO: `folio, tipo: TipoSolicitudRow, solicitante: UserDTO, estado, form_snapshot: FormSnapshot, valores: dict[str, Any], requiere_pago, pago_exento, created_at, updated_at, historial: list[HistorialEntry]`. `tipo.plantilla_id` is populated by `OrmSolicitudRepository._to_detail` from 006 onward so consumers (intake/revision detail templates, `PdfService`) can gate the "Generar PDF" affordance without a second tipo lookup.
 - **`HistorialEntry`** — frozen: `id, estado_anterior, estado_nuevo, actor_matricula, actor_nombre, actor_role, observaciones, created_at`.
 - **`SolicitudFilter`** — input DTO: `estado, tipo_id, folio_contains, solicitante_contains, created_from, created_to`.
 - **`TransitionInput`** — service input: `folio, actor_matricula, observaciones (≤2000)`.

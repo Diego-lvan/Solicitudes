@@ -23,4 +23,5 @@ Folders are created here when `/brainstorm` produces a `requirements.md` for a f
 - [lifecycle/](./lifecycle/) — state machine, folio allocation, repos, notifications port, audit (delivered in 004)
 - [intake/](./intake/) — solicitante surface: catalog, dynamic form, create, mis_solicitudes, owner-cancel (delivered in 004)
 - [revision/](./revision/) — personal surface: queue, detail-with-actions, atender/finalizar/cancelar (delivered in 004)
-- _archivos/, pdf/ — to be added by initiatives 005–006_
+- [pdf/](./pdf/) — admin plantilla CRUD + on-demand WeasyPrint rendering of solicitudes (delivered in 006)
+- _archivos/ — to be added by initiative 005_
