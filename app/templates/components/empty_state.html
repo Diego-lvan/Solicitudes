@@ -1,10 +1,12 @@
-{# Empty-state component (per frontend-design skill).
-   Args:
-     icon         — Bootstrap Icons class fragment, e.g. "inbox" → renders <i class="bi bi-inbox">.
-     title        — primary line.
-     description  — optional secondary line.
-     action_url   — optional URL for a primary CTA.
-     action_label — label for that CTA. Both action_* must be present together. #}
+{% comment %}
+Empty-state component (per frontend-design skill).
+Args:
+  icon         — Bootstrap Icons class fragment, e.g. "inbox" → renders <i class="bi bi-inbox">.
+  title        — primary line.
+  description  — optional secondary line.
+  action_url   — optional URL for a primary CTA.
+  action_label — label for that CTA. Both action_* must be present together.
+{% endcomment %}
 <div class="text-center py-5">
   {% if icon %}
     <i class="bi bi-{{ icon }} fs-1 text-muted" aria-hidden="true"></i>
