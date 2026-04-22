@@ -20,4 +20,7 @@ Folders are created here when `/brainstorm` produces a `requirements.md` for a f
 
 - [tipos/](./tipos/) — admin catalog of tipos de solicitud (delivered in 003)
 - [formularios/](./formularios/) — runtime form builder consumed by intake (delivered in 003)
-- _intake/, revision/, lifecycle/, archivos/, pdf/ — to be added by initiatives 004–006_
+- [lifecycle/](./lifecycle/) — state machine, folio allocation, repos, notifications port, audit (delivered in 004)
+- [intake/](./intake/) — solicitante surface: catalog, dynamic form, create, mis_solicitudes, owner-cancel (delivered in 004)
+- [revision/](./revision/) — personal surface: queue, detail-with-actions, atender/finalizar/cancelar (delivered in 004)
+- _archivos/, pdf/ — to be added by initiatives 005–006_
