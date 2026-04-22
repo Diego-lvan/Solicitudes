@@ -51,7 +51,9 @@ class TipoSolicitudDTO(BaseModel):
 
 
 class TipoSolicitudRow(BaseModel):
-    """Trimmed DTO for list views — no fields, no plantilla."""
+    """Trimmed DTO for list views — no fields, but does carry ``plantilla_id``
+    so consumers (e.g. ``SolicitudDetail.tipo``) can decide whether a PDF can
+    be rendered without re-fetching the full tipo."""
 
     model_config = {"frozen": True}
 
@@ -62,6 +64,7 @@ class TipoSolicitudRow(BaseModel):
     creator_roles: set[Role]
     requires_payment: bool
     activo: bool
+    plantilla_id: UUID | None = None
 
 
 class CreateFieldInput(BaseModel):

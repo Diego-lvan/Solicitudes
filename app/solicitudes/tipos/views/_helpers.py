@@ -52,6 +52,7 @@ def build_create_input(
         creator_roles={Role(r) for r in tipo_form.cleaned_data["creator_roles"]},
         requires_payment=tipo_form.cleaned_data.get("requires_payment", False),
         mentor_exempt=tipo_form.cleaned_data.get("mentor_exempt", False),
+        plantilla_id=tipo_form.cleaned_data.get("plantilla_id"),
         fields=_collect_fields(formset),
     )
 
@@ -67,6 +68,7 @@ def build_update_input(
         creator_roles={Role(r) for r in tipo_form.cleaned_data["creator_roles"]},
         requires_payment=tipo_form.cleaned_data.get("requires_payment", False),
         mentor_exempt=tipo_form.cleaned_data.get("mentor_exempt", False),
+        plantilla_id=tipo_form.cleaned_data.get("plantilla_id"),
         fields=_collect_fields(formset),
     )
 

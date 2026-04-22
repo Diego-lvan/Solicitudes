@@ -19,8 +19,15 @@
       {{ detail.tipo.nombre }} · {{ detail.created_at|date:"d/m/Y H:i" }}
     </div>
   </div>
-  <div>
+  <div class="d-flex align-items-center gap-2">
     {% include "solicitudes/_partials/_estado_badge.html" with estado=detail.estado %}
+    {% if is_owner and detail.estado.value == "FINALIZADA" and detail.tipo.plantilla_id %}
+      <a class="btn btn-outline-primary btn-sm"
+         href="{% url 'solicitudes:pdf_download' folio=detail.folio %}"
+         target="_blank" rel="noopener">
+        <i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i> Descargar PDF
+      </a>
+    {% endif %}
   </div>
 </div>
 

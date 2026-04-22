@@ -83,6 +83,17 @@
             {% endif %}
           </div>
         </div>
+
+        <div class="col-12">
+          <label for="{{ tipo_form.plantilla_id.id_for_label }}" class="form-label">{{ tipo_form.plantilla_id.label }}</label>
+          {{ tipo_form.plantilla_id }}
+          {% if tipo_form.plantilla_id.help_text %}
+            <div class="form-text">{{ tipo_form.plantilla_id.help_text }}</div>
+          {% endif %}
+          {% if tipo_form.plantilla_id.errors %}
+            <div class="invalid-feedback d-block" role="alert">{{ tipo_form.plantilla_id.errors.0 }}</div>
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>

@@ -11,6 +11,7 @@ from django.views import View
 from pydantic import ValidationError as PydValidationError
 
 from _shared.exceptions import AppError
+from solicitudes.pdf.dependencies import get_plantilla_service
 from solicitudes.tipos.dependencies import get_tipo_service
 from solicitudes.tipos.forms import FieldFormSet, TipoForm
 from solicitudes.tipos.views._helpers import (
@@ -20,6 +21,11 @@ from solicitudes.tipos.views._helpers import (
 from usuarios.permissions import AdminRequiredMixin
 
 
+def _plantilla_choices() -> list[tuple[str, str]]:
+    rows = get_plantilla_service().list(only_active=True)
+    return [(str(r.id), r.nombre) for r in rows]
+
+
 class TipoEditView(AdminRequiredMixin, View):
     template_name = "solicitudes/admin/tipos/form.html"
 
@@ -27,6 +33,7 @@ class TipoEditView(AdminRequiredMixin, View):
         service = get_tipo_service()
         tipo = service.get_for_admin(tipo_id)
         tipo_form = TipoForm(
+            plantilla_choices=_plantilla_choices(),
             initial={
                 "nombre": tipo.nombre,
                 "descripcion": tipo.descripcion,
@@ -34,7 +41,8 @@ class TipoEditView(AdminRequiredMixin, View):
                 "creator_roles": [r.value for r in tipo.creator_roles],
                 "requires_payment": tipo.requires_payment,
                 "mentor_exempt": tipo.mentor_exempt,
-            }
+                "plantilla_id": str(tipo.plantilla_id) if tipo.plantilla_id else "",
+            },
         )
         field_formset = FieldFormSet(
             initial=fieldset_initial_from_dto(tipo.fields),
@@ -53,7 +61,7 @@ class TipoEditView(AdminRequiredMixin, View):
         )
 
     def post(self, request: HttpRequest, tipo_id: UUID) -> HttpResponse:
-        tipo_form = TipoForm(request.POST)
+        tipo_form = TipoForm(request.POST, plantilla_choices=_plantilla_choices())
         field_formset = FieldFormSet(request.POST, prefix="fields")
 
         # Re-fetch the tipo so the template can render the heading even on error.
