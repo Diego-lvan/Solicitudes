@@ -26,14 +26,14 @@ Admin browser → views/{list,create,detail,edit,delete}.py
 
 ### Models (`solicitudes/models/`)
 
-- **`TipoSolicitud`** — `id` (UUID), `slug` (unique, ≤80), `nombre` (≤120), `descripcion` (text), `responsible_role` (`Role`), `creator_roles` (JSONField → `list[str]`), `requires_payment`, `mentor_exempt`, `plantilla_id` (UUID, nullable until 006), `activo`, `created_at`, `updated_at`. Index on `(activo, responsible_role)`.
+- **`TipoSolicitud`** — `id` (UUID), `slug` (unique, ≤80), `nombre` (≤120), `descripcion` (text), `responsible_role` (`Role`), `creator_roles` (JSONField → `list[str]`), `requires_payment`, `mentor_exempt`, `plantilla` (FK → `solicitudes.PlantillaSolicitud`, nullable, `on_delete=SET_NULL`, `related_name="tipos"`; introduced in 006), `activo`, `created_at`, `updated_at`. Index on `(activo, responsible_role)`. The Django auto-generated `plantilla_id` accessor remains the public attribute name on the ORM row.
 - **`FieldDefinition`** — `id` (UUID), `tipo` (FK CASCADE), `label` (≤120), `field_type` (`FieldType`), `required`, `order` (PositiveSmallInt), `options` (JSONField → `list[str]`, SELECT only), `accepted_extensions` (JSONField → `list[str]`, FILE only), `max_size_mb` (PositiveInt, FILE only, default 10), `max_chars` (PositiveInt, nullable, TEXT/TEXTAREA only), `placeholder` (≤200), `help_text` (≤300). Constraint: `unique (tipo, order)`. Default ordering: `order` asc.
 
 ### DTOs (`tipos/schemas.py`)
 
 - **`FieldDefinitionDTO`** — frozen Pydantic: `id, label, field_type, required, order, options, accepted_extensions, max_size_mb, max_chars, placeholder, help_text`.
 - **`TipoSolicitudDTO`** — frozen: full hydrated tipo with `fields: list[FieldDefinitionDTO]`.
-- **`TipoSolicitudRow`** — frozen list-view DTO: `id, slug, nombre, responsible_role, creator_roles, requires_payment, activo`. No fields, no plantilla.
+- **`TipoSolicitudRow`** — frozen list-view DTO: `id, slug, nombre, responsible_role, creator_roles, requires_payment, activo, plantilla_id (UUID | None, default None)`. No fields. `plantilla_id` was added in 006 so consumers (notably `SolicitudDetail.tipo` and the intake/revision detail templates) can decide whether a PDF can be rendered without re-fetching the full tipo. Backwards-compatible default keeps existing constructors valid.
 - **`CreateFieldInput`** / **`CreateTipoInput`** / **`UpdateTipoInput`** — input DTOs the form layer constructs from `cleaned_data`. Each carries the same shape as the persisted DTO plus Pydantic validators.
 
 ### Validator order (matters)
