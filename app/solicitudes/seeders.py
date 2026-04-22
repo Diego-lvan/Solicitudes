@@ -1,13 +1,14 @@
 """Dev seed data for the solicitudes app.
 
-Builds two representative tipos with their fields so the admin catalog has
-something to render right after ``manage.py seed``.
+Builds two representative tipos (with their fields) and two PDF plantillas,
+each tipo wired to its plantilla, so the admin catalog and the PDF download
+flow both work right after ``manage.py seed``.
 """
 from __future__ import annotations
 
 from typing import Any
 
-from solicitudes.models import FieldDefinition, TipoSolicitud
+from solicitudes.models import FieldDefinition, PlantillaSolicitud, TipoSolicitud
 from solicitudes.tipos.constants import FieldType
 from usuarios.constants import Role
 
@@ -22,9 +23,136 @@ SEEDED_SLUGS: list[str] = [
 ]
 
 
+SEEDED_PLANTILLA_NAMES: list[str] = [
+    "Constancia de Estudios",
+    "Solicitud de Cambio de Programa",
+]
+
+
+_CONSTANCIA_HTML = """
+<div class="header">
+  <h1>Constancia de Estudios</h1>
+  <p class="subtitle">Universidad Autónoma de Zacatecas</p>
+</div>
+
+<p>A quien corresponda:</p>
+
+<p>
+  Por medio de la presente se hace constar que
+  <strong>{{ solicitante.nombre }}</strong>,
+  con matrícula <strong>{{ solicitante.matricula }}</strong>,
+  se encuentra inscrito(a) en el programa
+  <strong>{{ valores.programa|default:solicitante.programa }}</strong>
+  durante el semestre {{ solicitante.semestre|default:"en curso" }}.
+</p>
+
+<p>
+  La presente se expide a solicitud del interesado para los fines que a su
+  conveniencia procedan, en referencia al folio <strong>{{ solicitud.folio }}</strong>.
+</p>
+
+<p class="firma">{{ firma_lugar_fecha }}</p>
+
+<p class="firma-rubrica">_____________________________<br>
+Control Escolar</p>
+""".strip()
+
+
+_CONSTANCIA_CSS = """
+@page { size: Letter; margin: 2.5cm 2cm 2.5cm 2cm; }
+body {
+  font-family: 'Liberation Serif', 'Times New Roman', serif;
+  color: #212529;
+  line-height: 1.55;
+}
+h1 { font-size: 18pt; margin: 0 0 .25rem; text-align: center; }
+.header { border-bottom: 1px solid #adb5bd; padding-bottom: 1rem; margin-bottom: 2rem; }
+.subtitle { text-align: center; color: #6c757d; margin: 0; font-size: 11pt; }
+p { margin: 0 0 1rem; text-align: justify; }
+.firma { margin-top: 3rem; text-align: right; }
+.firma-rubrica { margin-top: 3.5rem; text-align: center; }
+""".strip()
+
+
+_CAMBIO_HTML = """
+<div class="header">
+  <h1>Solicitud de Cambio de Programa</h1>
+  <p class="subtitle">Folio {{ solicitud.folio }}</p>
+</div>
+
+<p><strong>Solicitante:</strong> {{ solicitante.nombre }} ({{ solicitante.matricula }})</p>
+<p><strong>Correo:</strong> {{ solicitante.email }}</p>
+
+<table class="datos">
+  <tr>
+    <th>Programa actual</th>
+    <td>{{ valores.programa_actual }}</td>
+  </tr>
+  <tr>
+    <th>Programa solicitado</th>
+    <td>{{ valores.programa_al_que_deseas_cambiar }}</td>
+  </tr>
+  <tr>
+    <th>Motivo</th>
+    <td>{{ valores.motivo_del_cambio }}</td>
+  </tr>
+</table>
+
+<p class="firma">{{ firma_lugar_fecha }}</p>
+
+<p class="firma-rubrica">_____________________________<br>
+Firma del solicitante</p>
+""".strip()
+
+
+_CAMBIO_CSS = """
+@page { size: Letter; margin: 2.5cm 2cm; }
+body {
+  font-family: 'Liberation Sans', 'Helvetica', sans-serif;
+  color: #212529;
+  line-height: 1.5;
+  font-size: 11pt;
+}
+h1 { font-size: 16pt; margin: 0; }
+.header { border-bottom: 2px solid #006837; padding-bottom: .75rem; margin-bottom: 1.5rem; }
+.subtitle { color: #6c757d; margin: .25rem 0 0; }
+table.datos { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+table.datos th {
+  text-align: left;
+  padding: .5rem .75rem;
+  background: #f1f3f5;
+  width: 35%;
+  vertical-align: top;
+}
+table.datos td { padding: .5rem .75rem; border-bottom: 1px solid #dee2e6; }
+.firma { margin-top: 2.5rem; }
+.firma-rubrica { margin-top: 3rem; text-align: center; }
+""".strip()
+
+
 def run(*, fresh: bool) -> None:
     if fresh:
         TipoSolicitud.objects.filter(slug__in=SEEDED_SLUGS).delete()
+        PlantillaSolicitud.objects.filter(nombre__in=SEEDED_PLANTILLA_NAMES).delete()
+
+    plantilla_constancia, _ = PlantillaSolicitud.objects.update_or_create(
+        nombre="Constancia de Estudios",
+        defaults={
+            "descripcion": "Plantilla oficial para la constancia de inscripción.",
+            "html": _CONSTANCIA_HTML,
+            "css": _CONSTANCIA_CSS,
+            "activo": True,
+        },
+    )
+    plantilla_cambio, _ = PlantillaSolicitud.objects.update_or_create(
+        nombre="Solicitud de Cambio de Programa",
+        defaults={
+            "descripcion": "Plantilla del formato de cambio de programa.",
+            "html": _CAMBIO_HTML,
+            "css": _CAMBIO_CSS,
+            "activo": True,
+        },
+    )
 
     constancia, _ = TipoSolicitud.objects.update_or_create(
         slug="constancia-de-estudios",
@@ -35,6 +163,7 @@ def run(*, fresh: bool) -> None:
             "creator_roles": [Role.ALUMNO.value],
             "requires_payment": False,
             "mentor_exempt": False,
+            "plantilla": plantilla_constancia,
             "activo": True,
         },
     )
@@ -74,6 +203,7 @@ def run(*, fresh: bool) -> None:
             "creator_roles": [Role.ALUMNO.value],
             "requires_payment": True,
             "mentor_exempt": True,
+            "plantilla": plantilla_cambio,
             "activo": True,
         },
     )
