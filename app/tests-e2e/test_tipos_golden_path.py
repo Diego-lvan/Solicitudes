@@ -61,19 +61,23 @@ def test_admin_creates_lists_and_edits_a_tipo(
     page.get_by_label("Rol responsable de revisión").select_option("CONTROL_ESCOLAR")
     page.get_by_label("Alumno").check()
 
-    # Add two field rows.
+    # Add and populate field rows ONE AT A TIME — clicking "Agregar campo"
+    # collapses any previously-open row (by design, so the user focuses on
+    # the new one), and a collapsed `.field-row-body` is `display: none`,
+    # which makes its inputs un-fillable by Playwright. Fill each row before
+    # adding the next.
     add_btn = page.get_by_role("button", name="Agregar campo")
-    add_btn.click()
-    add_btn.click()
 
     # First field: TEXT. ``order`` is rewritten by the JS on submit based
     # on DOM position, so the test no longer fills it.
+    add_btn.click()
     page.locator('input[name="fields-0-label"]').fill("Nombre completo")
     page.locator('select[name="fields-0-field_type"]').select_option("TEXT")
 
     # Second field: SELECT with options entered through the chip UI.
     # The hidden ``options_csv`` input is filled by the chip JS, which mirrors
     # whatever the user typed (Enter-separated) into the visible chip input.
+    add_btn.click()
     page.locator('input[name="fields-1-label"]').fill("Programa")
     page.locator('select[name="fields-1-field_type"]').select_option("SELECT")
     options_chip_cell = page.locator(
