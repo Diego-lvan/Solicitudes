@@ -40,6 +40,13 @@
       </div>
     </div>
 
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h5 card-title">Archivos</h2>
+        {% include "solicitudes/_partials/_archivos.html" with archivos=archivos %}
+      </div>
+    </div>
+
     {% if is_owner and detail.estado.value == "CREADA" %}
     <form method="post" action="{% url 'solicitudes:intake:cancel' folio=detail.folio %}"
           class="d-inline-block"
