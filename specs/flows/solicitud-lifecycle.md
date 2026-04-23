@@ -1,6 +1,6 @@
 # Flow — Solicitud Lifecycle
 
-> **Status:** v1 (initiative 004). Cross-feature integrations land later: 005 wires file storage at intake, 006 plugs PDF generation at finalization, 007 replaces `NoOpNotificationService`, 008 replaces `FalseMentorService`. The skeleton documented here is stable.
+> **Status:** v1 (initiative 004). 005 (archivos) and 006 (PDF) and 008 (mentores) have shipped. Remaining cross-feature integrations: 007 replaces `NoOpNotificationService`, 010 swaps the dev-login picker for the real auth provider. The skeleton documented here is stable.
 >
 > **Owners:** `solicitudes` app — features `intake`, `lifecycle`, `revision`.
 
@@ -89,7 +89,7 @@ A solicitante (alumno or docente) opens the intake catalog (`/solicitudes/`) and
    4. **inside `transaction.atomic()`** allocates a folio, inserts the `Solicitud` row, appends the initial `HistorialEstado` (estado_anterior=None, estado_nuevo=CREADA)
    5. **outside the atomic block** fires `NotificationService.notify_creation` and writes the audit line
    6. returns the hydrated `SolicitudDetail`
-3. **Browser is redirected to `/solicitudes/<folio>/`** with `messages.success(...)`. If files were submitted, an additional `messages.warning(...)` informs the user that attachments are not yet stored (until 005 ships).
+3. **Browser is redirected to `/solicitudes/<folio>/`** with `messages.success(...)`. Any attached FORM files and the comprobante (when required) have been persisted by `archivo_service.store_for_solicitud(...)` inside the same outer `transaction.atomic()` as the row insert; the detail page renders the archivos in their own card with download links.
 4. **GET /solicitudes/revision/** — Personal in `tipo.responsible_role` opens the queue. `ReviewService.list_assigned(role)` returns rows scoped to the role (admin sees all).
 5. **POST /solicitudes/revision/`<folio>`/atender/** — `ReviewService.take` calls `LifecycleService.transition(action="atender", ...)`. The service:
    1. fetches the row → `SolicitudNotFound` on miss
@@ -123,11 +123,11 @@ Both are caught at the view boundary and translated to a `messages.error(...)` f
 - **Concurrent take** — two personnel both press "Atender" on the same row at the same moment. First-write-wins: one transition succeeds, the second sees `estado=EN_PROCESO` and gets `InvalidStateTransition`. Acceptable per the shared-queue requirement; UI surfaces the resulting flash.
 - **Notification failure** — `NotificationService.notify_*` is fired *after* the transaction commits. A failure leaves the estado committed without the side-channel notification. With the current `NoOpNotificationService` this is not reachable; when 007 lands, the email adapter should swallow its own errors at the adapter boundary.
 - **Audit failure** — same as notification: outside the transaction, best-effort. We may commit an estado without an audit line.
-- **File upload before 005 ships** — files are read into memory by Django's `FileField`, validated for size/extension, then dropped. The user sees the warning flash; the operator sees the WARNING log line. When 005 lands, the contract is `archivo_service.store_for_solicitud(folio, field_id, uploaded_file)` called from `CreateSolicitudView.post` inside the same `atomic()` block as the row insert.
+- **File-write rollback on intake** — `CreateSolicitudView.post` wraps the `Solicitud` insert and every `archivo_service.store_for_solicitud(...)` call in one outer `transaction.atomic()`. Storage writes go to a `.partial` sibling and are renamed via `transaction.on_commit` only when the outer atomic commits; on rollback, the view's `try/finally` calls `storage.cleanup_pending()` to delete the orphaned `.partial` files. See `apps/solicitudes/archivos/design.md` for the post-commit ENOSPC failure mode that is *not* recoverable transactionally.
 
 ## Cross-app integration points (future)
 
-- **005 (archivos)** — replaces the file-discard branch in `CreateSolicitudView.post` with a call to `archivo_service.store_for_solicitud(folio, ...)` inside the same `atomic()` block as the row insert.
+- **005 (archivos)** — *shipped.* `CreateSolicitudView.post` calls `archivo_service.store_for_solicitud(folio, ...)` for each FORM file and the comprobante inside the same outer `transaction.atomic()` as the row insert. Detail and revision views render the archivos partial. See `apps/solicitudes/archivos/design.md`.
 - **006 (pdf)** — adds a "Descargar PDF" button on `intake/detail.html` and `revision/detail.html` when estado is FINALIZADA and the tipo has a plantilla. PDF rendering reads `Solicitud.form_snapshot` + `Solicitud.valores` and feeds them into the WeasyPrint pipeline.
 - **007 (notificaciones)** — replaces the `NoOpNotificationService` binding in `lifecycle/dependencies.py` with the email adapter. The interface (`NotificationService` ABC in `lifecycle/notification_port.py`) does not change.
 - **008 (mentores)** — *shipped.* Replaced the `FalseMentorService` binding in `intake/dependencies.py` with the real catalog lookup via `mentores.adapters.intake_adapter.MentoresIntakeAdapter` (producer-side adapter). The port interface (`MentorService` ABC in `intake/mentor_port.py`) is unchanged; intake's runtime code imports zero from `mentores.*` — only `intake/dependencies.py` does, at boot. See `specs/apps/mentores/catalog/design.md` for the catalog contract.

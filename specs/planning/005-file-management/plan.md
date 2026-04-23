@@ -188,7 +188,7 @@ The intake view is the only place that calls `archivo_service.store_for_solicitu
 
 ## Acceptance Criteria
 
-- [ ] Uploading a file with disallowed extension or > size_mb returns 422 with `_shared/error.html` field error.
+- [ ] Uploading a file with disallowed extension or > size_mb is rejected. Form-level rejection (the dynamic form's extension/size validators) returns **400** so the form can re-render with the field error without wasting an upload buffer; service-level rejection (e.g. comprobante content-type/size, FORM `field_id` not in snapshot) returns **422** via `_shared/error.html`. Both layers enforce: the form provides fast feedback, the service is the canonical authority.
 - [ ] Uploading a `.zip` to a field whose `accepted_extensions` includes `.zip` is stored as-is and downloadable as a `.zip`.
 - [ ] Comprobante upload required when `tipo.requires_payment AND not pago_exento`; absence rejects the form with `comprobante_required`.
 - [ ] Files for solicitud `SOL-2026-00042` live under `media/solicitudes/SOL-2026-00042/`.
