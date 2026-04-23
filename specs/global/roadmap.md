@@ -10,7 +10,7 @@
 | 002 | Auth & Users              | Done        | 001           | 2026-04-25 | [plan](../planning/002-auth-users/plan.md)                 | `usuarios`, `_shared/auth`                                    |
 | 003 | Catalog & Dynamic Forms   | Done        | 002           | 2026-04-25 | [plan](../planning/003-catalog-forms/plan.md)              | `solicitudes/tipos`, `solicitudes/formularios`                |
 | 004 | Solicitud Lifecycle       | Done        | 003           | 2026-04-25 | [plan](../planning/004-solicitud-lifecycle/plan.md)        | `solicitudes/intake`, `solicitudes/revision`, `solicitudes/lifecycle`, `flows` |
-| 005 | File Management           | Not Started | 004           | 2026-04-25 | [plan](../planning/005-file-management/plan.md)            | `solicitudes/archivos`, `_shared` (storage)                   |
+| 005 | File Management           | Done        | 004           | 2026-04-25 | [plan](../planning/005-file-management/plan.md)            | `solicitudes/archivos`, `_shared` (storage)                   |
 | 006 | PDF Generation            | Done        | 004           | 2026-04-25 | [plan](../planning/006-pdf-generation/plan.md)             | `solicitudes/pdf`, `_shared/pdf`                              |
 | 007 | Notifications             | Not Started | 004           | 2026-04-25 | [plan](../planning/007-notifications/plan.md)              | `notificaciones`, `flows`                                          |
 | 008 | Mentors                   | Done        | 002           | 2026-04-25 | [plan](../planning/008-mentors/plan.md)                    | `mentores`                                                         |

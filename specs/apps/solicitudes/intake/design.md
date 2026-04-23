@@ -6,7 +6,7 @@
 
 The intake feature owns the solicitante's surface: discovering which tipos they can file, rendering the dynamic form, validating it, and persisting a new `Solicitud` row. It also hosts the solicitante-side `cancel_own` verb.
 
-Files (003+007/008) and notifications are out of scope here — intake delegates to ports owned by lifecycle (`NotificationService`) and to the future `ArchivoService` (005). Until 005 lands, file uploads validate-and-discard with a WARNING log + a user flash.
+Notifications are out of scope here — intake delegates to a port owned by lifecycle (`NotificationService`). File persistence is delegated to `ArchivoService` (005); the contract is documented under "File handling" below and in detail in `apps/solicitudes/archivos/design.md`.
 
 ## Layer wiring
 
@@ -99,14 +99,18 @@ Views never call repositories. They:
 2. Read `request.GET` for filters and `request.POST` / `request.FILES` for the form, then build the input DTO and pass it to `IntakeService`.
 3. Catch `AppError` and translate to the appropriate response (re-render with form errors for validation, redirect with `messages.error` for state/auth conflicts, redirect with `messages.success` on the happy path).
 
-### File handling (until 005 ships)
+### File handling (delivered in 005)
 
-`CreateSolicitudView.post` validates `FileField`s as part of form validation. After `form.is_valid()`, if `request.FILES` is non-empty, the view:
+`CreateSolicitudView.post` validates `FileField`s as part of form validation (extensions + size are caught at the form layer, returning **400** with the form re-rendered before any upload buffer reaches the service). After `form.is_valid()`, the view wraps everything in an outer `transaction.atomic()`:
 
-- writes one WARNING log line `intake.files_discarded` with the field names + tipo slug
-- flashes `messages.warning("Los archivos adjuntos aún no se almacenan; tu solicitud se registró sin ellos. ...")` so the user sees it on the detail page
+1. `intake_service.create(input_dto, actor=actor)` — inserts the `Solicitud` + initial `HistorialEstado`.
+2. For each file in `request.FILES`: `archivo_service.store_for_solicitud(folio=detail.folio, field_id=..., kind=..., uploaded_file=..., uploader=actor)`. The comprobante (form field name `comprobante`) becomes `kind=COMPROBANTE`; every other `field_<32-hex>` becomes `kind=FORM` with `field_id` decoded from the suffix.
 
-When 005 lands, the contract is `archivo_service.store_for_solicitud(folio, field_id, uploaded_file) -> ArchivoDTO`, called from this view inside the same `atomic()` block as the row insert. The service interface is owned by 005 (archivos feature).
+The whole block runs in one atomic — if any `store_for_solicitud` call raises, the `Solicitud` row rolls back too. After the block the view calls `storage.cleanup_pending()` in a `try/finally` so any `.partial` files left by a rolled-back transaction are removed (on success the storage's own on_commit hook drains the pending list, so cleanup is a no-op).
+
+Service-level rejections (e.g. comprobante extension/size, FORM `field_id` not in snapshot) raise `AppError` and surface as **422** with the form re-rendered. Both layers enforce: the form provides fast feedback, the service is the canonical authority.
+
+The service interface lives in 005 (`solicitudes.archivos.services.archivo_service.ArchivoService`); intake depends on the interface only — the cross-feature dependency rule.
 
 ## Outbound ports
 
