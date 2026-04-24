@@ -60,5 +60,10 @@ certs/
 # Docker
 .docker-cache/
 
+# Worktree-local Docker Compose overrides (alt-port stacks). Committing one
+# of these to main would tie everyone's stack to a specific worktree's project
+# name and ports. Keep them per-worktree; they're convenience scaffolding.
+docker-compose.override.yml
+
 # Git worktrees
 .worktrees/
