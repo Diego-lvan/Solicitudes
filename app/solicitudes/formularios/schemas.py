@@ -12,7 +12,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from solicitudes.tipos.constants import FieldType
+from solicitudes.tipos.constants import FieldSource, FieldType
 
 
 class FieldSnapshot(BaseModel):
@@ -31,6 +31,9 @@ class FieldSnapshot(BaseModel):
     max_chars: int | None = None
     placeholder: str = ""
     help_text: str = ""
+    # Carry the source forward so the resolver and the builder can decide
+    # whether a snapshot field is alumno-supplied or auto-filled.
+    source: FieldSource = FieldSource.USER_INPUT
 
 
 class FormSnapshot(BaseModel):

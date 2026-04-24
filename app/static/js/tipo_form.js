@@ -278,28 +278,49 @@
     render();
   }
 
-  // ---------- field-type-driven visibility ----------
+  // ---------- field-type / source-driven visibility ----------
 
   function initTypeToggle(row) {
-    const select = row.querySelector('select[name$="-field_type"]');
-    if (!select) return;
-    // Cells flagged with data-shows-for="TYPE[,TYPE...]" appear only for
-    // matching field types. Used by SELECT options, FILE extensions/size,
-    // and TEXT/TEXTAREA max-chars.
-    const cells = row.querySelectorAll("[data-shows-for]");
+    const typeSelect = row.querySelector('select[name$="-field_type"]');
+    if (!typeSelect) return;
+    const sourceSelect = row.querySelector('select[name$="-source"]');
+    // Two toggle dimensions:
+    //   - data-shows-for="TYPE[,TYPE...]"  → cell visible only when the
+    //     field_type matches (SELECT options, FILE extensions/size,
+    //     TEXT/TEXTAREA max-chars).
+    //   - data-hide-when-auto-fill        → cell hidden when source is a
+    //     USER_* variant. Auto-filled fields don't get an alumno-typed
+    //     value, so caps/placeholders that decorate the input box have no
+    //     UX surface to attach to.
+    const typeCells = row.querySelectorAll("[data-shows-for]");
+    const autoHideCells = row.querySelectorAll("[data-hide-when-auto-fill]");
 
     function update() {
-      const t = select.value;
-      cells.forEach((cell) => {
+      const t = typeSelect.value;
+      const isAutoFill =
+        !!sourceSelect && sourceSelect.value && sourceSelect.value !== "USER_INPUT";
+
+      typeCells.forEach((cell) => {
         const allowed = (cell.dataset.showsFor || "")
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean);
-        cell.style.display = allowed.includes(t) ? "" : "none";
+        const matchesType = allowed.includes(t);
+        const hiddenByAutoFill =
+          cell.hasAttribute("data-hide-when-auto-fill") && isAutoFill;
+        cell.style.display = matchesType && !hiddenByAutoFill ? "" : "none";
+      });
+
+      // Cells that have `data-hide-when-auto-fill` but no `data-shows-for`
+      // (e.g. placeholder, help text) are toggled purely by source.
+      autoHideCells.forEach((cell) => {
+        if (cell.hasAttribute("data-shows-for")) return; // handled above
+        cell.style.display = isAutoFill ? "none" : "";
       });
     }
 
-    select.addEventListener("change", update);
+    typeSelect.addEventListener("change", update);
+    sourceSelect?.addEventListener("change", update);
     update();
   }
 
@@ -448,6 +469,7 @@
     const extsCsv =
       row.querySelector('input[name$="-accepted_extensions_csv"]')?.value || "";
     const maxCharsRaw = row.querySelector('input[name$="-max_chars"]')?.value || "";
+    const sourceSelect = row.querySelector('select[name$="-source"]');
     return {
       label: (labelInput?.value || "").trim(),
       type: typeSelect?.value || "TEXT",
@@ -460,6 +482,7 @@
         .split(",")
         .map((s) => s.trim().toLowerCase())
         .filter(Boolean),
+      source: sourceSelect?.value || "USER_INPUT",
     };
   }
 
@@ -481,6 +504,18 @@
       label.appendChild(star);
     }
     wrap.appendChild(label);
+
+    // Auto-fill fields are not editable inputs at intake time; the live
+    // preview shows them as a static pill so the admin can tell at a glance
+    // which fields the alumno will *not* see as form controls.
+    if (state.source && state.source !== "USER_INPUT") {
+      const pill = document.createElement("span");
+      pill.className = "badge text-bg-light border";
+      const variant = state.source.replace(/^USER_/, "").toLowerCase();
+      pill.textContent = `Auto · ${variant}`;
+      wrap.appendChild(pill);
+      return wrap;
+    }
 
     let control;
     switch (state.type) {

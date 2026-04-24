@@ -21,3 +21,21 @@ class ComprobanteRequired(DomainValidationError):
 
     code = "comprobante_required"
     user_message = "Este tipo requiere comprobante de pago."
+
+
+class AutoFillRequiredFieldMissing(DomainValidationError):
+    """A required auto-fill field has no resolvable value.
+
+    Raised by :class:`AutoFillResolver.resolve` when SIGA is down + cache is
+    empty (or any other path that leaves a required ``USER_*`` field with an
+    empty :class:`UserDTO` attribute). The intake view maps it to a 422 and
+    re-renders the form with a top-of-page alert pointing the alumno to
+    Control Escolar.
+    """
+
+    code = "auto_fill_required_missing"
+    user_message = (
+        "No pudimos cargar tus datos académicos del SIGA y este formulario "
+        "los necesita. Intenta de nuevo en unos minutos o contacta a "
+        "Control Escolar si el problema persiste."
+    )

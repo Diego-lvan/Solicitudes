@@ -22,7 +22,7 @@ from solicitudes.formularios.validators import (
     make_extension_validator,
     make_size_validator,
 )
-from solicitudes.tipos.constants import FieldType
+from solicitudes.tipos.constants import FieldSource, FieldType
 
 
 def field_attr_name(field_id: Any) -> str:
@@ -105,7 +105,16 @@ def build_django_form(snapshot: FormSnapshot) -> type[forms.Form]:
     back to ``FieldSnapshot``.
     """
     attrs: dict[str, Any] = {}
-    ordered = sorted(snapshot.fields, key=lambda f: f.order)
+    # Auto-fill fields (source != USER_INPUT) are deliberately excluded from
+    # the constructed form. Their values are resolved server-side from the
+    # actor's UserDTO at intake time and merged into the persisted `valores`
+    # by the intake service. Excluding them here means a malicious client
+    # POSTing `field_<uuid>=...` for an auto-fill field has no form field to
+    # land in, so `to_values_dict()` cannot surface it.
+    user_input_fields = [
+        f for f in snapshot.fields if f.source is FieldSource.USER_INPUT
+    ]
+    ordered = sorted(user_input_fields, key=lambda f: f.order)
     for snap in ordered:
         attrs[field_attr_name(snap.field_id)] = _build_django_field(snap)
 
@@ -114,7 +123,10 @@ def build_django_form(snapshot: FormSnapshot) -> type[forms.Form]:
     attrs["field_order"] = [field_attr_name(s.field_id) for s in ordered]
 
     # Helper kept on the class so callers can serialize ``cleaned_data`` to a
-    # JSON-safe dict without re-deriving the attr-name mapping.
+    # JSON-safe dict without re-deriving the attr-name mapping. Auto-fill
+    # fields are absent from this map by construction (they were filtered
+    # above), which is what keeps malicious client values from surfacing in
+    # the dict.
     snapshots_by_attr = {
         field_attr_name(s.field_id): s for s in ordered
     }

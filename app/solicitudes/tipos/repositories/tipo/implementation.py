@@ -85,6 +85,7 @@ class OrmTipoRepository(TipoRepository):
                         max_chars=f.max_chars,
                         placeholder=f.placeholder,
                         help_text=f.help_text,
+                        source=f.source.value,
                     )
         except IntegrityError as exc:
             # Slug uniqueness is the only IntegrityError we expect on create —
@@ -164,6 +165,7 @@ class OrmTipoRepository(TipoRepository):
                 row.max_chars = inp.max_chars
                 row.placeholder = inp.placeholder
                 row.help_text = inp.help_text
+                row.source = inp.source.value
                 row.save()
             else:
                 FieldDefinition.objects.create(
@@ -178,6 +180,7 @@ class OrmTipoRepository(TipoRepository):
                     max_chars=inp.max_chars,
                     placeholder=inp.placeholder,
                     help_text=inp.help_text,
+                    source=inp.source.value,
                 )
 
     def _build_unique_slug(self, nombre: str) -> str:
@@ -205,6 +208,7 @@ class OrmTipoRepository(TipoRepository):
                 max_chars=f.max_chars,
                 placeholder=f.placeholder,
                 help_text=f.help_text,
+                source=f.source,
             )
             for f in sorted(tipo.fields.all(), key=lambda r: r.order)
         ]

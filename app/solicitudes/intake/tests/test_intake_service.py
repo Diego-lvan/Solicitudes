@@ -23,6 +23,10 @@ from _shared.pagination import Page, PageRequest
 from solicitudes.formularios.schemas import FormSnapshot
 from solicitudes.intake.exceptions import CreatorRoleNotAllowed
 from solicitudes.intake.schemas import CreateSolicitudInput
+from solicitudes.intake.services.auto_fill_resolver.interface import (
+    AutoFillPreview,
+    AutoFillResolver,
+)
 from solicitudes.intake.services.intake_service.implementation import (
     DefaultIntakeService,
 )
@@ -123,6 +127,16 @@ class _StubFolioService(FolioService):
         return f"SOL-{year}-{self.calls:05d}"
 
 
+class _NoopAutoFillResolver(AutoFillResolver):
+    """Default test fake — no auto-fill fields, never raises."""
+
+    def resolve(self, snapshot: Any, *, actor_matricula: str) -> dict[str, Any]:
+        return {}
+
+    def preview(self, snapshot: Any, *, actor_matricula: str) -> AutoFillPreview:
+        return AutoFillPreview()
+
+
 class _StubLifecycleService(LifecycleService):
     """Records ``transition`` calls; intake only uses this in ``cancel_own``."""
 
@@ -208,6 +222,8 @@ def _tipo(
 
 def _service(
     tipo: TipoSolicitudDTO,
+    *,
+    auto_fill: AutoFillResolver | None = None,
 ) -> tuple[
     DefaultIntakeService,
     StubTipoService,
@@ -229,6 +245,7 @@ def _service(
         folio_service=folios,
         lifecycle_service=lifecycle,
         notification_service=notifier,
+        auto_fill_resolver=auto_fill or _NoopAutoFillResolver(),
     )
     return svc, tipos, solicitudes, historial, notifier, lifecycle
 
@@ -268,7 +285,9 @@ def test_create_captures_snapshot_at_create_time_not_earlier() -> None:
 
     # GET phase: view calls get_intake_form, which captures a snapshot under
     # the *original* label.
-    svc.get_intake_form(tipo.slug, role=Role.ALUMNO, is_mentor=False)
+    svc.get_intake_form(
+        tipo.slug, role=Role.ALUMNO, is_mentor=False, actor_matricula="ALU-1"
+    )
     assert tipos.snapshot_calls == 1
 
     # Admin renames the field between GET and POST.

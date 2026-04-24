@@ -12,7 +12,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from solicitudes.formularios.builder import build_django_form, field_attr_name
 from solicitudes.formularios.schemas import FieldSnapshot, FormSnapshot
-from solicitudes.tipos.constants import FieldType
+from solicitudes.tipos.constants import FieldSource, FieldType
 
 
 def _snap(**overrides: Any) -> FormSnapshot:
@@ -292,3 +292,95 @@ def test_text_falls_back_to_default_max_when_max_chars_is_none() -> None:
     # Default cap is 200 chars; 199 should fit, 201 should not.
     assert Form(data={field_attr_name(fid): "x" * 199}).is_valid()
     assert not Form(data={field_attr_name(fid): "x" * 201}).is_valid()
+
+
+# ---- auto-fill source filtering ----
+
+
+def test_builder_excludes_non_user_input_fields() -> None:
+    user_id, auto_id = uuid4(), uuid4()
+    snap = _snap(
+        fields=[
+            FieldSnapshot(
+                field_id=user_id,
+                label="Motivo",
+                field_type=FieldType.TEXT,
+                required=True,
+                order=0,
+                source=FieldSource.USER_INPUT,
+            ),
+            FieldSnapshot(
+                field_id=auto_id,
+                label="Programa",
+                field_type=FieldType.TEXT,
+                required=True,
+                order=1,
+                source=FieldSource.USER_PROGRAMA,
+            ),
+        ]
+    )
+    Form = build_django_form(snap)
+    form = Form()
+    attrs = list(form.fields.keys())
+    assert field_attr_name(user_id) in attrs
+    assert field_attr_name(auto_id) not in attrs
+
+
+def test_builder_field_order_skips_auto_fill() -> None:
+    a, b, c = uuid4(), uuid4(), uuid4()
+    snap = _snap(
+        fields=[
+            FieldSnapshot(
+                field_id=a, label="A", field_type=FieldType.TEXT, required=False, order=0
+            ),
+            FieldSnapshot(
+                field_id=b,
+                label="B",
+                field_type=FieldType.TEXT,
+                required=False,
+                order=1,
+                source=FieldSource.USER_FULL_NAME,
+            ),
+            FieldSnapshot(
+                field_id=c, label="C", field_type=FieldType.TEXT, required=False, order=2
+            ),
+        ]
+    )
+    Form = build_django_form(snap)
+    rendered = list(Form())
+    assert [f.label for f in rendered] == ["A", "C"]
+
+
+def test_to_values_dict_does_not_surface_auto_fill_field_ids() -> None:
+    user_id, auto_id = uuid4(), uuid4()
+    snap = _snap(
+        fields=[
+            FieldSnapshot(
+                field_id=user_id,
+                label="Motivo",
+                field_type=FieldType.TEXT,
+                required=False,
+                order=0,
+            ),
+            FieldSnapshot(
+                field_id=auto_id,
+                label="Programa",
+                field_type=FieldType.TEXT,
+                required=False,
+                order=1,
+                source=FieldSource.USER_PROGRAMA,
+            ),
+        ]
+    )
+    Form = build_django_form(snap)
+    # Malicious client tries to inject a value for the auto-fill field id.
+    form = Form(
+        data={
+            field_attr_name(user_id): "tramite",
+            field_attr_name(auto_id): "INJECTED",
+        }
+    )
+    assert form.is_valid()
+    values = form.to_values_dict()  # type: ignore[attr-defined]
+    assert values == {str(user_id): "tramite"}
+    assert str(auto_id) not in values

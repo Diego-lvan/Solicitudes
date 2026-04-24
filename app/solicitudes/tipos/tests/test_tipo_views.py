@@ -194,6 +194,68 @@ def test_create_rejects_non_admin(alumno_client: Client) -> None:
     assert TipoSolicitud.objects.count() == 0
 
 
+@pytest.mark.django_db
+def test_create_post_persists_user_programa_source_on_text_field(
+    admin_client: Client,
+) -> None:
+    response = admin_client.post(
+        reverse("solicitudes:tipos:create"),
+        data={
+            "nombre": "Constancia con auto-fill",
+            "descripcion": "",
+            "responsible_role": Role.CONTROL_ESCOLAR.value,
+            "creator_roles": [Role.ALUMNO.value],
+            "fields-TOTAL_FORMS": "1",
+            "fields-INITIAL_FORMS": "0",
+            "fields-MIN_NUM_FORMS": "0",
+            "fields-MAX_NUM_FORMS": "50",
+            "fields-0-label": "Programa",
+            "fields-0-field_type": "TEXT",
+            "fields-0-required": "on",
+            "fields-0-order": "0",
+            "fields-0-source": "USER_PROGRAMA",
+        },
+    )
+    assert response.status_code == 302
+    tipo = TipoSolicitud.objects.get(slug="constancia-con-auto-fill")
+    [field] = tipo.fields.all()
+    assert field.source == "USER_PROGRAMA"
+
+
+@pytest.mark.django_db
+def test_create_post_normalizes_source_when_field_type_is_select(
+    admin_client: Client,
+) -> None:
+    """Stale USER_PROGRAMA on a SELECT row is silently reset to USER_INPUT
+    by ``FieldForm.clean()`` — defense in depth on top of the schema
+    validator. The admin's submission still succeeds; the persisted source
+    is the safe default.
+    """
+    response = admin_client.post(
+        reverse("solicitudes:tipos:create"),
+        data={
+            "nombre": "Tipo con select",
+            "descripcion": "",
+            "responsible_role": Role.CONTROL_ESCOLAR.value,
+            "creator_roles": [Role.ALUMNO.value],
+            "fields-TOTAL_FORMS": "1",
+            "fields-INITIAL_FORMS": "0",
+            "fields-MIN_NUM_FORMS": "0",
+            "fields-MAX_NUM_FORMS": "50",
+            "fields-0-label": "Programa",
+            "fields-0-field_type": "SELECT",
+            "fields-0-required": "on",
+            "fields-0-order": "0",
+            "fields-0-options_csv": "ISW, ISC",
+            "fields-0-source": "USER_PROGRAMA",  # stale — should reset
+        },
+    )
+    assert response.status_code == 302
+    tipo = TipoSolicitud.objects.get(slug="tipo-con-select")
+    [field] = tipo.fields.all()
+    assert field.source == "USER_INPUT"
+
+
 # ---- detail ----
 
 

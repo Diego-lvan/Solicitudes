@@ -13,7 +13,7 @@ from django.urls import reverse
 from solicitudes.lifecycle.constants import Estado
 from solicitudes.lifecycle.tests.factories import make_solicitud
 from solicitudes.models import Solicitud
-from solicitudes.tipos.constants import FieldType
+from solicitudes.tipos.constants import FieldSource, FieldType
 from solicitudes.tipos.tests.factories import make_field, make_tipo
 from usuarios.constants import SESSION_COOKIE_NAME, Role
 from usuarios.tests.factories import make_user
@@ -189,6 +189,207 @@ def test_create_two_parallel_posts_yield_distinct_folios(
     folios = list(Solicitud.objects.values_list("folio", flat=True))
     assert len(folios) == 2
     assert len(set(folios)) == 2
+
+
+# ---- auto-fill ----
+
+
+@pytest.mark.django_db
+def test_create_get_renders_solicitante_panel_with_resolved_values(
+    alumno_client: Client,
+) -> None:
+    make_user(
+        matricula="ALU1",
+        email="alu1@uaz.edu.mx",
+        role=Role.ALUMNO.value,
+        full_name="Ana Alumno",
+        programa="Ingeniería de Software",
+    )
+    tipo = make_tipo(slug="constancia", creator_roles=[Role.ALUMNO.value])
+    make_field(
+        tipo,
+        order=0,
+        label="Programa",
+        field_type=FieldType.TEXT.value,
+        source=FieldSource.USER_PROGRAMA.value,
+        required=True,
+    )
+    make_field(
+        tipo,
+        order=1,
+        label="Motivo",
+        field_type=FieldType.TEXT.value,
+        source=FieldSource.USER_INPUT.value,
+        required=True,
+    )
+    response = alumno_client.get(
+        reverse("solicitudes:intake:create", kwargs={"slug": "constancia"})
+    )
+    assert response.status_code == 200
+    auto_fill = response.context["auto_fill"]
+    assert auto_fill.has_missing_required is False
+    assert ("Programa", "Ingeniería de Software") in auto_fill.items
+    # Auto-fill field is NOT in the form; only the USER_INPUT one is.
+    form = response.context["form"]
+    assert len(form.fields) == 1
+
+
+@pytest.mark.django_db
+def test_create_get_flags_missing_required_when_programa_empty(
+    alumno_client: Client,
+) -> None:
+    make_user(
+        matricula="ALU1",
+        email="alu1@uaz.edu.mx",
+        role=Role.ALUMNO.value,
+        full_name="Ana Alumno",
+        programa="",  # missing — required auto-fill will flag
+    )
+    tipo = make_tipo(slug="constancia", creator_roles=[Role.ALUMNO.value])
+    make_field(
+        tipo,
+        order=0,
+        label="Programa",
+        field_type=FieldType.TEXT.value,
+        source=FieldSource.USER_PROGRAMA.value,
+        required=True,
+    )
+    response = alumno_client.get(
+        reverse("solicitudes:intake:create", kwargs={"slug": "constancia"})
+    )
+    assert response.status_code == 200
+    assert response.context["auto_fill"].has_missing_required is True
+    # Submit button is rendered disabled.
+    assert b"disabled" in response.content
+
+
+@pytest.mark.django_db
+def test_create_post_merges_auto_fill_values_into_persisted_valores(
+    alumno_client: Client,
+) -> None:
+    make_user(
+        matricula="ALU1",
+        email="alu1@uaz.edu.mx",
+        role=Role.ALUMNO.value,
+        full_name="Ana Alumno",
+        programa="Ingeniería de Software",
+    )
+    tipo = make_tipo(slug="constancia", creator_roles=[Role.ALUMNO.value])
+    auto_field = make_field(
+        tipo,
+        order=0,
+        label="Programa",
+        field_type=FieldType.TEXT.value,
+        source=FieldSource.USER_PROGRAMA.value,
+        required=True,
+    )
+    motivo_field = make_field(
+        tipo,
+        order=1,
+        label="Motivo",
+        field_type=FieldType.TEXT.value,
+        source=FieldSource.USER_INPUT.value,
+        required=True,
+    )
+    motivo_attr = f"field_{str(motivo_field.id).replace('-', '')}"
+    response = alumno_client.post(
+        reverse("solicitudes:intake:create", kwargs={"slug": "constancia"}),
+        data={motivo_attr: "Necesito constancia"},
+    )
+    assert response.status_code == 302
+    [s] = Solicitud.objects.all()
+    # Both keys present — auto-fill merged after form validation.
+    assert s.valores == {
+        str(motivo_field.id): "Necesito constancia",
+        str(auto_field.id): "Ingeniería de Software",
+    }
+
+
+@pytest.mark.django_db
+def test_create_post_drops_client_injection_for_auto_fill_field_id(
+    alumno_client: Client,
+) -> None:
+    """Malicious client tries to set the auto-fill field's ``valores`` entry
+    by POSTing ``field_<id>=...``. The form factory excluded the field, so
+    the value never lands in ``form.to_values_dict()``; the resolver's
+    backend value wins and the injected payload is dropped."""
+    make_user(
+        matricula="ALU1",
+        email="alu1@uaz.edu.mx",
+        role=Role.ALUMNO.value,
+        full_name="Ana Alumno",
+        programa="Ingeniería de Software",
+    )
+    tipo = make_tipo(slug="constancia", creator_roles=[Role.ALUMNO.value])
+    auto_field = make_field(
+        tipo,
+        order=0,
+        label="Programa",
+        field_type=FieldType.TEXT.value,
+        source=FieldSource.USER_PROGRAMA.value,
+        required=True,
+    )
+    motivo_field = make_field(
+        tipo,
+        order=1,
+        label="Motivo",
+        field_type=FieldType.TEXT.value,
+        source=FieldSource.USER_INPUT.value,
+        required=True,
+    )
+    motivo_attr = f"field_{str(motivo_field.id).replace('-', '')}"
+    auto_attr = f"field_{str(auto_field.id).replace('-', '')}"
+    response = alumno_client.post(
+        reverse("solicitudes:intake:create", kwargs={"slug": "constancia"}),
+        data={motivo_attr: "ok", auto_attr: "INJECTED-PAYLOAD"},
+    )
+    assert response.status_code == 302
+    [s] = Solicitud.objects.all()
+    # Backend value wins; injection is dropped.
+    assert s.valores[str(auto_field.id)] == "Ingeniería de Software"
+    assert "INJECTED-PAYLOAD" not in str(s.valores.values())
+
+
+@pytest.mark.django_db
+def test_create_post_returns_422_when_required_auto_fill_missing(
+    alumno_client: Client,
+) -> None:
+    make_user(
+        matricula="ALU1",
+        email="alu1@uaz.edu.mx",
+        role=Role.ALUMNO.value,
+        full_name="Ana Alumno",
+        programa="",  # SIGA empty for required field
+    )
+    tipo = make_tipo(slug="constancia", creator_roles=[Role.ALUMNO.value])
+    make_field(
+        tipo,
+        order=0,
+        label="Programa",
+        field_type=FieldType.TEXT.value,
+        source=FieldSource.USER_PROGRAMA.value,
+        required=True,
+    )
+    motivo_field = make_field(
+        tipo,
+        order=1,
+        label="Motivo",
+        field_type=FieldType.TEXT.value,
+        source=FieldSource.USER_INPUT.value,
+        required=True,
+    )
+    motivo_attr = f"field_{str(motivo_field.id).replace('-', '')}"
+    response = alumno_client.post(
+        reverse("solicitudes:intake:create", kwargs={"slug": "constancia"}),
+        data={motivo_attr: "ok"},
+    )
+    assert response.status_code == 422
+    assert Solicitud.objects.count() == 0
+    # The plan's acceptance criterion calls for a "clear error pointing
+    # to Control Escolar". Pin the user-facing message so a regression
+    # that swallowed ``AutoFillRequiredFieldMissing.user_message`` would
+    # surface here, not just in production.
+    assert b"Control Escolar" in response.content
 
 
 # ---- mis_solicitudes ----

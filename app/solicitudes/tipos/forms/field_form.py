@@ -6,7 +6,12 @@ from typing import Any
 from django import forms
 from django.forms import formset_factory
 
-from solicitudes.tipos.constants import MAX_FIELDS_PER_TIPO, FieldType
+from solicitudes.tipos.constants import (
+    FIELD_SOURCE_ALLOWED_TYPES,
+    MAX_FIELDS_PER_TIPO,
+    FieldSource,
+    FieldType,
+)
 
 
 class FieldForm(forms.Form):
@@ -84,6 +89,13 @@ class FieldForm(forms.Form):
         max_length=300,
         widget=forms.TextInput(attrs={"class": "form-control"}),
     )
+    source = forms.ChoiceField(
+        label="Fuente del campo",
+        choices=FieldSource.choices(),
+        initial=FieldSource.USER_INPUT.value,
+        required=False,
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
 
     def clean(self) -> dict[str, Any]:
         cleaned = super().clean()
@@ -139,6 +151,20 @@ class FieldForm(forms.Form):
             cleaned["max_size_mb"] = 10
         if ft not in (FieldType.TEXT, FieldType.TEXTAREA):
             cleaned["max_chars"] = None
+
+        # Source ↔ field_type compatibility. The dropdown is hidden for
+        # incompatible types in the UI, but if the admin switches the type
+        # after picking a USER_* source the previous value can ride along.
+        # Reset to USER_INPUT silently — defense in depth that mirrors the
+        # `_check_source_matches_type` validator on CreateFieldInput.
+        src_value = (cleaned.get("source") or FieldSource.USER_INPUT.value)
+        try:
+            src = FieldSource(src_value)
+        except ValueError:
+            src = FieldSource.USER_INPUT
+        if ft not in FIELD_SOURCE_ALLOWED_TYPES[src]:
+            src = FieldSource.USER_INPUT
+        cleaned["source"] = src.value
         return cleaned
 
 

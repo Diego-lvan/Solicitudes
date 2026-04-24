@@ -140,7 +140,7 @@ Card has two halves:
         {% endif %}
       </div>
 
-      <div class="col-6 col-md-3 max-chars-cell" data-shows-for="TEXT,TEXTAREA">
+      <div class="col-6 col-md-3 max-chars-cell" data-shows-for="TEXT,TEXTAREA" data-hide-when-auto-fill>
         <label for="{{ form.max_chars.id_for_label }}" class="form-label">Largo máx. (caracteres)</label>
         {{ form.max_chars }}
         {% if form.max_chars.help_text %}
@@ -148,7 +148,24 @@ Card has two halves:
         {% endif %}
       </div>
 
-      <div class="col-12 col-md-9">
+      {% comment %}
+      Auto-fill source picker. Hidden via `data-shows-for` on every type that
+      cannot accept a USER_* source — only TEXT and NUMBER expose the cell.
+      The form-clean layer also resets stale values to USER_INPUT, so toggling
+      type after picking a source can never persist an inconsistent pair.
+      {% endcomment %}
+      <div class="col-12 col-md-6 source-cell" data-shows-for="TEXT,NUMBER">
+        <label for="{{ form.source.id_for_label }}" class="form-label">{{ form.source.label }}</label>
+        {{ form.source }}
+        {% if form.source.help_text %}
+          <div class="form-text">{{ form.source.help_text }}</div>
+        {% endif %}
+        {% if form.source.errors %}
+          <div class="invalid-feedback d-block" role="alert">{{ form.source.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="col-12 col-md-9 placeholder-cell" data-hide-when-auto-fill>
         <label for="{{ form.placeholder.id_for_label }}" class="form-label">{{ form.placeholder.label }}</label>
         {{ form.placeholder }}
         {% if form.placeholder.help_text %}
@@ -156,7 +173,7 @@ Card has two halves:
         {% endif %}
       </div>
 
-      <div class="col-12">
+      <div class="col-12 help-text-cell" data-hide-when-auto-fill>
         <label for="{{ form.help_text.id_for_label }}" class="form-label">{{ form.help_text.label }}</label>
         {{ form.help_text }}
       </div>

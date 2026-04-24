@@ -4,14 +4,19 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 
-from django import forms
 from django.db import transaction
 
 from _shared import audit
 from solicitudes.intake.exceptions import CreatorRoleNotAllowed
 from solicitudes.intake.forms.intake_form import build_intake_form
 from solicitudes.intake.schemas import CreateSolicitudInput
-from solicitudes.intake.services.intake_service.interface import IntakeService
+from solicitudes.intake.services.auto_fill_resolver.interface import (
+    AutoFillResolver,
+)
+from solicitudes.intake.services.intake_service.interface import (
+    IntakeFormBundle,
+    IntakeService,
+)
 from solicitudes.lifecycle.constants import ACTION_CANCELAR, Estado
 from solicitudes.lifecycle.notification_port import NotificationService
 from solicitudes.lifecycle.repositories.historial.interface import (
@@ -45,6 +50,7 @@ class DefaultIntakeService(IntakeService):
         folio_service: FolioService,
         lifecycle_service: LifecycleService,
         notification_service: NotificationService,
+        auto_fill_resolver: AutoFillResolver,
     ) -> None:
         self._tipos = tipo_service
         self._solicitudes = solicitud_repository
@@ -52,6 +58,7 @@ class DefaultIntakeService(IntakeService):
         self._folios = folio_service
         self._lifecycle = lifecycle_service
         self._notifier = notification_service
+        self._auto_fill = auto_fill_resolver
 
     # ---- catalogue / form ----
 
@@ -59,13 +66,22 @@ class DefaultIntakeService(IntakeService):
         return self._tipos.list_for_creator(role)
 
     def get_intake_form(
-        self, slug: str, *, role: Role, is_mentor: bool
-    ) -> tuple[TipoSolicitudDTO, type[forms.Form]]:
+        self,
+        slug: str,
+        *,
+        role: Role,
+        is_mentor: bool,
+        actor_matricula: str,
+    ) -> IntakeFormBundle:
         tipo = self._tipos.get_for_creator(slug, role)
         with_comprobante = self._needs_comprobante(tipo, is_mentor=is_mentor)
         snapshot = self._tipos.snapshot(tipo.id)
         form_cls = build_intake_form(snapshot, with_comprobante=with_comprobante)
-        return tipo, form_cls
+        # Lenient preview — never raises; the view uses
+        # ``has_missing_required`` to disable submit when SIGA was empty for
+        # a required auto-fill field.
+        auto_fill = self._auto_fill.preview(snapshot, actor_matricula=actor_matricula)
+        return IntakeFormBundle(tipo=tipo, form_cls=form_cls, auto_fill=auto_fill)
 
     # ---- create ----
 
@@ -82,6 +98,17 @@ class DefaultIntakeService(IntakeService):
         # records what the user actually saw.
         snapshot = self._tipos.snapshot(tipo.id)
 
+        # Resolve auto-fill values from the actor's UserDTO. Strict mode:
+        # raises ``AutoFillRequiredFieldMissing`` if any required ``USER_*``
+        # field came back empty. Auto-fill values are merged on top of the
+        # alumno-supplied ``valores``, taking precedence — the form factory
+        # excludes auto-fill field ids, so any client-supplied value for one
+        # is already absent from ``input_dto.valores``; merging is defensive.
+        auto_values = self._auto_fill.resolve(
+            snapshot, actor_matricula=actor.matricula
+        )
+        merged_valores = {**input_dto.valores, **auto_values}
+
         pago_exento = bool(
             tipo.requires_payment and tipo.mentor_exempt and input_dto.is_mentor_at_creation
         )
@@ -96,7 +123,7 @@ class DefaultIntakeService(IntakeService):
                 solicitante_matricula=input_dto.solicitante_matricula,
                 estado=Estado.CREADA,
                 form_snapshot=snapshot.model_dump(mode="json"),
-                valores=input_dto.valores,
+                valores=merged_valores,
                 requiere_pago=tipo.requires_payment,
                 pago_exento=pago_exento,
             )
