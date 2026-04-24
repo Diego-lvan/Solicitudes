@@ -72,6 +72,7 @@ def test_build_render_context_populates_solicitante_and_solicitud() -> None:
         full_name="Ana A.",
         programa="ISW",
         semestre=4,
+        gender="M",
     )
     ctx = build_render_context(
         solicitud=detail,
@@ -84,6 +85,7 @@ def test_build_render_context_populates_solicitante_and_solicitud() -> None:
         "email": "a1@uaz.edu.mx",
         "programa": "ISW",
         "semestre": 4,
+        "genero": "M",
     }
     assert ctx["solicitud"]["folio"] == "SOL-2026-00001"
     assert ctx["solicitud"]["tipo_nombre"] == "Constancia"

@@ -66,5 +66,6 @@ class DefaultUserService(UserService):
                 full_name=profile.full_name,
                 programa=profile.programa,
                 semestre=profile.semestre,
+                gender=profile.gender,
             )
         )
