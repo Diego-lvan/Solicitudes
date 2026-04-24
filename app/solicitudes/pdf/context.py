@@ -76,6 +76,11 @@ def build_render_context(
             "email": solicitante.email,
             "programa": solicitante.programa,
             "semestre": solicitante.semestre,
+            # Single-letter SIGA code: ``"H"`` (hombre) / ``"M"`` (mujer) /
+            # ``""`` (desconocido). Plantillas pueden ramificar con
+            # ``{% if solicitante.genero == "H" %}El{% elif … %}La{% else %}…``
+            # sin que la app necesite saber nada de gramática.
+            "genero": solicitante.gender,
         },
         "solicitud": {
             "folio": solicitud.folio,
@@ -123,6 +128,7 @@ def build_synthetic_context(*, now: datetime) -> dict[str, object]:
             "email": "ejemplo@uaz.edu.mx",
             "programa": "Programa de Ejemplo",
             "semestre": 5,
+            "genero": "H",  # admin preview: arbitrario; refleja un H típico.
         },
         "solicitud": {
             "folio": "SOL-AAAA-NNNNN",

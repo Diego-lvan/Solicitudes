@@ -37,6 +37,8 @@ class OrmUserRepository(UserRepository):
             defaults["programa"] = input_dto.programa
         if input_dto.semestre is not None:
             defaults["semestre"] = input_dto.semestre
+        if input_dto.gender:
+            defaults["gender"] = input_dto.gender
         with transaction.atomic():
             user, _ = User.objects.update_or_create(
                 matricula=input_dto.matricula,
@@ -72,4 +74,5 @@ class OrmUserRepository(UserRepository):
             full_name=user.full_name,
             programa=user.programa,
             semestre=user.semestre,
+            gender=user.gender,
         )

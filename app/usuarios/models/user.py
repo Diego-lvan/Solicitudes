@@ -57,6 +57,11 @@ class User(AbstractBaseUser):
     full_name = models.CharField(max_length=200, blank=True)
     programa = models.CharField(max_length=200, blank=True)
     semestre = models.IntegerField(null=True, blank=True)
+    # Cached SIGA single-letter gender code: ``"H"`` (hombre) / ``"M"`` (mujer)
+    # / ``""`` (not provided). Consumers should treat empty as "unknown" and
+    # gracefully fall back. Sticky on JWT-only re-login per the
+    # empty-means-no-information contract enforced in the repository.
+    gender = models.CharField(max_length=1, blank=True)
     last_login_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
