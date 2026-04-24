@@ -3,6 +3,12 @@ from __future__ import annotations
 
 from mentores.dependencies import get_intake_mentor_adapter
 from solicitudes.intake.mentor_port import MentorService
+from solicitudes.intake.services.auto_fill_resolver.implementation import (
+    DefaultAutoFillResolver,
+)
+from solicitudes.intake.services.auto_fill_resolver.interface import (
+    AutoFillResolver,
+)
 from solicitudes.intake.services.intake_service.implementation import (
     DefaultIntakeService,
 )
@@ -15,6 +21,7 @@ from solicitudes.lifecycle.dependencies import (
     get_solicitud_repository,
 )
 from solicitudes.tipos.dependencies import get_tipo_service
+from usuarios.dependencies import get_user_service
 
 
 def get_mentor_service() -> MentorService:
@@ -27,6 +34,10 @@ def get_mentor_service() -> MentorService:
     return get_intake_mentor_adapter()
 
 
+def get_auto_fill_resolver() -> AutoFillResolver:
+    return DefaultAutoFillResolver(user_service=get_user_service())
+
+
 def get_intake_service() -> IntakeService:
     return DefaultIntakeService(
         tipo_service=get_tipo_service(),
@@ -35,4 +46,5 @@ def get_intake_service() -> IntakeService:
         folio_service=get_folio_service(),
         lifecycle_service=get_lifecycle_service(),
         notification_service=get_notification_service(),
+        auto_fill_resolver=get_auto_fill_resolver(),
     )

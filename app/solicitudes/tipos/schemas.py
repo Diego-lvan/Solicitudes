@@ -8,7 +8,9 @@ from pydantic import BaseModel, Field, model_validator
 from solicitudes.tipos.constants import (
     ALLOWED_CREATOR_ROLES,
     ALLOWED_RESPONSIBLE_ROLES,
+    FIELD_SOURCE_ALLOWED_TYPES,
     MAX_FIELDS_PER_TIPO,
+    FieldSource,
     FieldType,
 )
 from usuarios.constants import Role
@@ -30,6 +32,7 @@ class FieldDefinitionDTO(BaseModel):
     max_chars: int | None = None
     placeholder: str = ""
     help_text: str = ""
+    source: FieldSource = FieldSource.USER_INPUT
 
 
 class TipoSolicitudDTO(BaseModel):
@@ -85,6 +88,7 @@ class CreateFieldInput(BaseModel):
     max_chars: int | None = Field(default=None, ge=1, le=2000)
     placeholder: str = ""
     help_text: str = ""
+    source: FieldSource = FieldSource.USER_INPUT
 
     # Validator order matters here: shape-of-value checks (options, extensions)
     # run before the per-type-only flags (max_chars). When the admin posts a
@@ -118,6 +122,20 @@ class CreateFieldInput(BaseModel):
         ):
             raise ValueError(
                 "max_chars only applies to TEXT and TEXTAREA fields"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _check_source_matches_type(self) -> CreateFieldInput:
+        # Defense in depth on top of the form-clean normalization. USER_*
+        # sources only make sense on the field types listed in
+        # FIELD_SOURCE_ALLOWED_TYPES; anything else is rejected so a malicious
+        # POST cannot persist e.g. ``source=USER_PROGRAMA`` on a SELECT field.
+        allowed = FIELD_SOURCE_ALLOWED_TYPES[self.source]
+        if self.field_type not in allowed:
+            allowed_list = ", ".join(sorted(t.value for t in allowed))
+            raise ValueError(
+                f"source={self.source.value} only applies to {allowed_list} fields"
             )
         return self
 

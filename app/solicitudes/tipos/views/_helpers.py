@@ -10,7 +10,7 @@ from uuid import UUID
 
 from django.forms import BaseFormSet
 
-from solicitudes.tipos.constants import FieldType
+from solicitudes.tipos.constants import FieldSource, FieldType
 from solicitudes.tipos.forms import TipoForm
 from solicitudes.tipos.schemas import (
     CreateFieldInput,
@@ -37,6 +37,7 @@ def fieldset_initial_from_dto(fields: list[Any]) -> list[dict[str, Any]]:
                 "max_chars": f.max_chars,
                 "placeholder": f.placeholder,
                 "help_text": f.help_text,
+                "source": f.source.value,
             }
         )
     return out
@@ -100,6 +101,9 @@ def _collect_fields(formset: BaseFormSet[Any]) -> list[CreateFieldInput]:
                 max_chars=sub.cleaned_data.get("max_chars"),
                 placeholder=sub.cleaned_data.get("placeholder", ""),
                 help_text=sub.cleaned_data.get("help_text", ""),
+                source=FieldSource(
+                    sub.cleaned_data.get("source") or FieldSource.USER_INPUT.value
+                ),
             )
         )
     return fields

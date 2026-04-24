@@ -43,11 +43,20 @@ class CreateSolicitudView(CreatorRequiredMixin, View):
     def get(self, request: HttpRequest, slug: str) -> HttpResponse:
         actor = actor_from_request(request)
         is_mentor = get_mentor_service().is_mentor(actor.matricula)
-        tipo, form_cls = get_intake_service().get_intake_form(
-            slug, role=actor.role, is_mentor=is_mentor
+        bundle = get_intake_service().get_intake_form(
+            slug,
+            role=actor.role,
+            is_mentor=is_mentor,
+            actor_matricula=actor.matricula,
         )
         return render(
-            request, self.template_name, {"tipo": tipo, "form": form_cls()}
+            request,
+            self.template_name,
+            {
+                "tipo": bundle.tipo,
+                "form": bundle.form_cls(),
+                "auto_fill": bundle.auto_fill,
+            },
         )
 
     def post(self, request: HttpRequest, slug: str) -> HttpResponse:
@@ -57,16 +66,20 @@ class CreateSolicitudView(CreatorRequiredMixin, View):
         storage = get_file_storage()
         is_mentor = get_mentor_service().is_mentor(actor.matricula)
 
-        tipo, form_cls = service.get_intake_form(
-            slug, role=actor.role, is_mentor=is_mentor
+        bundle = service.get_intake_form(
+            slug,
+            role=actor.role,
+            is_mentor=is_mentor,
+            actor_matricula=actor.matricula,
         )
+        tipo, form_cls = bundle.tipo, bundle.form_cls
         form = form_cls(request.POST, request.FILES)
 
         if not form.is_valid():
             return render(
                 request,
                 self.template_name,
-                {"tipo": tipo, "form": form},
+                {"tipo": tipo, "form": form, "auto_fill": bundle.auto_fill},
                 status=400,
             )
 
@@ -116,7 +129,11 @@ class CreateSolicitudView(CreatorRequiredMixin, View):
                 return render(
                     request,
                     self.template_name,
-                    {"tipo": tipo, "form": form},
+                    {
+                        "tipo": tipo,
+                        "form": form,
+                        "auto_fill": bundle.auto_fill,
+                    },
                     status=exc.http_status,
                 )
         finally:

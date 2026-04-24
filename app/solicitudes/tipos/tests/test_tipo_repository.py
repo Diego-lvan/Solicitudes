@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 
 from solicitudes.models import FieldDefinition, TipoSolicitud
-from solicitudes.tipos.constants import FieldType
+from solicitudes.tipos.constants import FieldSource, FieldType
 from solicitudes.tipos.exceptions import TipoNotFound
 from solicitudes.tipos.repositories.tipo import OrmTipoRepository
 from solicitudes.tipos.schemas import (
@@ -245,3 +245,71 @@ def test_max_chars_round_trips_through_repo(repo: OrmTipoRepository) -> None:
     assert by_label["Nombre"].max_chars == 120
     assert by_label["Comentario"].max_chars == 500
     assert by_label["Edad"].max_chars is None
+
+
+@pytest.mark.django_db
+def test_source_round_trips_through_repo_on_create(repo: OrmTipoRepository) -> None:
+    dto = repo.create(
+        CreateTipoInput(
+            nombre="With sources",
+            responsible_role=Role.CONTROL_ESCOLAR,
+            creator_roles={Role.ALUMNO},
+            fields=[
+                CreateFieldInput(
+                    label="Programa",
+                    field_type=FieldType.TEXT,
+                    order=0,
+                    source=FieldSource.USER_PROGRAMA,
+                ),
+                CreateFieldInput(
+                    label="Motivo",
+                    field_type=FieldType.TEXTAREA,
+                    order=1,
+                ),
+            ],
+        )
+    )
+    fetched = repo.get_by_id(dto.id)
+    by_label = {f.label: f for f in fetched.fields}
+    assert by_label["Programa"].source is FieldSource.USER_PROGRAMA
+    assert by_label["Motivo"].source is FieldSource.USER_INPUT
+
+
+@pytest.mark.django_db
+def test_source_round_trips_through_repo_on_update(repo: OrmTipoRepository) -> None:
+    dto = repo.create(
+        CreateTipoInput(
+            nombre="Update sources",
+            responsible_role=Role.CONTROL_ESCOLAR,
+            creator_roles={Role.ALUMNO},
+            fields=[
+                CreateFieldInput(
+                    label="Programa",
+                    field_type=FieldType.TEXT,
+                    order=0,
+                    source=FieldSource.USER_PROGRAMA,
+                ),
+            ],
+        )
+    )
+    [existing] = dto.fields
+    updated = repo.update(
+        UpdateTipoInput(
+            id=dto.id,
+            nombre=dto.nombre,
+            responsible_role=dto.responsible_role,
+            creator_roles=dto.creator_roles,
+            fields=[
+                CreateFieldInput(
+                    id=existing.id,
+                    label="Programa",
+                    field_type=FieldType.TEXT,
+                    order=0,
+                    source=FieldSource.USER_FULL_NAME,
+                ),
+            ],
+        )
+    )
+    [field] = updated.fields
+    assert field.id == existing.id
+    assert field.source is FieldSource.USER_FULL_NAME

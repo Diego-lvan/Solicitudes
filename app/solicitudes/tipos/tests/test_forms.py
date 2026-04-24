@@ -143,3 +143,53 @@ def test_field_form_file_keeps_max_size() -> None:
     )
     assert form.is_valid()
     assert form.cleaned_data["max_size_mb"] == 20
+
+
+# ---- source ----
+
+
+def test_field_form_source_defaults_to_user_input() -> None:
+    form = FieldForm(data=_field_data())
+    assert form.is_valid()
+    assert form.cleaned_data["source"] == "USER_INPUT"
+
+
+def test_field_form_source_user_programa_round_trips_on_text() -> None:
+    form = FieldForm(data=_field_data(field_type="TEXT", source="USER_PROGRAMA"))
+    assert form.is_valid()
+    assert form.cleaned_data["source"] == "USER_PROGRAMA"
+
+
+def test_field_form_source_user_semestre_round_trips_on_number() -> None:
+    form = FieldForm(data=_field_data(field_type="NUMBER", source="USER_SEMESTRE"))
+    assert form.is_valid()
+    assert form.cleaned_data["source"] == "USER_SEMESTRE"
+
+
+def test_field_form_source_normalized_to_user_input_on_select() -> None:
+    # Stale USER_PROGRAMA after admin switched type to SELECT must be reset
+    # silently — defense in depth on top of the schema validator.
+    form = FieldForm(
+        data=_field_data(
+            field_type="SELECT",
+            options_csv="A,B",
+            source="USER_PROGRAMA",
+        )
+    )
+    assert form.is_valid()
+    assert form.cleaned_data["source"] == "USER_INPUT"
+
+
+def test_field_form_source_normalized_to_user_input_on_textarea() -> None:
+    form = FieldForm(
+        data=_field_data(field_type="TEXTAREA", source="USER_PROGRAMA")
+    )
+    assert form.is_valid()
+    assert form.cleaned_data["source"] == "USER_INPUT"
+
+
+def test_field_form_source_normalized_when_text_meets_user_semestre() -> None:
+    # USER_SEMESTRE is NUMBER-only; a TEXT row must reset rather than reject.
+    form = FieldForm(data=_field_data(field_type="TEXT", source="USER_SEMESTRE"))
+    assert form.is_valid()
+    assert form.cleaned_data["source"] == "USER_INPUT"

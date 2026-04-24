@@ -105,6 +105,7 @@ class DefaultTipoService(TipoService):
                     max_chars=f.max_chars,
                     placeholder=f.placeholder,
                     help_text=f.help_text,
+                    source=f.source,
                 )
                 for f in tipo.fields
             ],

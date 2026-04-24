@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from django.db import models
 
-from solicitudes.tipos.constants import FieldType
+from solicitudes.tipos.constants import FieldSource, FieldType
 
 
 class FieldDefinition(models.Model):
@@ -17,6 +17,14 @@ class FieldDefinition(models.Model):
     )
     label = models.CharField(max_length=120)
     field_type = models.CharField(max_length=16, choices=FieldType.choices())
+    # Where the value comes from at intake. `USER_INPUT` means the alumno
+    # types it; other variants pull from the hydrated UserDTO and the form
+    # builder never renders a control for them.
+    source = models.CharField(
+        max_length=24,
+        choices=FieldSource.choices(),
+        default=FieldSource.USER_INPUT.value,
+    )
     required = models.BooleanField(default=True)
     order = models.PositiveSmallIntegerField()
     # `options` only applies to SELECT fields; ignored otherwise.
