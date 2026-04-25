@@ -58,7 +58,7 @@ The decision is made by the view (and re-checked in the service-side snapshot lo
 `IntakeService` (`services/intake_service/interface.py`):
 
 - `list_creatable_tipos(role) -> list[TipoSolicitudRow]` — delegates to `TipoService.list_for_creator(role)`.
-- `get_intake_form(slug, *, role, is_mentor) -> tuple[TipoSolicitudDTO, type[forms.Form]]` — looks up the tipo via `TipoService.get_for_creator` (which raises `Unauthorized` if `role ∉ tipo.creator_roles`), captures a `FormSnapshot`, builds the dynamic form. Used by both GET and POST.
+- `get_intake_form(slug, *, role, is_mentor, actor_matricula) -> IntakeFormBundle` (extended by 011) — looks up the tipo via `TipoService.get_for_creator` (which raises `Unauthorized` if `role ∉ tipo.creator_roles`), captures a `FormSnapshot`, builds the dynamic form (which excludes auto-fill fields), and computes the lenient `AutoFillPreview` from the actor's hydrated `UserDTO`. Used by both GET and POST. The bundle is a `dataclass(frozen=True)` carrying `tipo`, `form_cls`, and `auto_fill`.
 - `create(input_dto, *, actor: UserDTO) -> SolicitudDetail` — see flow below.
 - `cancel_own(folio, *, actor, observaciones) -> SolicitudDetail` — thin wrapper that calls `LifecycleService.transition(action="cancelar", ...)`. Owner-only authorization is enforced by the lifecycle service's `_authorize`.
 
@@ -137,10 +137,40 @@ The view calls `MentorService.is_mentor(actor.matricula)` exactly twice on the c
 
 `_estado_badge.html` renders `{{ estado.display_name }}` (Spanish single/multi-word labels: "Creada", "En proceso", "Finalizada", "Cancelada") with semantic Bootstrap badge colors. Status is conveyed by both color *and* text so the WCAG color-as-only-signal rule is satisfied.
 
+## Auto-fill resolver (added by 011)
+
+`AutoFillResolver` (`services/auto_fill_resolver/interface.py`) translates a `FormSnapshot` + `actor_matricula` into `{field_id_str: value}` for every snapshot field with `source != USER_INPUT`. Two methods share one SIGA round-trip:
+
+| Method | Caller | Behaviour |
+|---|---|---|
+| `resolve(snapshot, *, actor_matricula) -> dict[str, Any]` | `IntakeService.create` | Strict — raises `AutoFillRequiredFieldMissing` if any `required=True` auto-fill field has an empty resolved value. Optional empty values are **dropped from the dict** (not persisted as `null` / `""`), matching `to_values_dict()`'s treatment of absent values. |
+| `preview(snapshot, *, actor_matricula) -> AutoFillPreview` | `IntakeService.get_intake_form` | Lenient — never raises. Returns labeled `(label, value)` pairs for the read-only panel, plus `has_missing_required: bool` so the view can render the alert and disable submit. |
+
+`DefaultAutoFillResolver` is constructor-injected with `UserService`. Source ↔ `UserDTO` attribute mapping is the table `_SOURCE_TO_USER_ATTR` in the implementation (`USER_FULL_NAME → full_name`, `USER_PROGRAMA → programa`, …). To extend with a derived value (e.g., a future article-from-gender helper), add an entry to a `_SOURCE_DERIVERS` table — the slot is reserved for that pattern.
+
+`AutoFillPreview` is a `dataclass(frozen=True)` (not Pydantic) because it is a service-to-service internal value, never crosses an external boundary, never serializes to JSON.
+
+### Intake `create` integration
+
+Step 3.5 of the `create` flow (between snapshot capture and the atomic block):
+
+```python
+auto_values = self._auto_fill.resolve(snapshot, actor_matricula=actor.matricula)
+merged_valores = {**input_dto.valores, **auto_values}
+```
+
+The dynamic form factory has already excluded auto-fill fields, so any client-supplied value for an auto-fill `field_id` is absent from `input_dto.valores`. The merge is defensive — backend values always win.
+
+The view's GET handler reads `bundle.auto_fill` and:
+
+- Renders `templates/solicitudes/intake/_solicitante_panel.html` above the form, listing `(label, value)` pairs (em-dash placeholder for empty optional values).
+- When `has_missing_required` is `True`, the panel renders a Bootstrap `alert-danger` with an icon + Spanish copy pointing to Control Escolar, and the submit button is rendered with `disabled aria-disabled="true"`.
+
 ## Exceptions (`intake/exceptions.py`)
 
 - **`CreatorRoleNotAllowed`** (Unauthorized, 403) — actor's role is not in `tipo.creator_roles` or the tipo is inactive. Raised by the service; the view-level `CreatorRequiredMixin` is a coarser pre-filter.
 - **`ComprobanteRequired`** (DomainValidationError, 422) — reserved for service-level enforcement of the comprobante rule. Today the requirement is enforced at the form layer (a required `FileField`); this exception is the right surface if we later move the check (e.g., to validate a server-issued receipt rather than an upload).
+- **`AutoFillRequiredFieldMissing`** (DomainValidationError, 422) — added by 011. Raised by `AutoFillResolver.resolve` when a `required=True` auto-fill field resolves to an empty value (SIGA down + cache empty). The view catches it as a generic `AppError`, re-renders with a flash + form-level error pointing the alumno to Control Escolar.
 
 ## Tests
 

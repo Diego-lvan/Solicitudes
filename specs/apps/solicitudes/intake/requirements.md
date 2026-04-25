@@ -65,9 +65,24 @@ This is the entry point that turns a tipo definition into a real, traceable soli
 - **WCAG color-as-only-signal** is satisfied: estado is conveyed by text *and* color in every badge.
 - **No JSON API by default.** The intake surface is server-rendered HTML.
 
+## Auto-fill from user data (initiative 011)
+
+Initiative 011 extended intake's create flow with a server-side resolver that
+plucks values from the actor's hydrated `UserDTO` for any snapshot field
+whose `source != USER_INPUT`. The alumno never types those fields; they
+appear in a read-only **"Datos del solicitante"** panel above the form.
+
+| ID | Requirement | Source |
+|---|---|---|
+| RF-INT-13 | The intake page must render a read-only "Datos del solicitante" panel listing every auto-fill field the snapshot declares, with each field's resolved value pulled from the actor's `UserDTO`. | 011 |
+| RF-INT-14 | Auto-fill values must come exclusively from the backend. Client-supplied values for auto-fill `field_id`s must be silently dropped — only the resolved server value lands in the persisted `valores`. | 011 |
+| RF-INT-15 | If a `required=True` auto-fill field has an empty resolved value (SIGA down + cache empty), the submission must fail with a 422 and a flash message pointing the alumno to Control Escolar. No partial save. | 011 |
+| RF-INT-16 | When the same condition is detected at GET time (preview), the page must render the panel with a top-of-page alert and disable the submit button so the alumno cannot post. | 011 |
+| RF-INT-17 | Optional auto-fill fields with empty resolved values must be **dropped** from the persisted `valores`, not written as `null` / `""`. Mirrors `DynamicTipoForm.to_values_dict()`'s treatment of absent values. | 011 |
+
 ## Open questions
 
-None at initiative closeout. Initiative 011 introduces a `FieldSource` extension that lets the catalog mark fields as auto-fillable from the actor's `UserDTO`; intake will hydrate those values from the backend at submit and merge them into `valores` on the same path described here.
+None at initiative closeout for 011. The original 011 open question (whether auto-fill should be one initiative or split into 011a/011b) was answered by shipping it as one — see `specs/planning/011-field-autofill/changelog.md`.
 
 ## Related Specs
 

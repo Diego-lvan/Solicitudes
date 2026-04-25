@@ -70,7 +70,7 @@ class FieldDefinition(models.Model):
     )
 ```
 
-Migration `0002_fielddefinition_source.py` (additive — defaults to `USER_INPUT` for legacy rows).
+Migration `0005_fielddefinition_source.py` (additive — defaults to `USER_INPUT` for legacy rows). Plan originally pre-allocated `0002`, but `solicitudes/migrations/` already contains `0001..0004` from initiatives 003/004/005 — `0005` is the next free slot.
 
 ### 3. DTO + snapshot delta
 
@@ -121,8 +121,12 @@ class FieldForm(forms.Form):
         initial=FieldSource.USER_INPUT.value,
         required=False,
         widget=forms.Select(attrs={"class": "form-select"}),
-        help_text="Si eliges una fuente USER_*, el alumno no teclea este campo; se llena del perfil.",
     )
+
+    # No help_text. The choice labels themselves are self-explanatory in
+    # Spanish ("El solicitante lo escribe" / "Auto · Programa" / …) and
+    # mentioning the internal `USER_*` identifiers in user-facing copy was
+    # technical and misleading.
 
     def clean(self) -> dict[str, Any]:
         cleaned = super().clean()
@@ -139,6 +143,13 @@ class FieldForm(forms.Form):
 ### 6. Admin template (`templates/solicitudes/admin/tipos/_field_row.html`)
 
 A new cell tagged `data-shows-for="TEXT,NUMBER"` exposes the `source` dropdown — invisible for SELECT/FILE/DATE/TEXTAREA where source can only be `USER_INPUT`. Reuses the existing `data-shows-for` toggle plumbing from 003.
+
+**Hide input-decoration cells when source is auto-fill.** A field with `source != USER_INPUT` has no alumno-typed value, so the cells that decorate the input box (`max_chars`, `placeholder`, `help_text`) are dead UI when auto-fill is selected. Mark those cells with a new boolean attribute `data-hide-when-auto-fill` and extend the JS toggle so a cell is visible iff:
+
+1. its `data-shows-for` matches the current `field_type` (or it has no `data-shows-for`), **AND**
+2. it has no `data-hide-when-auto-fill` **OR** the current `source` is `USER_INPUT`.
+
+The toggle now listens on both the `field_type` and `source` selects. Cells kept visible for auto-fill: `label`, `field_type`, `required`, `source`. Cells hidden: `max_chars`, `placeholder`, `help_text` (plus the type-only ones already hidden by `data-shows-for`: SELECT options, FILE extensions/size).
 
 ### 7. Builder change (`solicitudes/formularios/builder.py`)
 
@@ -284,7 +295,7 @@ if (state.source && state.source !== "USER_INPUT") {
 ```
 solicitudes/
 ├── models/field_definition.py             [MOD]  + source column
-├── migrations/0002_fielddefinition_source.py [NEW]
+├── migrations/0005_fielddefinition_source.py [NEW]
 ├── tipos/
 │   ├── constants.py                       [MOD]  + FieldSource enum + ALLOWED map
 │   ├── schemas.py                         [MOD]  + source on DTO + Input + validator

@@ -9,7 +9,7 @@ Provide identity and authorization for the Sistema de Solicitudes. Authenticatio
 ## In scope
 
 - **JWT validation** on every request, with anonymous users allowed through to the view layer (views decide whether to require auth).
-- **A custom `User` model** keyed by `matricula` — no passwords, no `username`. Cached fields for SIGA-sourced data (`full_name`, `programa`, `semestre`).
+- **A custom `User` model** keyed by `matricula` — no passwords, no `username`. Cached fields for SIGA-sourced data (`full_name`, `programa`, `semestre`, `gender`).
 - **Role taxonomy** — `ALUMNO`, `DOCENTE`, `CONTROL_ESCOLAR`, `RESPONSABLE_PROGRAMA`, `ADMIN` — and role-resolution from provider claims.
 - **SIGA enrichment** — best-effort, asynchronous-from-the-user's-POV fetch of academic profile fields. SIGA outages must never block login.
 - **Session cookie management** — set on callback, cleared on logout, validated on every protected request.
@@ -39,8 +39,9 @@ Provide identity and authorization for the Sistema de Solicitudes. Authenticatio
 ## Non-functional requirements
 
 - **No password storage.** The model has no `set_password` path, and the manager rejects `create_user`/`create_superuser`.
-- **The auth provider owns email.** SIGA enriches `full_name`, `programa`, `semestre` only. SIGA's `email` is never persisted.
-- **Cached SIGA fields are sticky.** A subsequent JWT-only login (no SIGA data) must not clobber a previously cached `full_name`/`programa`/`semestre`.
+- **The auth provider owns email.** SIGA enriches `full_name`, `programa`, `semestre`, `gender` only. SIGA's `email` is never persisted.
+- **Cached SIGA fields are sticky.** A subsequent JWT-only login (no SIGA data) must not clobber a previously cached `full_name`/`programa`/`semestre`/`gender`.
+- **Gender is normalised at the DTO boundary.** SIGA's single-letter code is coerced to `"H"` / `"M"` / `""` by a Pydantic validator on `UserDTO`/`SigaProfile`/`CreateOrUpdateUserInput`; any unknown value (`"F"`, `"X"`, full words, non-strings) collapses to `""`. PDF plantillas branching on `solicitante.genero` therefore never see garbage. Added by initiative 011 alongside the auto-fill plumbing.
 - **Provider role vocabulary is isolated.** Changes to the provider's role strings are absorbed in one place (`PROVIDER_ROLE_MAP` + the `RoleResolver` ABC), never rippled through the codebase.
 - **Production fail-fast.** `JWT_SECRET`, `AUTH_PROVIDER_LOGIN_URL`, and `SIGA_BASE_URL` are required at boot in `prod.py`.
 
