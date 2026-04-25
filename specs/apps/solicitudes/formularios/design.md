@@ -9,14 +9,14 @@ from solicitudes.formularios.builder import build_django_form, field_attr_name
 from solicitudes.formularios.schemas import FieldSnapshot, FormSnapshot
 ```
 
-- **`build_django_form(snapshot: FormSnapshot) -> type[forms.Form]`** — returns a dynamically-constructed Django form class whose fields match `snapshot.fields`, ordered by `order`. The class also carries a `to_values_dict(self) -> dict[str, Any]` method.
+- **`build_django_form(snapshot: FormSnapshot) -> type[forms.Form]`** — returns a dynamically-constructed Django form class whose fields match `snapshot.fields`, ordered by `order`. **Fields with `source != FieldSource.USER_INPUT` are excluded entirely** (added by 011): they are absent from `Form.fields`, from `field_order`, and from `to_values_dict()`. This is the security boundary that drops malicious client `field_<auto_id>=...` payloads before they can land in `valores`. The class also carries a `to_values_dict(self) -> dict[str, Any]` method.
 - **`field_attr_name(field_id: Any) -> str`** — `f"field_{str(field_id).replace('-', '')}"`. Deterministic, the only way callers should derive the form-field name from a snapshot field id.
 
 ## Schemas (`formularios/schemas.py`)
 
 Frozen Pydantic v2 DTOs. `formularios` only consumes `tipos` data — never imports the ORM, never imports view code.
 
-- **`FieldSnapshot`** — `field_id, label, field_type, required, order, options, accepted_extensions, max_size_mb, max_chars, placeholder, help_text`. Same shape as `FieldDefinitionDTO` minus the live `id`; `field_id` carries the original DB id forever (so historical solicitudes can resolve a deleted field).
+- **`FieldSnapshot`** — `field_id, label, field_type, required, order, options, accepted_extensions, max_size_mb, max_chars, placeholder, help_text, source`. Same shape as `FieldDefinitionDTO` minus the live `id`; `field_id` carries the original DB id forever (so historical solicitudes can resolve a deleted field). The `source` (added by 011) travels with the snapshot so the resolver can decide which field to auto-fill, even if the live `FieldDefinition.source` later changes.
 - **`FormSnapshot`** — `tipo_id, tipo_slug, tipo_nombre, captured_at: datetime, fields: list[FieldSnapshot]`.
 
 `tipo_slug` and `tipo_nombre` are denormalized into the snapshot so historical solicitude listings can render them without a join — they remain readable even if the tipo is later renamed.

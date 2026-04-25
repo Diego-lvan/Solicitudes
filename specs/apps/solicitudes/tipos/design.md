@@ -27,7 +27,7 @@ Admin browser → views/{list,create,detail,edit,delete}.py
 ### Models (`solicitudes/models/`)
 
 - **`TipoSolicitud`** — `id` (UUID), `slug` (unique, ≤80), `nombre` (≤120), `descripcion` (text), `responsible_role` (`Role`), `creator_roles` (JSONField → `list[str]`), `requires_payment`, `mentor_exempt`, `plantilla` (FK → `solicitudes.PlantillaSolicitud`, nullable, `on_delete=SET_NULL`, `related_name="tipos"`; introduced in 006), `activo`, `created_at`, `updated_at`. Index on `(activo, responsible_role)`. The Django auto-generated `plantilla_id` accessor remains the public attribute name on the ORM row.
-- **`FieldDefinition`** — `id` (UUID), `tipo` (FK CASCADE), `label` (≤120), `field_type` (`FieldType`), `required`, `order` (PositiveSmallInt), `options` (JSONField → `list[str]`, SELECT only), `accepted_extensions` (JSONField → `list[str]`, FILE only), `max_size_mb` (PositiveInt, FILE only, default 10), `max_chars` (PositiveInt, nullable, TEXT/TEXTAREA only), `placeholder` (≤200), `help_text` (≤300). Constraint: `unique (tipo, order)`. Default ordering: `order` asc.
+- **`FieldDefinition`** — `id` (UUID), `tipo` (FK CASCADE), `label` (≤120), `field_type` (`FieldType`), `required`, `order` (PositiveSmallInt), `options` (JSONField → `list[str]`, SELECT only), `accepted_extensions` (JSONField → `list[str]`, FILE only), `max_size_mb` (PositiveInt, FILE only, default 10), `max_chars` (PositiveInt, nullable, TEXT/TEXTAREA only), `placeholder` (≤200), `help_text` (≤300), `source` (`FieldSource`, default `USER_INPUT` — added by 011, controls auto-fill). Constraint: `unique (tipo, order)`. Default ordering: `order` asc.
 
 ### DTOs (`tipos/schemas.py`)
 
@@ -125,10 +125,18 @@ Beyond plain CRUD, the catalog editor ships these UX affordances; future contrib
 ## Constants (`tipos/constants.py`)
 
 - `FieldType` (StrEnum): `TEXT`, `TEXTAREA`, `NUMBER`, `DATE`, `SELECT`, `FILE`.
+- `FieldSource` (StrEnum, added by 011): `USER_INPUT` (default — alumno fills), `USER_FULL_NAME`, `USER_PROGRAMA`, `USER_EMAIL`, `USER_MATRICULA` (apply to TEXT), `USER_SEMESTRE` (applies to NUMBER). Choices labels in Spanish ("El solicitante lo escribe" / "Auto · Programa" / …); identifiers in English. Internal `USER_*` codes never appear in rendered HTML.
+- `FIELD_SOURCE_ALLOWED_TYPES: dict[FieldSource, frozenset[FieldType]]` — single source of truth for source ↔ type compatibility. Enforced by the `_check_source_matches_type` Pydantic validator on `CreateFieldInput` and (defense in depth) by `FieldForm.clean()` which silently resets stale `source` to `USER_INPUT` on a type switch.
 - `MAX_FIELDS_PER_TIPO = 50`.
 - `ALLOWED_CREATOR_ROLES = {ALUMNO, DOCENTE}`.
 - `ALLOWED_RESPONSIBLE_ROLES = {CONTROL_ESCOLAR, RESPONSABLE_PROGRAMA, DOCENTE}`.
 - `COMMON_FILE_EXTENSIONS` — sectioned tuple of (group_label, extensions); fed to the row template via `tipos_tags.common_file_extensions`.
+
+## Catalog admin UI affordances added by 011
+
+- The `_field_row.html` template has a **`source` cell** marked `data-shows-for="TEXT,NUMBER"` — invisible for SELECT/FILE/DATE/TEXTAREA where source can only be `USER_INPUT`.
+- Three input-decoration cells (`max_chars`, `placeholder`, `help_text`) carry `data-hide-when-auto-fill` and disappear when `source != USER_INPUT`. The toggle composes with `data-shows-for` so type and source filter independently.
+- `tipo_form.js`'s `renderField` renders an "Auto · `<variant>`" Bootstrap pill in the live-preview pane instead of an interactive control when the row's source is non-`USER_INPUT`. The pill is the admin's at-a-glance signal that the alumno will *not* see this field as a form input.
 
 ## What 004 consumes from this feature
 

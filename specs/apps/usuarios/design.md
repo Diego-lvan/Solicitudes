@@ -25,6 +25,7 @@ All cross-layer calls go through Pydantic DTOs (`UserDTO`, `CreateOrUpdateUserIn
 | `role` | `CharField(32)` `choices=Role.choices()` | One of five values. |
 | `full_name` / `programa` | `CharField(200)` `blank` | Cached SIGA fields; sticky on JWT-only re-login. |
 | `semestre` | `IntegerField` `null/blank` | Cached SIGA field; sticky on JWT-only re-login. |
+| `gender` | `CharField(1)` `blank` | Cached SIGA single-letter code (`"H"` / `"M"` / `""`); sticky on JWT-only re-login. Added by initiative 011 to support gendered Spanish in PDF plantillas. |
 | `last_login_at` | `DateTimeField` `null/blank` | Stamped by `UserService.get_or_create_from_claims`. Separate from `AbstractBaseUser.last_login` to avoid Django's signal handlers. |
 | `created_at` / `updated_at` | `DateTimeField` `auto_now_add` / `auto_now` | Audit. |
 
@@ -45,9 +46,10 @@ Provider claim string → `Role` mapping is isolated in `usuarios.constants.PROV
 
 ## Pydantic DTOs (`schemas.py`)
 
-- `UserDTO` — frozen, returned by repository and service. `email: EmailStr`, `role: Role`, optional cached SIGA fields, plus `is_mentor: bool` (populated by the future `mentores` service, never stored on `User`).
+- `UserDTO` — frozen, returned by repository and service. `email: EmailStr`, `role: Role`, optional cached SIGA fields (`full_name`, `programa`, `semestre`, `gender`), plus `is_mentor: bool` (populated by the future `mentores` service, never stored on `User`).
 - `CreateOrUpdateUserInput` — input to `UserRepository.upsert`. `EmailStr`, `Role`.
 - `SigaProfile` — shape returned by `SigaService.fetch_profile`.
+- **Gender coercion at the DTO boundary** (added by 011) — all three DTOs share a `field_validator("gender", mode="before")` that normalises any value to one of `"H"` / `"M"` / `""`. Trims whitespace, uppercases, and treats anything outside the allowed set (`"F"`, `"X"`, full words, non-strings, `None`) as `""`. This pins the rendered domain so PDF plantillas branching on `solicitante.genero` never see garbage, while keeping the cache forgiving against a SIGA payload regression.
 
 ## Exception hierarchy (`exceptions.py`)
 
@@ -87,7 +89,7 @@ ABC with one method `fetch_profile(matricula) -> SigaProfile`.
   - 5xx, timeout, connection error, malformed JSON, missing/invalid URL → `SigaUnavailable` (broadened to `requests.RequestException` so dev/test runs with empty `SIGA_BASE_URL` are tolerated).
 - `JwtFallbackSigaService` — builds a minimal profile from the captured JWT claims; used for offline / dev environments. Currently unwired; available as a drop-in replacement.
 
-> **Profile shape is alumno-only today.** `SigaProfile` carries `matricula, email, full_name, programa, semestre`. Whether SIGA exposes the same shape (or a different one with `departamento`, `categoria`, etc.) for docentes / control escolar is **OQ-002-5** in `requirements.md`. Until SIGA confirms, the system degrades gracefully because every academic field on `UserDTO` is optional — a docente login simply gets empty `programa`/`semestre`. When the docente shape lands, extend `SigaProfile` additively and downstream consumers (e.g., initiative 011's `FieldSource` enum) gain new variants.
+> **Profile shape is alumno-only today.** `SigaProfile` carries `matricula, email, full_name, programa, semestre, gender` (the last added by initiative 011). Whether SIGA exposes the same shape (or a different one with `departamento`, `categoria`, etc.) for docentes / control escolar is **OQ-002-5** in `requirements.md`. Until SIGA confirms, the system degrades gracefully because every academic field on `UserDTO` is optional — a docente login simply gets empty `programa`/`semestre`/`gender`. When the docente shape lands, extend `SigaProfile` additively and downstream consumers (e.g., initiative 011's `FieldSource` enum) gain new variants.
 
 ### `UserService` (`services/user_service/`)
 

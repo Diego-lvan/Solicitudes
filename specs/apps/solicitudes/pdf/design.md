@@ -74,7 +74,7 @@ All frozen Pydantic v2 models.
 
 `pdf/context.py::build_render_context(solicitud, solicitante, now)` returns:
 
-- `solicitante`: `{ matricula, nombre, email, programa, semestre }` (from `UserDTO`; `nombre` maps from `full_name`).
+- `solicitante`: `{ matricula, nombre, email, programa, semestre, genero }` (from `UserDTO`; `nombre` maps from `full_name`). `genero` (added by initiative 011) is the cached single-letter SIGA code (`"H"` / `"M"` / `""`); plantillas branch on it for gendered Spanish, e.g. `{% if solicitante.genero == "H" %}el{% elif solicitante.genero == "M" %}la{% else %}el/la{% endif %}`.
 - `solicitud`: `{ folio, estado, tipo_nombre, created_at, updated_at }`.
 - `valores`: `{ <slug>: rendered_value }` — the slug is `slug_for_label(field.label)` (Django `slugify` then `-` → `_`), zipped with `solicitud.valores` by `field_id`. FILE-typed values render as the original filename only.
 - `now`: timezone-aware datetime in `America/Mexico_City`.

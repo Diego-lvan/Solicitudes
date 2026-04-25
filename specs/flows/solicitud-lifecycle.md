@@ -83,14 +83,15 @@ A solicitante (alumno or docente) opens the intake catalog (`/solicitudes/`) and
 
 ## Step-by-step (happy path)
 
-1. **GET /solicitudes/crear/`<slug>`/** — `CreateSolicitudView.get` calls `IntakeService.get_intake_form(slug, role, is_mentor)`. The service looks up the tipo (rejects with `Unauthorized` if `role ∉ tipo.creator_roles`), captures a `FormSnapshot`, and asks `build_intake_form` to wrap a dynamic form. Comprobante `FileField` is appended when `requires_payment AND not (mentor_exempt AND is_mentor)`.
+1. **GET /solicitudes/crear/`<slug>`/** — `CreateSolicitudView.get` calls `IntakeService.get_intake_form(slug, role, is_mentor, actor_matricula)`. The service looks up the tipo (rejects with `Unauthorized` if `role ∉ tipo.creator_roles`), captures a `FormSnapshot`, asks `build_intake_form` to wrap a dynamic form (which **excludes auto-fill fields** so the alumno never sees them as inputs), and computes a lenient `AutoFillPreview` from the actor's hydrated `UserDTO` (added by 011). Comprobante `FileField` is appended when `requires_payment AND not (mentor_exempt AND is_mentor)`. The view renders the read-only "Datos del solicitante" panel above the form; if `preview.has_missing_required` is true the panel shows an alert and the submit button is disabled.
 2. **POST /solicitudes/crear/`<slug>`/** — view validates the bound form, builds `CreateSolicitudInput`, calls `IntakeService.create(input_dto, actor)`. The service:
    1. re-checks the role + active flag (defense in depth)
    2. captures a **fresh** snapshot (so any admin edits between GET and POST are reflected — the `Solicitud.form_snapshot` records what the user actually saw at submit time)
-   3. computes `pago_exento` (only true when payment required AND tipo exempts mentors AND actor is a mentor)
-   4. **inside `transaction.atomic()`** allocates a folio, inserts the `Solicitud` row, appends the initial `HistorialEstado` (estado_anterior=None, estado_nuevo=CREADA)
-   5. **outside the atomic block** fires `NotificationService.notify_creation` (one email per staff member with `tipo.responsible_role`, plus an acuse de recibo to the solicitante; failures logged + absorbed) and writes the audit line
-   6. returns the hydrated `SolicitudDetail`
+   3. resolves auto-fill values via `AutoFillResolver.resolve(snapshot, actor_matricula=actor.matricula)` (added by 011) — strict path; raises `AutoFillRequiredFieldMissing` (422) when a required `USER_*` field has an empty resolved value. The merge `{**input_dto.valores, **auto_values}` is defensive: the form factory already excluded auto-fill `field_id`s, so client-supplied values for them never reached `valores`
+   4. computes `pago_exento` (only true when payment required AND tipo exempts mentors AND actor is a mentor)
+   5. **inside `transaction.atomic()`** allocates a folio, inserts the `Solicitud` row with the merged `valores`, appends the initial `HistorialEstado` (estado_anterior=None, estado_nuevo=CREADA)
+   6. **outside the atomic block** fires `NotificationService.notify_creation` (one email per staff member with `tipo.responsible_role`, plus an acuse de recibo to the solicitante; failures logged + absorbed) and writes the audit line
+   7. returns the hydrated `SolicitudDetail`
 3. **Browser is redirected to `/solicitudes/<folio>/`** with `messages.success(...)`. Any attached FORM files and the comprobante (when required) have been persisted by `archivo_service.store_for_solicitud(...)` inside the same outer `transaction.atomic()` as the row insert; the detail page renders the archivos in their own card with download links.
 4. **GET /solicitudes/revision/** — Personal in `tipo.responsible_role` opens the queue. `ReviewService.list_assigned(role)` returns rows scoped to the role (admin sees all).
 5. **POST /solicitudes/revision/`<folio>`/atender/** — `ReviewService.take` calls `LifecycleService.transition(action="atender", ...)`. The service:
