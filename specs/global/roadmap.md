@@ -20,6 +20,7 @@
 | 012 | Mentor Catalog Historicization | Done        | 008           | 2026-04-25 | [plan](../planning/012-mentor-historicization/plan.md)     | `mentores` (model + repo + service + views), `mentores/migrations` |
 | 013 | User Directory (admin read-only) | Not Started | 002 + 008     | 2026-04-26 | [plan](../planning/013-user-directory/plan.md)             | `usuarios/directory` (new feature), `usuarios/urls`, `templates/usuarios/directory`, `templates/components/sidebar.html` |
 | 014 | Revision Handler Display  | Not Started | 004 + 002     | 2026-04-26 | [plan](../planning/014-revision-handler-display/plan.md)   | `solicitudes/lifecycle` (DTOs + repo annotation), `solicitudes/revision` (templates), `templates/solicitudes/revision/{queue,detail}.html` |
+| 015 | Tailwind v4 Frontend Migration | Not Started | 001 (+ all shipped initiatives' templates) | 2026-04-26 | [plan](../planning/015-tailwind-migration/plan.md) | All `app/templates/**`, `app/static/{css,js,vendor,fonts}/**`, `Dockerfile`, `docker-compose.dev.yml`, `Makefile`, `.gitignore`, `.claude/skills/frontend-design`, `.claude/skills/django-patterns/{forms,platform}.md`, `.claude/rules/django.md`, `CLAUDE.md`, `specs/global/{architecture,requirements}.md` |
 
 **Status values:** `Not Started` · `In Progress` · `Blocked` · `Done`
 
@@ -41,6 +42,8 @@
       │
       └── 014 Revision Handler Display   (additive on 004; templates + lifecycle DTOs)
       └── 010 External Auth Provider   (blocked on OQ-002-1)
+
+015 Tailwind v4 Frontend Migration   (cross-cutting infra; touches every shipped initiative's templates; blocks 013/014 template work while in progress)
 ```
 
 ## Notes
@@ -49,6 +52,7 @@
 - **008 (Mentors)** depends only on 002, so it can run in parallel with 003/004.
 - **010 (External Auth Provider)** swaps the DEBUG-only `/auth/dev-login` picker shipped in 002 for the real provider handshake; blocked on OQ-002-1. Can run any time after 002 once the provider contract is known.
 - **012 (Mentor Catalog Historicization)** rewrites the catalog from "current state only" (one row per matrícula) to a per-period model (`MentorPeriodo`). Hard-blocked on 008 — must merge to `main` first since 012 replaces 008's `Mentor` table.
+- **015 (Tailwind v4 Frontend Migration)** is cross-cutting infrastructure; it touches every shipped initiative's templates. Single feature branch `feat/015-tailwind-migration`, single PR, big-bang merge. While in progress, **013** and **014** template work should pause — otherwise their Bootstrap-based templates would need a second rewrite immediately after merging. Backend work on 013/014 (models, services, repos, views) can proceed in parallel.
 - Each initiative is sized for 1–3 implementation sessions. If a `plan.md` grows past that, decompose into sub-initiatives before starting `/implement`.
 
 ## Update protocol
