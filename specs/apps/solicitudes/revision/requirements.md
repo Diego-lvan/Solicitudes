@@ -61,6 +61,19 @@ The trade-off — one extra hop on each call — is worth it: the read-path role
 
 None at initiative closeout. If/when the queue grows large enough that contention becomes a real problem, an `assigned_to` claim flow can be added; until then, the shared-queue model stands.
 
+## Addendum — initiative 014 (2026-04-26): handler visibility + solicitante context
+
+Extends RF-REV-* with surfaces that answer two recurring operator questions: "who is currently handling this?" and "who is sending it?" — without changing the shared-queue invariant or the data model.
+
+| ID | Requirement | Source |
+|---|---|---|
+| RF-REV-10 | The revision queue must show an **"Atendida por"** column whose value is the user (full name, falling back to matrícula) who performed the `atender` transition on the row. The column must be blank when the row has never been atendida (estado is `CREADA`, or `CANCELADA` direct from `CREADA`). The column must remain populated for `EN_PROCESO`, `FINALIZADA`, and `CANCELADA-from-EN_PROCESO`. | Operator visibility |
+| RF-REV-11 | The revision queue must **not** render an "Acción" column. Navigation to the detail page is the existing folio-cell link; the redundant action button is removed. | UX simplification |
+| RF-REV-12 | The revision detail page must render a **"Solicitante"** card showing nombre completo, matrícula, and email (email as a `mailto:` link). This data is already present on the loaded `SolicitudDetail.solicitante`; the requirement is to surface it prominently rather than as a one-line subtitle. | RF-09, operator context |
+| RF-REV-13 | The revision detail page must show, near the header, a line `"Atendida por: {nombre} ({matrícula}) · {fecha}"` whenever the row has been atendida. The line is hidden otherwise. | RF-09, operator context |
+| RF-REV-14 | "Atendida por" data must be derivable from existing `HistorialEstado` rows (actor of the most recent transition with `estado_nuevo == EN_PROCESO`). No `assigned_to` field is added; the shared-queue model documented in this spec stands. | Data-model invariance |
+| RF-REV-15 | The queue list query must remain bounded at **≤ 3 SQL queries** after the addendum (one count, one rows, pagination overhead). Asserted by an existing query-count test that this initiative extends. | Performance contract |
+
 ## Related Specs
 
 - [design.md](./design.md) — HOW.
