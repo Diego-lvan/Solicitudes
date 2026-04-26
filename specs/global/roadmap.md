@@ -19,6 +19,7 @@
 | 011 | Field Auto-fill from User | Done        | 003 + 004     | 2026-04-25 | [plan](../planning/011-field-autofill/plan.md)             | `solicitudes/tipos`, `solicitudes/formularios`, `solicitudes/intake`, `usuarios` (gender), `solicitudes/pdf` (context) |
 | 012 | Mentor Catalog Historicization | Done        | 008           | 2026-04-25 | [plan](../planning/012-mentor-historicization/plan.md)     | `mentores` (model + repo + service + views), `mentores/migrations` |
 | 013 | User Directory (admin read-only) | Not Started | 002 + 008     | 2026-04-26 | [plan](../planning/013-user-directory/plan.md)             | `usuarios/directory` (new feature), `usuarios/urls`, `templates/usuarios/directory`, `templates/components/sidebar.html` |
+| 014 | Revision Handler Display  | Not Started | 004 + 002     | 2026-04-26 | [plan](../planning/014-revision-handler-display/plan.md)   | `solicitudes/lifecycle` (DTOs + repo annotation), `solicitudes/revision` (templates), `templates/solicitudes/revision/{queue,detail}.html` |
 
 **Status values:** `Not Started` · `In Progress` · `Blocked` · `Done`
 
@@ -37,6 +38,8 @@
       ├── 008 Mentors
       │    ├── 012 Mentor Catalog Historicization
       │    └── 013 User Directory (admin read-only)   (also depends on 002)
+      │
+      └── 014 Revision Handler Display   (additive on 004; templates + lifecycle DTOs)
       └── 010 External Auth Provider   (blocked on OQ-002-1)
 ```
 
