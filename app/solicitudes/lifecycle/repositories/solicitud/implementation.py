@@ -5,7 +5,7 @@ from collections.abc import Iterator
 from typing import Any
 from uuid import UUID
 
-from django.db.models import Count, Q, QuerySet
+from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
 from django.db.models.functions import TruncMonth
 
 from _shared.pagination import Page, PageRequest
@@ -22,11 +22,13 @@ from solicitudes.lifecycle.schemas import (
     AggregateByEstado,
     AggregateByMonth,
     AggregateByTipo,
+    HandlerRef,
+    HistorialEntry,
     SolicitudDetail,
     SolicitudFilter,
     SolicitudRow,
 )
-from solicitudes.models import Solicitud
+from solicitudes.models import HistorialEstado, Solicitud
 from solicitudes.tipos.schemas import TipoSolicitudRow
 from usuarios.constants import Role
 from usuarios.schemas import UserDTO
@@ -126,8 +128,28 @@ class OrmSolicitudRepository(SolicitudRepository):
     @staticmethod
     def _base_queryset() -> QuerySet[Solicitud]:
         # `select_related` keeps list rendering at 1 query for tipo + solicitante.
-        return Solicitud.objects.select_related("tipo", "solicitante").order_by(
-            "-created_at"
+        # The Subquery annotations expose the actor of the row's atender
+        # transition (CREADA → EN_PROCESO) so queue templates can show
+        # "Atendida por" without an N+1 historial lookup. The state machine
+        # only allows one such transition, but `order_by("-created_at")` keeps
+        # the read deterministic if that ever changes. `iter_for_admin`
+        # inherits these columns harmlessly — the subquery is bounded by the
+        # existing `(solicitud, -created_at)` index on HistorialEstado.
+        atender_qs = HistorialEstado.objects.filter(
+            solicitud_id=OuterRef("folio"),
+            estado_nuevo=Estado.EN_PROCESO.value,
+        ).order_by("-created_at")
+        return (
+            Solicitud.objects.select_related("tipo", "solicitante")
+            .annotate(
+                _atendida_por_matricula=Subquery(
+                    atender_qs.values("actor__matricula")[:1]
+                ),
+                _atendida_por_nombre=Subquery(
+                    atender_qs.values("actor__full_name")[:1]
+                ),
+            )
+            .order_by("-created_at")
         )
 
     @staticmethod
@@ -244,7 +266,23 @@ class OrmSolicitudRepository(SolicitudRepository):
             pago_exento=row.pago_exento,
             created_at=row.created_at,
             updated_at=row.updated_at,
+            atendida_por_matricula=getattr(row, "_atendida_por_matricula", "") or "",
+            atendida_por_nombre=getattr(row, "_atendida_por_nombre", "") or "",
         )
+
+    @staticmethod
+    def _derive_handler(historial: list[HistorialEntry]) -> HandlerRef | None:
+        # The historial is already in memory (loaded by `list_for_folio`); this
+        # adds zero SQL. Sort defensively: the ORM repo orders ascending, but
+        # callers may pass any order.
+        for entry in sorted(historial, key=lambda h: h.created_at, reverse=True):
+            if entry.estado_nuevo is Estado.EN_PROCESO:
+                return HandlerRef(
+                    matricula=entry.actor_matricula,
+                    full_name=entry.actor_nombre or entry.actor_matricula,
+                    taken_at=entry.created_at,
+                )
+        return None
 
     @staticmethod
     def _to_detail(
@@ -280,4 +318,5 @@ class OrmSolicitudRepository(SolicitudRepository):
             created_at=row.created_at,
             updated_at=row.updated_at,
             historial=historial,
+            atendida_por=OrmSolicitudRepository._derive_handler(historial),
         )

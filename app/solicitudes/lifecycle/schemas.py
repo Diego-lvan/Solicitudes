@@ -27,6 +27,16 @@ class HistorialEntry(BaseModel):
     created_at: datetime
 
 
+class HandlerRef(BaseModel):
+    """Personal who performed the atender transition. Empty for never-atendida rows."""
+
+    model_config = ConfigDict(frozen=True)
+
+    matricula: str
+    full_name: str
+    taken_at: datetime
+
+
 class SolicitudRow(BaseModel):
     """Row used by list views; thin enough to render a queue or `mis/` table."""
 
@@ -42,6 +52,8 @@ class SolicitudRow(BaseModel):
     pago_exento: bool = False
     created_at: datetime
     updated_at: datetime
+    atendida_por_matricula: str = ""
+    atendida_por_nombre: str = ""
 
 
 class SolicitudDetail(BaseModel):
@@ -60,6 +72,7 @@ class SolicitudDetail(BaseModel):
     created_at: datetime
     updated_at: datetime
     historial: list[HistorialEntry]
+    atendida_por: HandlerRef | None = None
 
 
 class SolicitudFilter(BaseModel):

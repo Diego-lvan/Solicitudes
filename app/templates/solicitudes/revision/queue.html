@@ -44,9 +44,9 @@
         <th scope="col">Folio</th>
         <th scope="col">Tipo</th>
         <th scope="col" class="d-none d-lg-table-cell">Solicitante</th>
+        <th scope="col" class="d-none d-lg-table-cell">Atendida por</th>
         <th scope="col" class="d-none d-md-table-cell">Fecha</th>
         <th scope="col">Estado</th>
-        <th scope="col" class="text-end">Acción</th>
       </tr>
     </thead>
     <tbody>
@@ -57,12 +57,15 @@
         </td>
         <td>{{ row.tipo_nombre }}</td>
         <td class="d-none d-lg-table-cell">{{ row.solicitante_nombre }}</td>
+        <td class="d-none d-lg-table-cell">
+          {% if row.atendida_por_nombre %}
+            {{ row.atendida_por_nombre }}
+          {% else %}
+            <span class="text-muted">—</span>
+          {% endif %}
+        </td>
         <td class="d-none d-md-table-cell">{{ row.created_at|date:"d/m/Y" }}</td>
         <td>{% include "solicitudes/_partials/_estado_badge.html" with estado=row.estado %}</td>
-        <td class="text-end">
-          <a class="btn btn-sm btn-outline-secondary"
-             href="{% url 'solicitudes:revision:detail' folio=row.folio %}">Revisar</a>
-        </td>
       </tr>
       {% endfor %}
     </tbody>
