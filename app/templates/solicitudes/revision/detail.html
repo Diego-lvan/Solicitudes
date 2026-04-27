@@ -15,9 +15,14 @@
 <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-2 mb-4">
   <div>
     <h1 class="h3 mb-1">{{ detail.folio }}</h1>
-    <div class="text-muted small">
-      {{ detail.tipo.nombre }} · Solicitante: {{ detail.solicitante.full_name|default:detail.solicitante.matricula }}
-    </div>
+    <div class="text-muted small">{{ detail.tipo.nombre }}</div>
+    {% if detail.atendida_por %}
+      <div class="text-muted small mt-1">
+        Atendida por
+        <span class="fw-semibold text-body">{{ detail.atendida_por.full_name }}</span>
+        ({{ detail.atendida_por.matricula }}) · {{ detail.atendida_por.taken_at|date:"d/m/Y H:i" }}
+      </div>
+    {% endif %}
   </div>
   <div class="d-flex align-items-center gap-2">
     {% include "solicitudes/_partials/_estado_badge.html" with estado=detail.estado %}
@@ -106,6 +111,21 @@
   </div>
 
   <div class="col-12 col-lg-4">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h6 card-title text-muted text-uppercase small mb-3">Solicitante</h2>
+        <div class="fw-semibold">
+          {{ detail.solicitante.full_name|default:detail.solicitante.matricula }}
+        </div>
+        <div class="small text-muted">Matrícula: {{ detail.solicitante.matricula }}</div>
+        {% if detail.solicitante.email %}
+        <div class="small mt-1">
+          <a href="mailto:{{ detail.solicitante.email }}">{{ detail.solicitante.email }}</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-body">
         <h2 class="h5 card-title">Historial</h2>
