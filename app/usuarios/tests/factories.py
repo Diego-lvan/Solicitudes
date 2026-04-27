@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import Any
+from uuid import uuid4
 
 from model_bakery import baker
 
@@ -11,10 +12,15 @@ from usuarios.schemas import UserDTO
 
 
 def make_user(**overrides: Any) -> User:
-    """Persisted ``User`` with sensible defaults; pass kwargs to override fields."""
+    """Persisted ``User`` with sensible defaults; pass kwargs to override fields.
+
+    Defaults are uuid-derived so successive calls without explicit ``matricula``
+    or ``email`` never collide on the unique constraints.
+    """
+    token = uuid4().hex[:10].upper()
     defaults: dict[str, Any] = {
-        "matricula": overrides.pop("matricula", baker.seq("M")),
-        "email": overrides.pop("email", f"{baker.seq('user')}@uaz.edu.mx"),
+        "matricula": overrides.pop("matricula", f"M{token}"),
+        "email": overrides.pop("email", f"user-{token.lower()}@uaz.edu.mx"),
         "role": overrides.pop("role", Role.ALUMNO.value),
     }
     defaults.update(overrides)
