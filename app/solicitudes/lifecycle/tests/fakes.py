@@ -22,6 +22,7 @@ from solicitudes.lifecycle.schemas import (
     AggregateByEstado,
     AggregateByMonth,
     AggregateByTipo,
+    HandlerRef,
     HistorialEntry,
     SolicitudDetail,
     SolicitudFilter,
@@ -130,8 +131,12 @@ class InMemorySolicitudRepository(SolicitudRepository):
         if folio not in self._rows:
             raise SolicitudNotFound(f"folio={folio}")
         detail = self._rows[folio]
+        historial = self._historial.list_for_folio(folio)
         return detail.model_copy(
-            update={"historial": self._historial.list_for_folio(folio)}
+            update={
+                "historial": historial,
+                "atendida_por": self._derive_handler(historial),
+            }
         )
 
     def list_for_solicitante(
@@ -241,8 +246,8 @@ class InMemorySolicitudRepository(SolicitudRepository):
             for (y, m), c in sorted(counts.items())
         ]
 
-    @staticmethod
-    def _row(d: SolicitudDetail) -> SolicitudRow:
+    def _row(self, d: SolicitudDetail) -> SolicitudRow:
+        handler = self._derive_handler(self._historial.list_for_folio(d.folio))
         return SolicitudRow(
             folio=d.folio,
             tipo_id=d.tipo.id,
@@ -254,7 +259,20 @@ class InMemorySolicitudRepository(SolicitudRepository):
             pago_exento=d.pago_exento,
             created_at=d.created_at,
             updated_at=d.updated_at,
+            atendida_por_matricula=handler.matricula if handler else "",
+            atendida_por_nombre=handler.full_name if handler else "",
         )
+
+    @staticmethod
+    def _derive_handler(historial: list[HistorialEntry]) -> HandlerRef | None:
+        for entry in sorted(historial, key=lambda h: h.created_at, reverse=True):
+            if entry.estado_nuevo is Estado.EN_PROCESO:
+                return HandlerRef(
+                    matricula=entry.actor_matricula,
+                    full_name=entry.actor_nombre or entry.actor_matricula,
+                    taken_at=entry.created_at,
+                )
+        return None
 
     @staticmethod
     def _paginate(rows: list[SolicitudRow], page: PageRequest) -> Page[SolicitudRow]:

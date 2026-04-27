@@ -160,17 +160,39 @@ def test_list_pagination_returns_correct_window(
 def test_list_uses_at_most_three_queries(
     repo: OrmSolicitudRepository,
 ) -> None:
-    """Acceptance criterion: list queries are at most 3 SQL queries."""
+    """Acceptance criterion: list queries are at most 3 SQL queries.
+
+    Seeds an EN_PROCESO row with a real atender historial entry so the
+    `atendida_por_*` Subquery annotations resolve to real values — without
+    that, the subqueries always return NULL and we wouldn't actually be
+    proving the cap holds under populated data (initiative 014 §3).
+    """
     user = make_user(matricula="A1")
-    for _ in range(5):
+    for _ in range(4):
         make_solicitud(solicitante=user)
+    en_proceso = make_solicitud(solicitante=user, estado=Estado.EN_PROCESO)
+    ce = make_user(
+        matricula="CE-Q",
+        email="ce-q@uaz.edu.mx",
+        role=Role.CONTROL_ESCOLAR.value,
+        full_name="Personal Q",
+    )
+    OrmHistorialRepository().append(
+        folio=en_proceso.folio,
+        estado_anterior=Estado.CREADA,
+        estado_nuevo=Estado.EN_PROCESO,
+        actor_matricula=ce.matricula,
+        actor_role=Role.CONTROL_ESCOLAR,
+    )
     with CaptureQueriesContext(connection) as ctx:
         page = repo.list_for_solicitante(
             "A1", page=PageRequest(), filters=SolicitudFilter()
         )
         # Force evaluation of any iterators/computed fields.
-        _ = [r.tipo_nombre for r in page.items]
+        _ = [(r.tipo_nombre, r.atendida_por_nombre) for r in page.items]
     assert len(ctx) <= 3, f"too many queries: {[q['sql'] for q in ctx]}"
+    # And confirm the annotation actually populated for the EN_PROCESO row.
+    assert any(r.atendida_por_nombre == "Personal Q" for r in page.items)
 
 
 @pytest.mark.django_db
@@ -197,3 +219,146 @@ def test_get_by_folio_hydrates_historial(repo: OrmSolicitudRepository) -> None:
     detail = repo.get_by_folio(s.folio)
     assert len(detail.historial) == 1
     assert detail.historial[0].estado_nuevo is Estado.CREADA
+
+
+# ---- atendida_por (initiative 014) ----
+
+
+def _seed_creada(folio: str = "SOL-2026-00100"):
+    user = make_user(matricula="A1", email="a1@uaz.edu.mx", role=Role.ALUMNO.value)
+    s = make_solicitud(folio=folio, solicitante=user, estado=Estado.CREADA)
+    OrmHistorialRepository().append(
+        folio=s.folio,
+        estado_anterior=None,
+        estado_nuevo=Estado.CREADA,
+        actor_matricula=user.matricula,
+        actor_role=Role.ALUMNO,
+    )
+    return s
+
+
+def _atender(s, *, matricula: str = "CE1", full_name: str = "Carla Control") -> None:
+    actor = make_user(
+        matricula=matricula,
+        email=f"{matricula.lower()}@uaz.edu.mx",
+        role=Role.CONTROL_ESCOLAR.value,
+        full_name=full_name,
+    )
+    s.estado = Estado.EN_PROCESO.value
+    s.save(update_fields=["estado", "updated_at"])
+    OrmHistorialRepository().append(
+        folio=s.folio,
+        estado_anterior=Estado.CREADA,
+        estado_nuevo=Estado.EN_PROCESO,
+        actor_matricula=actor.matricula,
+        actor_role=Role.CONTROL_ESCOLAR,
+    )
+
+
+@pytest.mark.django_db
+def test_list_atendida_por_empty_for_creada(repo: OrmSolicitudRepository) -> None:
+    _seed_creada()
+    page = repo.list_for_solicitante(
+        "A1", page=PageRequest(), filters=SolicitudFilter()
+    )
+    assert page.items[0].atendida_por_matricula == ""
+    assert page.items[0].atendida_por_nombre == ""
+
+
+@pytest.mark.django_db
+def test_list_atendida_por_populated_for_en_proceso(
+    repo: OrmSolicitudRepository,
+) -> None:
+    s = _seed_creada()
+    _atender(s, matricula="CE1", full_name="Carla Control")
+    page = repo.list_for_solicitante(
+        "A1", page=PageRequest(), filters=SolicitudFilter()
+    )
+    assert page.items[0].atendida_por_matricula == "CE1"
+    assert page.items[0].atendida_por_nombre == "Carla Control"
+
+
+@pytest.mark.django_db
+def test_list_atendida_por_preserved_through_finalizada(
+    repo: OrmSolicitudRepository,
+) -> None:
+    s = _seed_creada()
+    _atender(s, matricula="CE1", full_name="Carla Control")
+    s.estado = Estado.FINALIZADA.value
+    s.save(update_fields=["estado", "updated_at"])
+    OrmHistorialRepository().append(
+        folio=s.folio,
+        estado_anterior=Estado.EN_PROCESO,
+        estado_nuevo=Estado.FINALIZADA,
+        actor_matricula="CE1",
+        actor_role=Role.CONTROL_ESCOLAR,
+    )
+    page = repo.list_for_solicitante(
+        "A1", page=PageRequest(), filters=SolicitudFilter()
+    )
+    assert page.items[0].atendida_por_matricula == "CE1"
+
+
+@pytest.mark.django_db
+def test_list_atendida_por_empty_when_cancelled_from_creada(
+    repo: OrmSolicitudRepository,
+) -> None:
+    s = _seed_creada()
+    s.estado = Estado.CANCELADA.value
+    s.save(update_fields=["estado", "updated_at"])
+    OrmHistorialRepository().append(
+        folio=s.folio,
+        estado_anterior=Estado.CREADA,
+        estado_nuevo=Estado.CANCELADA,
+        actor_matricula="A1",
+        actor_role=Role.ALUMNO,
+    )
+    page = repo.list_for_solicitante(
+        "A1", page=PageRequest(), filters=SolicitudFilter()
+    )
+    assert page.items[0].atendida_por_matricula == ""
+
+
+@pytest.mark.django_db
+def test_list_atendida_por_preserved_when_cancelled_from_en_proceso(
+    repo: OrmSolicitudRepository,
+) -> None:
+    s = _seed_creada()
+    _atender(s, matricula="CE1", full_name="Carla Control")
+    s.estado = Estado.CANCELADA.value
+    s.save(update_fields=["estado", "updated_at"])
+    OrmHistorialRepository().append(
+        folio=s.folio,
+        estado_anterior=Estado.EN_PROCESO,
+        estado_nuevo=Estado.CANCELADA,
+        actor_matricula="CE1",
+        actor_role=Role.CONTROL_ESCOLAR,
+    )
+    page = repo.list_for_solicitante(
+        "A1", page=PageRequest(), filters=SolicitudFilter()
+    )
+    assert page.items[0].atendida_por_matricula == "CE1"
+
+
+@pytest.mark.django_db
+def test_get_by_folio_handler_populated_with_no_extra_sql(
+    repo: OrmSolicitudRepository,
+    django_assert_num_queries,
+) -> None:
+    s = _seed_creada()
+    _atender(s, matricula="CE1", full_name="Carla Control")
+    # Two queries: one for the Solicitud + select_related, one for historial.
+    with django_assert_num_queries(2):
+        detail = repo.get_by_folio(s.folio)
+    assert detail.atendida_por is not None
+    assert detail.atendida_por.matricula == "CE1"
+    assert detail.atendida_por.full_name == "Carla Control"
+
+
+@pytest.mark.django_db
+def test_get_by_folio_handler_none_for_creada(
+    repo: OrmSolicitudRepository,
+) -> None:
+    s = _seed_creada()
+    detail = repo.get_by_folio(s.folio)
+    assert detail.atendida_por is None
