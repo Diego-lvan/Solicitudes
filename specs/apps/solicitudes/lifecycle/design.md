@@ -69,8 +69,9 @@ TERMINAL = frozenset({Estado.FINALIZADA, Estado.CANCELADA})
 
 ### DTOs (`lifecycle/schemas.py`)
 
-- **`SolicitudRow`** — frozen list-view DTO: `folio, tipo_id, tipo_nombre, solicitante_matricula, solicitante_nombre, estado, requiere_pago, created_at, updated_at`.
-- **`SolicitudDetail`** — frozen hydrated DTO: `folio, tipo: TipoSolicitudRow, solicitante: UserDTO, estado, form_snapshot: FormSnapshot, valores: dict[str, Any], requiere_pago, pago_exento, created_at, updated_at, historial: list[HistorialEntry]`. `tipo.plantilla_id` is populated by `OrmSolicitudRepository._to_detail` from 006 onward so consumers (intake/revision detail templates, `PdfService`) can gate the "Generar PDF" affordance without a second tipo lookup.
+- **`SolicitudRow`** — frozen list-view DTO: `folio, tipo_id, tipo_nombre, solicitante_matricula, solicitante_nombre, estado, requiere_pago, pago_exento, created_at, updated_at, atendida_por_matricula, atendida_por_nombre`. The two `atendida_por_*` strings (added in 014) default to `""` and carry the actor of the row's `atender` transition; the queue template renders them flat to keep the row markup trivial.
+- **`SolicitudDetail`** — frozen hydrated DTO: `folio, tipo: TipoSolicitudRow, solicitante: UserDTO, estado, form_snapshot: FormSnapshot, valores: dict[str, Any], requiere_pago, pago_exento, created_at, updated_at, historial: list[HistorialEntry], atendida_por: HandlerRef | None`. `tipo.plantilla_id` is populated by `OrmSolicitudRepository._to_detail` from 006 onward so consumers (intake/revision detail templates, `PdfService`) can gate the "Generar PDF" affordance without a second tipo lookup. `atendida_por` (added in 014) is `None` for never-atendida rows; the structured shape lets the detail template render `"Atendida por: {full_name} ({matricula}) · {taken_at}"`.
+- **`HandlerRef`** (added in 014) — frozen: `matricula, full_name, taken_at`. Used only on `SolicitudDetail.atendida_por`; the queue path uses the flat `atendida_por_*` strings instead. The DTO shape is split (flat strings on the row, structured `HandlerRef` on the detail) so the queue template stays trivially renderable while the detail can format the timestamp.
 - **`HistorialEntry`** — frozen: `id, estado_anterior, estado_nuevo, actor_matricula, actor_nombre, actor_role, observaciones, created_at`.
 - **`SolicitudFilter`** — input DTO: `estado, tipo_id, folio_contains, solicitante_contains, created_from, created_to`.
 - **`TransitionInput`** — service input: `folio, actor_matricula, observaciones (≤2000)`.
@@ -173,7 +174,16 @@ Each `aggregate_by_*` is **single SQL** (`.values(...).annotate(Count("folio"))`
 
 `SolicitudRow` carries an additive `pago_exento: bool = False` field (added in 009) so list-and-export consumers don't need to re-hydrate a `SolicitudDetail` per row.
 
-List queries cap at **3 SQL queries** (one count, one rows, plus pagination overhead) via `select_related("tipo", "solicitante")`. Asserted by `test_list_uses_at_most_three_queries`.
+List queries cap at **3 SQL queries** (one count, one rows, plus pagination overhead) via `select_related("tipo", "solicitante")`. Asserted by `test_list_uses_at_most_three_queries` (which from 014 onward seeds an EN_PROCESO row with a real atender historial entry so the Subquery annotations actually resolve to non-NULL — without that, the cap claim would not exercise the new columns).
+
+### `atendida_por` derivation (added in 014)
+
+Both the row and the detail surface "who performed the atender transition" without a new column on `Solicitud`:
+
+- **Queue path (`_base_queryset`).** Two `Subquery` annotations select `actor__matricula` and `actor__full_name` from `HistorialEstado` filtered to `estado_nuevo=EN_PROCESO`, ordered `-created_at` (the state machine only allows one such transition; the ordering is defensive). The subqueries are inlined into the SELECT and ride the existing `(solicitud, -created_at)` index on `HistorialEstado`, so the 3-query cap is preserved. `_to_row` reads the annotated columns into `atendida_por_matricula` / `atendida_por_nombre`, defaulting to `""` when the subquery returns NULL. `iter_for_admin` inherits the annotation harmlessly — the streaming export does not need the columns but the per-row cost is bounded by the same index.
+- **Detail path (`_to_detail`).** The historial list is already loaded in memory by `HistorialRepository.list_for_folio`; `_derive_handler` walks it once (sorted `-created_at`), picks the first entry with `estado_nuevo == EN_PROCESO`, and builds `HandlerRef` from `actor_matricula`, `actor_nombre`, and `created_at`. **Zero additional SQL.** Asserted by `django_assert_num_queries(2)` in `test_get_by_folio_handler_populated_with_no_extra_sql`.
+
+The display rule (populated for EN_PROCESO, FINALIZADA, and CANCELADA-from-EN_PROCESO; blank for CREADA and CANCELADA-from-CREADA) falls out of the derivation: the historial only carries an EN_PROCESO entry when the row was actually atendida, and the entry is preserved through subsequent transitions.
 
 `iter_for_admin` is **streaming on PostgreSQL** (server-side cursor) and **materialising on SQLite** (Django's iterator silently fetches all rows on SQLite); the call site documents this so dev exports of huge datasets don't surprise.
 
@@ -202,6 +212,7 @@ All inherit from `_shared.exceptions` so the global error middleware maps them t
 ## Related Specs
 
 - [Initiative 004 plan](../../../planning/004-solicitud-lifecycle/plan.md) — the implementation blueprint this design promotes from.
+- [Initiative 014 plan](../../../planning/014-revision-handler-display/plan.md) — added the `HandlerRef` DTO, the `atendida_por_*` annotations on the queue queryset, and the in-memory derivation on the detail path.
 - [intake/design.md](../intake/design.md) — consumer of `LifecycleService.transition` (for `cancel_own`) and the `NotificationService` port.
 - [revision/design.md](../revision/design.md) — consumer of `LifecycleService.transition` (for take/finalize/cancel by personal).
 - [tipos/design.md](../tipos/design.md) — provides `TipoService.snapshot()` and `TipoService.get_for_admin()`.
