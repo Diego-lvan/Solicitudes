@@ -11,6 +11,9 @@ from django.test.utils import override_settings
 from django.urls import reverse
 
 from solicitudes.lifecycle.constants import Estado
+from solicitudes.lifecycle.repositories.historial.implementation import (
+    OrmHistorialRepository,
+)
 from solicitudes.lifecycle.tests.factories import make_solicitud
 from solicitudes.tipos.tests.factories import make_tipo
 from usuarios.constants import SESSION_COOKIE_NAME, Role
@@ -192,6 +195,129 @@ def test_cancel_by_personal_succeeds(ce_client: Client) -> None:
     assert response.status_code == 302
     s.refresh_from_db()
     assert s.estado == Estado.CANCELADA.value
+
+
+# ---- atendida_por display (initiative 014) ----
+
+
+@pytest.mark.django_db
+def test_queue_renders_atendida_por_column_and_no_accion(ce_client: Client) -> None:
+    ce_user = make_user(
+        matricula="CE1",
+        email="ce1@uaz.edu.mx",
+        role=Role.CONTROL_ESCOLAR.value,
+        full_name="Carla Control Escolar",
+    )
+    tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)
+    creada = make_solicitud(tipo=tipo, folio="SOL-2026-00010", estado=Estado.CREADA)
+    en_proceso = make_solicitud(
+        tipo=tipo, folio="SOL-2026-00011", estado=Estado.EN_PROCESO
+    )
+    # Seed historial: in-process row was atendida by CE1.
+    historial = OrmHistorialRepository()
+    historial.append(
+        folio=en_proceso.folio,
+        estado_anterior=None,
+        estado_nuevo=Estado.CREADA,
+        actor_matricula=en_proceso.solicitante_id,
+        actor_role=Role.ALUMNO,
+    )
+    historial.append(
+        folio=en_proceso.folio,
+        estado_anterior=Estado.CREADA,
+        estado_nuevo=Estado.EN_PROCESO,
+        actor_matricula=ce_user.matricula,
+        actor_role=Role.CONTROL_ESCOLAR,
+    )
+
+    response = ce_client.get(reverse("solicitudes:revision:queue"))
+    assert response.status_code == 200
+    body = response.content.decode()
+    assert ">Atendida por<" in body
+    assert ">Acción<" not in body
+    assert ">Revisar<" not in body  # the action link is removed
+    assert "Carla Control Escolar" in body
+    # CREADA row's handler cell renders an em dash placeholder.
+    rows = {r.folio: r for r in response.context["page"].items}
+    assert rows[creada.folio].atendida_por_nombre == ""
+    assert rows[en_proceso.folio].atendida_por_nombre == "Carla Control Escolar"
+
+
+@pytest.mark.django_db
+def test_detail_renders_solicitante_card_and_handler_line_for_en_proceso(
+    ce_client: Client,
+) -> None:
+    ce_user = make_user(
+        matricula="CE1",
+        email="ce1@uaz.edu.mx",
+        role=Role.CONTROL_ESCOLAR.value,
+        full_name="Carla Control Escolar",
+    )
+    alumno = make_user(
+        matricula="ALU-9",
+        email="alu-9@uaz.edu.mx",
+        role=Role.ALUMNO.value,
+        full_name="Ana López",
+    )
+    tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)
+    s = make_solicitud(
+        tipo=tipo, solicitante=alumno, folio="SOL-2026-00020", estado=Estado.EN_PROCESO
+    )
+    historial = OrmHistorialRepository()
+    historial.append(
+        folio=s.folio,
+        estado_anterior=None,
+        estado_nuevo=Estado.CREADA,
+        actor_matricula=alumno.matricula,
+        actor_role=Role.ALUMNO,
+    )
+    historial.append(
+        folio=s.folio,
+        estado_anterior=Estado.CREADA,
+        estado_nuevo=Estado.EN_PROCESO,
+        actor_matricula=ce_user.matricula,
+        actor_role=Role.CONTROL_ESCOLAR,
+    )
+
+    response = ce_client.get(
+        reverse("solicitudes:revision:detail", kwargs={"folio": s.folio})
+    )
+    assert response.status_code == 200
+    body = response.content.decode()
+
+    # Solicitante card
+    assert "Ana López" in body
+    assert "Matrícula: ALU-9" in body
+    assert 'href="mailto:alu-9@uaz.edu.mx"' in body
+
+    # Atendida por line
+    assert "Atendida por" in body
+    assert "Carla Control Escolar" in body
+    assert "(CE1)" in body
+
+
+@pytest.mark.django_db
+def test_detail_handler_line_absent_for_creada(ce_client: Client) -> None:
+    alumno = make_user(
+        matricula="ALU-10",
+        email="alu-10@uaz.edu.mx",
+        role=Role.ALUMNO.value,
+        full_name="Beto Pérez",
+    )
+    tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)
+    s = make_solicitud(
+        tipo=tipo, solicitante=alumno, folio="SOL-2026-00030", estado=Estado.CREADA
+    )
+    response = ce_client.get(
+        reverse("solicitudes:revision:detail", kwargs={"folio": s.folio})
+    )
+    assert response.status_code == 200
+    body = response.content.decode()
+    # Solicitante card still rendered
+    assert "Beto Pérez" in body
+    assert 'href="mailto:alu-10@uaz.edu.mx"' in body
+    # No handler line for a CREADA row
+    assert "Atendida por" not in body
 
 
 @pytest.mark.django_db

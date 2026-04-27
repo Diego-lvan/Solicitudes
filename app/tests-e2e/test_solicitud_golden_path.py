@@ -222,6 +222,10 @@ def test_personal_takes_and_finalizes_solicitud(
     page.goto(f"{base}/solicitudes/revision/")
     expect(page.get_by_role("heading", name="Cola de revisión")).to_be_visible()
     expect(page.locator("table")).to_contain_text("SOL-2026-90001")
+    # RF-REV-10/11: queue exposes "Atendida por" column and no "Acción" / "Revisar".
+    expect(page.locator("th", has_text="Atendida por")).to_be_visible()
+    expect(page.locator("th", has_text="Acción")).to_have_count(0)
+    expect(page.get_by_role("link", name="Revisar")).to_have_count(0)
     page.screenshot(
         path=str(SCREENSHOT_DIR / "revision_queue_desktop.png"), full_page=True
     )
@@ -231,9 +235,15 @@ def test_personal_takes_and_finalizes_solicitud(
     )
     page.set_viewport_size({"width": 1280, "height": 900})
 
-    page.get_by_role("link", name="Revisar").first.click()
+    page.get_by_role("link", name="SOL-2026-90001").click()
     page.wait_for_load_state("networkidle")
     expect(page.get_by_role("heading", name="SOL-2026-90001")).to_be_visible()
+    # RF-REV-12: Solicitante card shows nombre, matrícula and email-as-mailto.
+    solicitante_card = page.locator(".card", has=page.locator("h2", has_text="Solicitante"))
+    expect(solicitante_card).to_be_visible()
+    expect(solicitante_card).to_contain_text("Alumna Demo")
+    expect(solicitante_card).to_contain_text("ALU-E2E")
+    expect(solicitante_card.locator("a[href='mailto:alu-e2e@uaz.edu.mx']")).to_be_visible()
     page.screenshot(
         path=str(SCREENSHOT_DIR / "revision_detail_desktop.png"), full_page=True
     )
@@ -242,6 +252,19 @@ def test_personal_takes_and_finalizes_solicitud(
     page.get_by_role("button", name="Atender").click()
     page.wait_for_load_state("networkidle")
     expect(page.locator(".alert-success")).to_contain_text("tomada")
+    # RF-REV-13: handler line surfaces immediately after atender.
+    expect(page.get_by_text("Atendida por", exact=False).first).to_be_visible()
+    expect(page.locator("body")).to_contain_text("Carla Control Escolar")
+    page.screenshot(
+        path=str(SCREENSHOT_DIR / "revision_detail_after_atender_desktop.png"),
+        full_page=True,
+    )
+    page.set_viewport_size({"width": 320, "height": 800})
+    page.screenshot(
+        path=str(SCREENSHOT_DIR / "revision_detail_after_atender_mobile.png"),
+        full_page=True,
+    )
+    page.set_viewport_size({"width": 1280, "height": 900})
 
     s.refresh_from_db()
     assert s.estado == Estado.EN_PROCESO.value
