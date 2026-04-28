@@ -55,7 +55,9 @@ app/usuarios/directory/
 │       └── implementation.py    # DefaultUserDirectoryService
 ├── views/
 │   ├── __init__.py
-│   └── admin.py                 # DirectoryListView, DirectoryDetailView
+│   ├── _helpers.py              # safe_return_path, build_filter_querystring
+│   ├── list.py                  # DirectoryListView
+│   └── detail.py                # DirectoryDetailView
 └── tests/
     ├── __init__.py
     ├── test_repositories.py
@@ -194,33 +196,47 @@ class DirectoryFilterForm(forms.Form):
 
 The view calls `form.is_valid()` for parsing but treats invalid input as "no filter" — never returns 400.
 
-### 6. Views (`views/admin.py`)
+### 6. Views (`views/list.py`, `views/detail.py`)
 
-Both views use `LoginRequiredMixin + AdminRequiredMixin` (existing in `usuarios/permissions.py`). All non-admin users → 403 via the existing middleware. URLs accept GET only.
+Per the One-Class-Per-File rule, the two views live in separate files:
+`views/list.py::DirectoryListView` and `views/detail.py::DirectoryDetailView`.
+Both use `AdminRequiredMixin` (which itself extends `LoginRequiredMixin` —
+applying both is redundant). All non-admin users → 403 via the existing
+middleware. URLs accept GET only.
 
 ```python
-class DirectoryListView(LoginRequiredMixin, AdminRequiredMixin, View):
+# views/list.py
+class DirectoryListView(AdminRequiredMixin, View):
     def get(self, request):
         form = DirectoryFilterForm(request.GET or None)
         form.is_valid()           # populate cleaned_data; never blocks
         filters = form.to_filters()
         page = get_user_directory_service().list(filters)
-        querystring = _build_filter_qs(filters)   # role + q only, no page
-        ctx = {"page": page, "filters": filters, "form": form, "querystring": querystring}
+        ctx = {
+            "page": page, "filters": filters, "form": form,
+            "querystring": build_filter_querystring(filters),  # role + q only, no page
+        }
         return render(request, "usuarios/directory/list.html", ctx)
 
-class DirectoryDetailView(LoginRequiredMixin, AdminRequiredMixin, View):
+# views/detail.py
+class DirectoryDetailView(AdminRequiredMixin, View):
     def get(self, request, matricula: str):
-        try:
-            detail = get_user_directory_service().get_detail(matricula)
-        except UserNotFound:
-            raise   # AppErrorMiddleware renders 404 standard template
-        back_qs = request.META.get("QUERY_STRING", "")  # preserved via ?return= or referer fallback
-        ctx = {"user": detail, "back_qs": back_qs}
+        # UserNotFound propagates → AppErrorMiddleware renders 404
+        detail = get_user_directory_service().get_detail(matricula)
+        back_url = (
+            safe_return_path(request.GET.get("return", ""))
+            or reverse("usuarios:directory:list")
+        )
+        ctx = {"user_detail": detail, "back_url": back_url}
         return render(request, "usuarios/directory/detail.html", ctx)
 ```
 
-Back-link strategy: the list view passes the active filter querystring to each detail link as `?return=<urlencoded>`. The detail view reads `request.GET.get("return", "")`, validates it (relative path only — same-host guard, mirrors `CallbackView`'s safe-redirect helper), and uses it to build the "Volver" href; falls back to `{% url 'usuarios:directory:list' %}` when missing/unsafe.
+Back-link strategy: the list view passes the active filter querystring to each
+detail link as `?return=<urlencoded>`. The detail view reads
+`request.GET.get("return", "")`, validates it via `safe_return_path` (relative
+path only — rejects scheme, netloc, protocol-relative `//`, and payloads over
+512 chars), and uses it to build the "Volver" href; falls back to
+`{% url 'usuarios:directory:list' %}` when missing/unsafe.
 
 ### 7. URLs
 
