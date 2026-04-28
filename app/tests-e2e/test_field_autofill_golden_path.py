@@ -83,6 +83,8 @@ def test_admin_creates_tipo_with_auto_fill_text_field(
     expect(page.get_by_role("heading", name="Nuevo tipo de solicitud")).to_be_visible()
 
     page.get_by_label("Nombre", exact=False).fill("Constancia auto-fill (E2E)")
+    page.locator('select[name="responsible_role"]').select_option("CONTROL_ESCOLAR")
+    page.locator('input[name="creator_roles"][value="ALUMNO"]').check()
 
     # Add a field, set type=TEXT (default), pick source=USER_PROGRAMA.
     page.get_by_role("button", name="Agregar campo").click()
