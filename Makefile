@@ -3,8 +3,8 @@ DC_TEST := docker compose -f docker-compose.test.yml
 EXEC    := $(DC_DEV) exec -T web
 
 .PHONY: help up down build logs shell migrate makemigrations \
-        lint type test e2e e2e-install e2e-postgres e2e-headed clean certs \
-        seed seed-fresh
+        lint type test coverage coverage-html e2e e2e-install e2e-postgres e2e-headed clean certs \
+        seed seed-fresh css css-watch
 
 help:  ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -59,6 +59,18 @@ type:  ## mypy inside web
 test:  ## Unit + integration tests (in-process, SQLite)
 	$(EXEC) pytest
 
+coverage:  ## Coverage report (Tier 1+2). E2E=1 also runs Playwright suite.
+	$(EXEC) pytest -m "not e2e" --cov --cov-report=term-missing
+ifeq ($(E2E),1)
+	$(EXEC) pytest -m e2e --cov --cov-append --cov-report=term-missing
+endif
+
+coverage-html:  ## HTML coverage at app/htmlcov/. E2E=1 also runs Playwright suite.
+	$(EXEC) pytest -m "not e2e" --cov --cov-report=term-missing --cov-report=html
+ifeq ($(E2E),1)
+	$(EXEC) pytest -m e2e --cov --cov-append --cov-report=term-missing --cov-report=html
+endif
+
 e2e-install:  ## Bootstrap Chromium + system deps for browser tests (run once after `make build`)
 	$(DC_DEV) exec -T -u root web python -m playwright install-deps chromium
 	$(EXEC) python -m playwright install chromium
@@ -75,6 +87,14 @@ e2e-postgres:  ## Same as e2e against ephemeral Postgres
 
 e2e-headed:  ## Browser tests with visible Chromium
 	$(EXEC) pytest -m e2e --headed --slowmo 200
+
+css:  ## One-shot minified Tailwind build → app/static/css/app.build.css
+	$(EXEC) tailwindcss -i /app/static/css/app.css \
+	                    -o /app/static/css/app.build.css --minify
+
+css-watch:  ## Watch templates/CSS and rebuild app.build.css on change
+	$(EXEC) tailwindcss -i /app/static/css/app.css \
+	                    -o /app/static/css/app.build.css --watch=always
 
 clean:  ## Stop everything, remove volumes
 	$(DC_DEV) down -v
