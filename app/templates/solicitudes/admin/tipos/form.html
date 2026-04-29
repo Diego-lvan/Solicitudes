@@ -1,155 +1,144 @@
 {% extends "base.html" %}
+{% load lucide %}
 
 {% block title %}{{ form_title }} · {{ block.super }}{% endblock %}
 
 {% block content %}
-<nav aria-label="breadcrumb" class="mb-3">
-  <ol class="breadcrumb mb-0">
-    <li class="breadcrumb-item"><a href="{% url 'solicitudes:tipos:list' %}">Tipos</a></li>
-    <li class="breadcrumb-item active" aria-current="page">{{ form_title }}</li>
+<nav aria-label="Breadcrumbs" class="mb-3">
+  <ol class="flex items-center gap-1.5 text-sm text-zinc-500">
+    <li><a href="{% url 'solicitudes:tipos:list' %}" class="hover:text-zinc-900 hover:underline underline-offset-2">Tipos</a></li>
+    <li aria-hidden="true" class="text-zinc-400">/</li>
+    <li><span aria-current="page" class="text-zinc-900 font-medium">{{ form_title }}</span></li>
   </ol>
 </nav>
 
-<h1 class="h3 mb-4">{{ form_title }}</h1>
+<h1 class="text-2xl font-semibold text-zinc-900 mb-6">{{ form_title }}</h1>
 
 <form method="post" novalidate>
   {% csrf_token %}
 
   {% if tipo_form.non_field_errors %}
-    <div class="alert alert-danger" role="alert">
-      {{ tipo_form.non_field_errors }}
-    </div>
+    {% include "components/alert.html" with variant="danger" message=tipo_form.non_field_errors %}
   {% endif %}
 
-  <div class="row g-4">
-  <div class="col-12 col-xl-7 tipo-editor-col">
+  <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
+    <div class="xl:col-span-7 space-y-4">
 
-  <div class="card mb-4">
-    <div class="card-body">
-      <h2 class="h5 mb-3">Información general</h2>
+      <article class="rounded-lg border border-zinc-200 bg-white p-5">
+        <h2 class="text-sm font-semibold text-zinc-900 mb-4">Información general</h2>
 
-      <div class="row g-3">
-        <div class="col-12 col-md-8">
-          <label for="{{ tipo_form.nombre.id_for_label }}" class="form-label">
-            {{ tipo_form.nombre.label }} <span class="text-danger" aria-hidden="true">*</span>
-          </label>
-          {{ tipo_form.nombre }}
-          {% if tipo_form.nombre.errors %}
-            <div class="invalid-feedback d-block" role="alert">{{ tipo_form.nombre.errors.0 }}</div>
-          {% endif %}
-        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2 space-y-1.5">
+            <label for="{{ tipo_form.nombre.id_for_label }}" class="block text-sm font-medium text-zinc-900">
+              {{ tipo_form.nombre.label }}<span class="text-red-600 ml-0.5" aria-hidden="true">*</span>
+            </label>
+            {{ tipo_form.nombre }}
+            {% if tipo_form.nombre.errors %}<p class="text-xs text-red-600" role="alert">{{ tipo_form.nombre.errors.0 }}</p>{% endif %}
+          </div>
 
-        <div class="col-12">
-          <label for="{{ tipo_form.descripcion.id_for_label }}" class="form-label">{{ tipo_form.descripcion.label }}</label>
-          {{ tipo_form.descripcion }}
-          {% if tipo_form.descripcion.errors %}
-            <div class="invalid-feedback d-block" role="alert">{{ tipo_form.descripcion.errors.0 }}</div>
-          {% endif %}
-        </div>
+          <div class="md:col-span-2 space-y-1.5">
+            <label for="{{ tipo_form.descripcion.id_for_label }}" class="block text-sm font-medium text-zinc-900">{{ tipo_form.descripcion.label }}</label>
+            {{ tipo_form.descripcion }}
+            {% if tipo_form.descripcion.errors %}<p class="text-xs text-red-600" role="alert">{{ tipo_form.descripcion.errors.0 }}</p>{% endif %}
+          </div>
 
-        <div class="col-12 col-md-6">
-          <label for="{{ tipo_form.responsible_role.id_for_label }}" class="form-label">
-            {{ tipo_form.responsible_role.label }} <span class="text-danger" aria-hidden="true">*</span>
-          </label>
-          {{ tipo_form.responsible_role }}
-          {% if tipo_form.responsible_role.errors %}
-            <div class="invalid-feedback d-block" role="alert">{{ tipo_form.responsible_role.errors.0 }}</div>
-          {% endif %}
-        </div>
+          <div class="space-y-1.5">
+            <label for="{{ tipo_form.responsible_role.id_for_label }}" class="block text-sm font-medium text-zinc-900">
+              {{ tipo_form.responsible_role.label }}<span class="text-red-600 ml-0.5" aria-hidden="true">*</span>
+            </label>
+            {{ tipo_form.responsible_role }}
+            {% if tipo_form.responsible_role.errors %}<p class="text-xs text-red-600" role="alert">{{ tipo_form.responsible_role.errors.0 }}</p>{% endif %}
+          </div>
 
-        <div class="col-12 col-md-6">
-          <fieldset>
-            {# Bootstrap reboot ships <legend> at ~1.5rem; force it back to label size. #}
-            <legend class="form-label fs-6 fw-normal mb-2 float-none w-auto p-0">
-              {{ tipo_form.creator_roles.label }} <span class="text-danger" aria-hidden="true">*</span>
+          <fieldset class="space-y-1.5">
+            <legend class="block text-sm font-medium text-zinc-900 mb-1">
+              {{ tipo_form.creator_roles.label }}<span class="text-red-600 ml-0.5" aria-hidden="true">*</span>
             </legend>
             {{ tipo_form.creator_roles }}
-            {% if tipo_form.creator_roles.errors %}
-              <div class="invalid-feedback d-block" role="alert">{{ tipo_form.creator_roles.errors.0 }}</div>
-            {% endif %}
+            {% if tipo_form.creator_roles.errors %}<p class="text-xs text-red-600" role="alert">{{ tipo_form.creator_roles.errors.0 }}</p>{% endif %}
           </fieldset>
-        </div>
 
-        <div class="col-12 col-md-6">
-          <div class="form-check">
-            {{ tipo_form.requires_payment }}
-            <label class="form-check-label" for="{{ tipo_form.requires_payment.id_for_label }}">{{ tipo_form.requires_payment.label }}</label>
+          <div class="space-y-2">
+            <label class="inline-flex items-start gap-2 text-sm text-zinc-900 cursor-pointer">
+              {{ tipo_form.requires_payment }}
+              <span>{{ tipo_form.requires_payment.label }}</span>
+            </label>
+            <label class="inline-flex items-start gap-2 text-sm text-zinc-900 cursor-pointer">
+              {{ tipo_form.mentor_exempt }}
+              <span>
+                {{ tipo_form.mentor_exempt.label }}
+                {% if tipo_form.mentor_exempt.help_text %}<span class="block text-xs text-zinc-500">{{ tipo_form.mentor_exempt.help_text }}</span>{% endif %}
+              </span>
+            </label>
           </div>
-          <div class="form-check">
-            {{ tipo_form.mentor_exempt }}
-            <label class="form-check-label" for="{{ tipo_form.mentor_exempt.id_for_label }}">{{ tipo_form.mentor_exempt.label }}</label>
-            {% if tipo_form.mentor_exempt.help_text %}
-              <div class="form-text">{{ tipo_form.mentor_exempt.help_text }}</div>
-            {% endif %}
-          </div>
-        </div>
 
-        <div class="col-12">
-          <label for="{{ tipo_form.plantilla_id.id_for_label }}" class="form-label">{{ tipo_form.plantilla_id.label }}</label>
-          {{ tipo_form.plantilla_id }}
-          {% if tipo_form.plantilla_id.help_text %}
-            <div class="form-text">{{ tipo_form.plantilla_id.help_text }}</div>
-          {% endif %}
-          {% if tipo_form.plantilla_id.errors %}
-            <div class="invalid-feedback d-block" role="alert">{{ tipo_form.plantilla_id.errors.0 }}</div>
-          {% endif %}
+          <div class="md:col-span-2 space-y-1.5">
+            <label for="{{ tipo_form.plantilla_id.id_for_label }}" class="block text-sm font-medium text-zinc-900">{{ tipo_form.plantilla_id.label }}</label>
+            {{ tipo_form.plantilla_id }}
+            {% if tipo_form.plantilla_id.help_text %}<p class="text-xs text-zinc-500">{{ tipo_form.plantilla_id.help_text }}</p>{% endif %}
+            {% if tipo_form.plantilla_id.errors %}<p class="text-xs text-red-600" role="alert">{{ tipo_form.plantilla_id.errors.0 }}</p>{% endif %}
+          </div>
         </div>
+      </article>
+
+      <div class="flex justify-between items-center">
+        <h2 class="text-base font-semibold text-zinc-900">Campos del formulario</h2>
+        <button type="button" id="add-field-row"
+                class="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                       hover:bg-zinc-50
+                       focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+          {% lucide "plus" class="size-4" %}<span>Agregar campo</span>
+        </button>
+      </div>
+
+      {{ field_formset.management_form }}
+
+      {% if field_formset.non_form_errors %}
+        {% include "components/alert.html" with variant="danger" message=field_formset.non_form_errors %}
+      {% endif %}
+
+      <div id="field-rows" class="space-y-2">
+        {% for f in field_formset %}
+          {% include "solicitudes/admin/tipos/_field_row.html" with form=f %}
+        {% endfor %}
+      </div>
+
+      {# Hidden empty form template — JS clones this when adding a row. #}
+      <template id="empty-field-row">
+        {% include "solicitudes/admin/tipos/_field_row.html" with form=field_formset.empty_form %}
+      </template>
+
+      <div class="flex flex-col md:flex-row gap-2 md:justify-end pt-4">
+        <a href="{% url 'solicitudes:tipos:list' %}"
+           class="md:order-1 order-2 inline-flex items-center justify-center h-10 px-4 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                  hover:bg-zinc-50
+                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+          Cancelar
+        </a>
+        <button type="submit"
+                class="md:order-2 order-1 inline-flex items-center justify-center h-10 px-4 rounded-md bg-zinc-900 text-white text-sm font-medium
+                       hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+          {{ submit_label }}
+        </button>
       </div>
     </div>
-  </div>
 
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="h5 mb-0">Campos del formulario</h2>
-    <button type="button" class="btn btn-outline-secondary btn-sm" id="add-field-row">
-      <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Agregar campo
-    </button>
-  </div>
-
-  {{ field_formset.management_form }}
-
-  {% if field_formset.non_form_errors %}
-    <div class="alert alert-danger" role="alert">
-      {{ field_formset.non_form_errors }}
-    </div>
-  {% endif %}
-
-  <div id="field-rows">
-    {% for f in field_formset %}
-      {% include "solicitudes/admin/tipos/_field_row.html" with form=f %}
-    {% endfor %}
-  </div>
-
-  {# Hidden empty form template — JS clones this when adding a row. #}
-  <template id="empty-field-row">
-    {% include "solicitudes/admin/tipos/_field_row.html" with form=field_formset.empty_form %}
-  </template>
-
-  <div class="d-flex flex-column flex-md-row gap-2 justify-content-end mt-4">
-    <a href="{% url 'solicitudes:tipos:list' %}" class="btn btn-outline-secondary order-2 order-md-1">Cancelar</a>
-    <button type="submit" class="btn btn-primary order-1 order-md-2">{{ submit_label }}</button>
-  </div>
-
-  </div>{# /col-xl-7 editor #}
-
-  <aside class="col-12 col-xl-5 tipo-preview-col" aria-label="Vista previa del formulario">
-    <div class="tipo-preview-sticky">
-      <div class="card">
-        <div class="card-header bg-light-subtle d-flex align-items-center gap-2">
-          <i class="bi bi-eye" aria-hidden="true"></i>
-          <h2 class="h6 mb-0">Vista previa</h2>
-          <span class="badge text-bg-light border ms-auto small">En vivo</span>
-        </div>
-        <div class="card-body" id="tipo-preview-body">
-          {# Rendered by tipo_form.js — kept tiny on purpose. #}
-        </div>
+    <aside class="xl:col-span-5" aria-label="Vista previa del formulario">
+      <div class="xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
+        <article class="rounded-lg border border-zinc-200 bg-white">
+          <header class="flex items-center gap-2 px-4 py-3 border-b border-zinc-200">
+            {% lucide "eye" class="size-4 text-zinc-500" %}
+            <h2 class="text-sm font-semibold text-zinc-900">Vista previa</h2>
+            <span class="ml-auto inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200">En vivo</span>
+          </header>
+          <div id="tipo-preview-body" class="p-4 text-sm">
+            {# Rendered by tipo_form.js — kept tiny on purpose. #}
+          </div>
+        </article>
+        <p class="mt-2 text-xs text-zinc-500">Así verá el formulario quien cree una solicitud de este tipo.</p>
       </div>
-      <p class="form-text mt-2 mb-0">
-        Así verá el formulario quien cree una solicitud de este tipo.
-      </p>
-    </div>
-  </aside>
-
-  </div>{# /row #}
+    </aside>
+  </div>
 </form>
 {% endblock %}
 

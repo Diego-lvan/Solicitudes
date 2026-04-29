@@ -1,49 +1,53 @@
 {% extends "base.html" %}
+{% load lucide %}
 
 {% block title %}Reportes — Lista · {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1 class="h3 mb-0">Lista de solicitudes</h1>
-  <div class="d-flex gap-2">
-    <a class="btn btn-outline-secondary" href="{% url 'reportes:dashboard' %}?{{ querystring }}">
-      <i class="bi bi-bar-chart me-1" aria-hidden="true"></i> Volver al dashboard
+<header class="flex flex-wrap justify-between items-center gap-3 mb-6">
+  <h1 class="text-2xl font-semibold text-zinc-900">Lista de solicitudes</h1>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'reportes:dashboard' %}?{{ querystring }}"
+       class="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+              hover:bg-zinc-50
+              focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+      {% lucide "chart-bar" class="size-4" %}<span>Volver al dashboard</span>
     </a>
-    <a class="btn btn-outline-secondary" href="{% url 'reportes:export_csv' %}?{{ querystring }}">
-      <i class="bi bi-filetype-csv me-1" aria-hidden="true"></i> Exportar CSV
+    <a href="{% url 'reportes:export_csv' %}?{{ querystring }}"
+       class="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+              hover:bg-zinc-50
+              focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+      {% lucide "file-spreadsheet" class="size-4" %}<span>Exportar CSV</span>
     </a>
   </div>
-</div>
+</header>
 
 {% include "reportes/_filter_form.html" %}
 
-<div class="table-responsive">
-  <table class="table table-hover align-middle">
-    <thead>
+<div class="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+  <table class="w-full text-sm">
+    <thead class="bg-zinc-50/60 text-left text-xs uppercase tracking-wider text-zinc-500">
       <tr>
-        <th scope="col">Folio</th>
-        <th scope="col">Tipo</th>
-        <th scope="col" class="d-none d-md-table-cell">Solicitante</th>
-        <th scope="col">Estado</th>
-        <th scope="col" class="d-none d-md-table-cell text-end">Creada</th>
+        <th scope="col" class="px-4 py-2.5 font-semibold">Folio</th>
+        <th scope="col" class="px-4 py-2.5 font-semibold">Tipo</th>
+        <th scope="col" class="px-4 py-2.5 font-semibold hidden md:table-cell">Solicitante</th>
+        <th scope="col" class="px-4 py-2.5 font-semibold">Estado</th>
+        <th scope="col" class="px-4 py-2.5 font-semibold text-right hidden md:table-cell">Creada</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody class="divide-y divide-zinc-200">
       {% for row in page.items %}
-        <tr>
-          <td>{{ row.folio }}</td>
-          <td>{{ row.tipo_nombre }}</td>
-          <td class="d-none d-md-table-cell">{{ row.solicitante_nombre }}</td>
-          <td>{% include "solicitudes/_partials/_estado_badge.html" with estado=row.estado %}</td>
-          <td class="d-none d-md-table-cell text-end">{{ row.created_at|date:"d/m/Y" }}</td>
+        <tr class="hover:bg-zinc-50">
+          <td class="px-4 py-3 font-mono text-zinc-900">{{ row.folio }}</td>
+          <td class="px-4 py-3 text-zinc-900">{{ row.tipo_nombre }}</td>
+          <td class="px-4 py-3 text-zinc-700 hidden md:table-cell">{{ row.solicitante_nombre }}</td>
+          <td class="px-4 py-3">{% include "solicitudes/_partials/_estado_badge.html" with estado=row.estado %}</td>
+          <td class="px-4 py-3 text-right text-zinc-500 hidden md:table-cell">{{ row.created_at|date:"d/m/Y" }}</td>
         </tr>
       {% empty %}
         <tr>
-          <td colspan="5">
-            <div class="text-center py-5">
-              <i class="bi bi-inbox fs-1 text-muted" aria-hidden="true"></i>
-              <p class="mt-3 mb-0 text-muted">Sin resultados para los filtros aplicados.</p>
-            </div>
+          <td colspan="5" class="px-4">
+            {% include "components/empty_state.html" with icon="inbox" title="Sin resultados" description="Ajusta los filtros aplicados." %}
           </td>
         </tr>
       {% endfor %}
@@ -52,22 +56,28 @@
 </div>
 
 {% if page.has_prev or page.has_next %}
-  <nav aria-label="Paginación">
-    <ul class="pagination">
-      {% if page.has_prev %}
-        <li class="page-item">
-          <a class="page-link" href="?{{ querystring }}&page={{ page.page|add:'-1' }}">Anterior</a>
-        </li>
-      {% endif %}
-      <li class="page-item active" aria-current="page">
-        <span class="page-link">{{ page.page }}</span>
-      </li>
-      {% if page.has_next %}
-        <li class="page-item">
-          <a class="page-link" href="?{{ querystring }}&page={{ page.page|add:'1' }}">Siguiente</a>
-        </li>
-      {% endif %}
-    </ul>
+  <nav aria-label="Paginación" class="flex items-center justify-between gap-3 mt-4 text-sm">
+    {% if page.has_prev %}
+      <a class="inline-flex items-center gap-1.5 px-3 h-9 rounded-md border border-zinc-300 bg-white text-zinc-700
+                hover:bg-zinc-50 hover:text-zinc-900
+                focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+         href="?{{ querystring }}&page={{ page.page|add:'-1' }}">
+        {% lucide "chevron-left" class="size-4" %}<span>Anterior</span>
+      </a>
+    {% else %}
+      <span></span>
+    {% endif %}
+    <span class="text-zinc-600">Página <span class="font-medium text-zinc-900">{{ page.page }}</span></span>
+    {% if page.has_next %}
+      <a class="inline-flex items-center gap-1.5 px-3 h-9 rounded-md border border-zinc-300 bg-white text-zinc-700
+                hover:bg-zinc-50 hover:text-zinc-900
+                focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+         href="?{{ querystring }}&page={{ page.page|add:'1' }}">
+        <span>Siguiente</span>{% lucide "chevron-right" class="size-4" %}
+      </a>
+    {% else %}
+      <span></span>
+    {% endif %}
   </nav>
 {% endif %}
 {% endblock %}

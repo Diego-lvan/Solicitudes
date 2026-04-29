@@ -1,45 +1,48 @@
 {% extends "base.html" %}
+{% load lucide %}
 
 {% block title %}Importar mentores · {{ block.super }}{% endblock %}
 
 {% block content %}
-<section class="row justify-content-center">
-  <div class="col-12 col-md-8 col-lg-6">
-    <h1 class="h3 mb-4">Importar mentores (CSV)</h1>
+<section class="max-w-xl mx-auto">
+  <h1 class="text-2xl font-semibold text-zinc-900 mb-4">Importar mentores (CSV)</h1>
 
-    <p class="text-muted">
-      El archivo debe tener una sola columna con encabezado <code>matricula</code>.
-      Las matrículas inválidas se omitirán; el resumen mostrará cuántas filas
-      fueron insertadas, reactivadas, omitidas (ya activas) o rechazadas.
-    </p>
+  <p class="text-sm text-zinc-500 mb-6">
+    El archivo debe tener una sola columna con encabezado <code class="font-mono text-zinc-900">matricula</code>.
+    Las matrículas inválidas se omitirán; el resumen mostrará cuántas filas fueron insertadas, reactivadas, omitidas (ya activas) o rechazadas.
+  </p>
 
-    <form method="post" enctype="multipart/form-data" novalidate>
-      {% csrf_token %}
+  <form method="post" enctype="multipart/form-data" novalidate class="space-y-5">
+    {% csrf_token %}
 
-      {% if form.non_field_errors %}
-      <div class="alert alert-danger" role="alert">
-        {{ form.non_field_errors }}
-      </div>
+    {% if form.non_field_errors %}
+      {% include "components/alert.html" with variant="danger" message=form.non_field_errors %}
+    {% endif %}
+
+    <div class="space-y-1.5">
+      <label for="{{ form.archivo.id_for_label }}" class="block text-sm font-medium text-zinc-900">
+        {{ form.archivo.label }}<span class="text-red-600 ml-0.5" aria-hidden="true">*</span>
+      </label>
+      {{ form.archivo }}
+      {% if form.archivo.errors %}
+        <p class="text-xs text-red-600" role="alert">{{ form.archivo.errors|join:" " }}</p>
       {% endif %}
+      {% if form.archivo.help_text %}<p class="text-xs text-zinc-500">{{ form.archivo.help_text }}</p>{% endif %}
+    </div>
 
-      <div class="mb-3">
-        <label for="{{ form.archivo.id_for_label }}" class="form-label">
-          {{ form.archivo.label }}
-        </label>
-        {{ form.archivo }}
-        {% if form.archivo.errors %}
-          <div class="invalid-feedback d-block">{{ form.archivo.errors|join:" " }}</div>
-        {% endif %}
-        <div class="form-text">{{ form.archivo.help_text }}</div>
-      </div>
-
-      <div class="d-flex gap-2 justify-content-end">
-        <a href="{% url 'mentores:list' %}" class="btn btn-outline-secondary">Cancelar</a>
-        <button type="submit" class="btn btn-primary">
-          <i class="bi bi-upload me-1" aria-hidden="true"></i> Importar
-        </button>
-      </div>
-    </form>
-  </div>
+    <div class="flex justify-end gap-2 pt-2">
+      <a href="{% url 'mentores:list' %}"
+         class="inline-flex items-center h-10 px-4 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                hover:bg-zinc-50
+                focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+        Cancelar
+      </a>
+      <button type="submit"
+              class="inline-flex items-center gap-1.5 h-10 px-4 rounded-md bg-zinc-900 text-white text-sm font-medium
+                     hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+        {% lucide "upload" class="size-4" %}<span>Importar</span>
+      </button>
+    </div>
+  </form>
 </section>
 {% endblock %}

@@ -1,13 +1,16 @@
+{% load lucide %}
 {% comment %}
 Shared GET filter form for /reportes/ and /reportes/lista/.
 `selected_estado`, `selected_tipo_id`, `selected_role` are pre-stringified
 in views/_helpers.py:filter_form_choices so the comparisons match the
 `option`'s string `value` attribute exactly.
 {% endcomment %}
-<form method="get" class="row g-2 align-items-end mb-4">
-  <div class="col-12 col-md-3">
-    <label class="form-label" for="filter_estado">Estado</label>
-    <select class="form-select" name="estado" id="filter_estado">
+<form method="get" class="grid grid-cols-2 md:grid-cols-6 gap-3 items-end mb-6">
+  <div class="space-y-1.5 col-span-2 md:col-span-1">
+    <label for="filter_estado" class="block text-sm font-medium text-zinc-900">Estado</label>
+    <select id="filter_estado" name="estado"
+            class="block w-full h-10 px-3 pr-8 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                   focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
       <option value="">Todos</option>
       {% for value, label in estado_choices %}
         <option value="{{ value }}" {% if selected_estado == value %}selected{% endif %}>{{ label }}</option>
@@ -15,9 +18,11 @@ in views/_helpers.py:filter_form_choices so the comparisons match the
     </select>
   </div>
 
-  <div class="col-12 col-md-3">
-    <label class="form-label" for="filter_tipo">Tipo</label>
-    <select class="form-select" name="tipo_id" id="filter_tipo">
+  <div class="space-y-1.5 col-span-2 md:col-span-1">
+    <label for="filter_tipo" class="block text-sm font-medium text-zinc-900">Tipo</label>
+    <select id="filter_tipo" name="tipo_id"
+            class="block w-full h-10 px-3 pr-8 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                   focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
       <option value="">Todos</option>
       {% for value, label in tipo_choices %}
         <option value="{{ value }}" {% if selected_tipo_id == value %}selected{% endif %}>{{ label }}</option>
@@ -25,9 +30,11 @@ in views/_helpers.py:filter_form_choices so the comparisons match the
     </select>
   </div>
 
-  <div class="col-12 col-md-3">
-    <label class="form-label" for="filter_role">Responsable</label>
-    <select class="form-select" name="responsible_role" id="filter_role">
+  <div class="space-y-1.5 col-span-2 md:col-span-1">
+    <label for="filter_role" class="block text-sm font-medium text-zinc-900">Responsable</label>
+    <select id="filter_role" name="responsible_role"
+            class="block w-full h-10 px-3 pr-8 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                   focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
       <option value="">Todos</option>
       {% for value, label in role_choices %}
         <option value="{{ value }}" {% if selected_role == value %}selected{% endif %}>{{ label }}</option>
@@ -35,20 +42,31 @@ in views/_helpers.py:filter_form_choices so the comparisons match the
     </select>
   </div>
 
-  <div class="col-6 col-md-2">
-    <label class="form-label" for="filter_from">Desde</label>
-    <input type="date" class="form-control" name="created_from" id="filter_from" value="{{ filter.created_from|default_if_none:'' }}" />
+  <div class="space-y-1.5">
+    <label for="filter_from" class="block text-sm font-medium text-zinc-900">Desde</label>
+    <input id="filter_from" name="created_from" type="date" value="{{ filter.created_from|default_if_none:'' }}"
+           class="block w-full h-10 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900" />
   </div>
 
-  <div class="col-6 col-md-2">
-    <label class="form-label" for="filter_to">Hasta</label>
-    <input type="date" class="form-control" name="created_to" id="filter_to" value="{{ filter.created_to|default_if_none:'' }}" />
+  <div class="space-y-1.5">
+    <label for="filter_to" class="block text-sm font-medium text-zinc-900">Hasta</label>
+    <input id="filter_to" name="created_to" type="date" value="{{ filter.created_to|default_if_none:'' }}"
+           class="block w-full h-10 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900" />
   </div>
 
-  <div class="col-12 col-md-auto">
-    <button type="submit" class="btn btn-primary">
-      <i class="bi bi-funnel me-1" aria-hidden="true"></i> Aplicar
+  <div class="flex gap-2 col-span-2 md:col-span-1">
+    <button type="submit"
+            class="inline-flex items-center gap-1.5 h-10 px-4 rounded-md bg-zinc-900 text-white text-sm font-medium
+                   hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+      {% lucide "funnel" class="size-4" %}<span>Aplicar</span>
     </button>
-    <a href="{% url 'reportes:dashboard' %}" class="btn btn-outline-secondary">Limpiar</a>
+    <a href="{% url 'reportes:dashboard' %}"
+       class="inline-flex items-center h-10 px-4 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+              hover:bg-zinc-50
+              focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+      Limpiar
+    </a>
   </div>
 </form>

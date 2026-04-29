@@ -3,79 +3,81 @@
 {% block title %}{{ form_title }} · {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1 class="h3 mb-0">{{ form_title }}</h1>
-  <a class="btn btn-link" href="{% url 'solicitudes:plantillas:list' %}">Volver al listado</a>
-</div>
+<header class="flex flex-wrap justify-between items-center gap-3 mb-6">
+  <h1 class="text-2xl font-semibold text-zinc-900">{{ form_title }}</h1>
+  <a href="{% url 'solicitudes:plantillas:list' %}" class="text-sm text-zinc-700 hover:text-zinc-900 hover:underline underline-offset-2">
+    Volver al listado
+  </a>
+</header>
 
 {% if form.non_field_errors %}
-  <div class="alert alert-danger">
-    {{ form.non_field_errors }}
-  </div>
+  {% include "components/alert.html" with variant="danger" message=form.non_field_errors %}
 {% endif %}
 
 <form method="post" novalidate>
   {% csrf_token %}
 
-  <div class="row g-3">
-    <div class="col-md-8">
-      <label for="{{ form.nombre.id_for_label }}" class="form-label">
-        {{ form.nombre.label }}
-        <span class="text-danger" aria-hidden="true">*</span>
+  <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+    <div class="md:col-span-8 space-y-1.5">
+      <label for="{{ form.nombre.id_for_label }}" class="block text-sm font-medium text-zinc-900">
+        {{ form.nombre.label }}<span class="text-red-600 ml-0.5" aria-hidden="true">*</span>
       </label>
       {{ form.nombre }}
-      {% if form.nombre.errors %}
-        <div class="invalid-feedback d-block" role="alert">{{ form.nombre.errors.0 }}</div>
-      {% endif %}
+      {% if form.nombre.errors %}<p class="text-xs text-red-600" role="alert">{{ form.nombre.errors.0 }}</p>{% endif %}
     </div>
-    <div class="col-md-4">
-      <div class="form-check mt-4">
+    <div class="md:col-span-4 flex items-end">
+      <label class="inline-flex items-center gap-2 text-sm text-zinc-900 cursor-pointer">
         {{ form.activo }}
-        <label class="form-check-label" for="{{ form.activo.id_for_label }}">{{ form.activo.label }}</label>
-      </div>
+        <span>{{ form.activo.label }}</span>
+      </label>
     </div>
-    <div class="col-12">
-      <label for="{{ form.descripcion.id_for_label }}" class="form-label">{{ form.descripcion.label }}</label>
+
+    <div class="md:col-span-12 space-y-1.5">
+      <label for="{{ form.descripcion.id_for_label }}" class="block text-sm font-medium text-zinc-900">{{ form.descripcion.label }}</label>
       {{ form.descripcion }}
-      {% if form.descripcion.errors %}
-        <div class="invalid-feedback d-block" role="alert">{{ form.descripcion.errors.0 }}</div>
-      {% endif %}
+      {% if form.descripcion.errors %}<p class="text-xs text-red-600" role="alert">{{ form.descripcion.errors.0 }}</p>{% endif %}
     </div>
-    <div class="col-12">
-      <label for="{{ form.html.id_for_label }}" class="form-label">
-        {{ form.html.label }}
-        <span class="text-danger" aria-hidden="true">*</span>
-        <span class="text-muted small">(usa <code>{% verbatim %}{{ var }}{% endverbatim %}</code> para insertar variables)</span>
+
+    <div class="md:col-span-12 space-y-1.5">
+      <label for="{{ form.html.id_for_label }}" class="block text-sm font-medium text-zinc-900">
+        {{ form.html.label }}<span class="text-red-600 ml-0.5" aria-hidden="true">*</span>
+        <span class="ml-1 text-xs font-normal text-zinc-500">(usa <code class="font-mono text-zinc-900">{% verbatim %}{{ var }}{% endverbatim %}</code> para insertar variables)</span>
       </label>
       {{ form.html }}
-      {% if form.html.errors %}
-        <div class="invalid-feedback d-block" role="alert">{{ form.html.errors.0 }}</div>
-      {% endif %}
+      {% if form.html.errors %}<p class="text-xs text-red-600" role="alert">{{ form.html.errors.0 }}</p>{% endif %}
     </div>
-    <div class="col-12">
-      <label for="{{ form.css.id_for_label }}" class="form-label">{{ form.css.label }}</label>
+
+    <div class="md:col-span-12 space-y-1.5">
+      <label for="{{ form.css.id_for_label }}" class="block text-sm font-medium text-zinc-900">{{ form.css.label }}</label>
       {{ form.css }}
-      {% if form.css.errors %}
-        <div class="invalid-feedback d-block" role="alert">{{ form.css.errors.0 }}</div>
-      {% endif %}
+      {% if form.css.errors %}<p class="text-xs text-red-600" role="alert">{{ form.css.errors.0 }}</p>{% endif %}
     </div>
   </div>
 
-  <div class="d-flex gap-2 mt-4 justify-content-end">
-    <a href="{% url 'solicitudes:plantillas:list' %}" class="btn btn-outline-secondary">Cancelar</a>
-    <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
+  <div class="flex justify-end gap-2 mt-6">
+    <a href="{% url 'solicitudes:plantillas:list' %}"
+       class="inline-flex items-center h-10 px-4 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+              hover:bg-zinc-50
+              focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+      Cancelar
+    </a>
+    <button type="submit"
+            class="inline-flex items-center h-10 px-4 rounded-md bg-zinc-900 text-white text-sm font-medium
+                   hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+      {{ submit_label }}
+    </button>
   </div>
 </form>
 
-<div class="card mt-5">
-  <div class="card-header">Variables disponibles</div>
-  <div class="card-body small">
-    <ul class="mb-0">
-      <li><code>{% verbatim %}{{ solicitante.matricula }}{% endverbatim %}</code>, <code>{% verbatim %}{{ solicitante.nombre }}{% endverbatim %}</code>, <code>{% verbatim %}{{ solicitante.email }}{% endverbatim %}</code>, <code>{% verbatim %}{{ solicitante.programa }}{% endverbatim %}</code>, <code>{% verbatim %}{{ solicitante.semestre }}{% endverbatim %}</code></li>
-      <li><code>{% verbatim %}{{ solicitud.folio }}{% endverbatim %}</code>, <code>{% verbatim %}{{ solicitud.estado }}{% endverbatim %}</code>, <code>{% verbatim %}{{ solicitud.tipo_nombre }}{% endverbatim %}</code>, <code>{% verbatim %}{{ solicitud.created_at }}{% endverbatim %}</code></li>
-      <li><code>{% verbatim %}{{ valores.&lt;slug-de-campo&gt; }}{% endverbatim %}</code> (los slugs se derivan automáticamente del label del campo)</li>
-      <li><code>{% verbatim %}{{ now }}{% endverbatim %}</code>, <code>{% verbatim %}{{ firma_lugar_fecha }}{% endverbatim %}</code></li>
-    </ul>
-  </div>
-</div>
+<article class="rounded-lg border border-zinc-200 bg-white mt-10">
+  <header class="px-4 py-3 border-b border-zinc-200">
+    <h2 class="text-sm font-semibold text-zinc-900">Variables disponibles</h2>
+  </header>
+  <ul class="px-4 py-3 text-xs text-zinc-700 space-y-1.5 list-disc list-inside">
+    <li><code class="font-mono text-zinc-900">{% verbatim %}{{ solicitante.matricula }}{% endverbatim %}</code>, <code class="font-mono text-zinc-900">{% verbatim %}{{ solicitante.nombre }}{% endverbatim %}</code>, <code class="font-mono text-zinc-900">{% verbatim %}{{ solicitante.email }}{% endverbatim %}</code>, <code class="font-mono text-zinc-900">{% verbatim %}{{ solicitante.programa }}{% endverbatim %}</code>, <code class="font-mono text-zinc-900">{% verbatim %}{{ solicitante.semestre }}{% endverbatim %}</code></li>
+    <li><code class="font-mono text-zinc-900">{% verbatim %}{{ solicitud.folio }}{% endverbatim %}</code>, <code class="font-mono text-zinc-900">{% verbatim %}{{ solicitud.estado }}{% endverbatim %}</code>, <code class="font-mono text-zinc-900">{% verbatim %}{{ solicitud.tipo_nombre }}{% endverbatim %}</code>, <code class="font-mono text-zinc-900">{% verbatim %}{{ solicitud.created_at }}{% endverbatim %}</code></li>
+    <li><code class="font-mono text-zinc-900">{% verbatim %}{{ valores.&lt;slug-de-campo&gt; }}{% endverbatim %}</code> (los slugs se derivan automáticamente del label del campo)</li>
+    <li><code class="font-mono text-zinc-900">{% verbatim %}{{ now }}{% endverbatim %}</code>, <code class="font-mono text-zinc-900">{% verbatim %}{{ firma_lugar_fecha }}{% endverbatim %}</code></li>
+  </ul>
+</article>
 {% endblock %}

@@ -1,142 +1,123 @@
 {% extends "base.html" %}
+{% load lucide %}
 
 {% block title %}Reportes · {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1 class="h3 mb-0">Reportes y dashboard</h1>
-  <div class="d-flex gap-2">
-    <a class="btn btn-outline-secondary" href="{% url 'reportes:export_csv' %}?{{ querystring }}">
-      <i class="bi bi-filetype-csv me-1" aria-hidden="true"></i> Exportar CSV
+<header class="flex flex-wrap justify-between items-center gap-3 mb-6">
+  <h1 class="text-2xl font-semibold text-zinc-900">Reportes y dashboard</h1>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'reportes:export_csv' %}?{{ querystring }}"
+       class="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+              hover:bg-zinc-50
+              focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+      {% lucide "file-spreadsheet" class="size-4" %}<span>Exportar CSV</span>
     </a>
-    <a class="btn btn-outline-secondary" href="{% url 'reportes:export_pdf' %}?{{ querystring }}">
-      <i class="bi bi-filetype-pdf me-1" aria-hidden="true"></i> Exportar PDF
+    <a href="{% url 'reportes:export_pdf' %}?{{ querystring }}"
+       class="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+              hover:bg-zinc-50
+              focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+      {% lucide "file-text" class="size-4" %}<span>Exportar PDF</span>
     </a>
-    <a class="btn btn-primary" href="{% url 'reportes:list' %}?{{ querystring }}">
-      <i class="bi bi-list-ul me-1" aria-hidden="true"></i> Ver lista
+    <a href="{% url 'reportes:list' %}?{{ querystring }}"
+       class="inline-flex items-center gap-1.5 h-9 px-3 rounded-md bg-zinc-900 text-white text-sm font-medium
+              hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+      {% lucide "list" class="size-4" %}<span>Ver lista</span>
     </a>
   </div>
-</div>
+</header>
 
 {% include "reportes/_filter_form.html" %}
 
-<div class="row g-3 mb-4">
-  <div class="col-12 col-md-4">
-    <div class="card">
-      <div class="card-body">
-        <p class="text-muted text-uppercase small mb-1">Total</p>
-        <p class="display-6 mb-0">{{ dashboard.total }}</p>
-      </div>
-    </div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  <div class="rounded-lg border border-zinc-200 bg-white p-4">
+    <p class="text-xs uppercase tracking-wider text-zinc-500">Total</p>
+    <p class="mt-1 text-4xl font-semibold text-zinc-900">{{ dashboard.total }}</p>
   </div>
 </div>
 
-<div class="row g-3">
-  <div class="col-12 col-lg-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <h2 class="h5 mb-3">Por estado</h2>
-        {% if dashboard.by_estado %}
-          <table class="table table-sm align-middle mb-0">
-            <thead>
-              <tr>
-                <th scope="col">Estado</th>
-                <th scope="col" class="text-end">Conteo</th>
-                <th scope="col" style="width: 40%">Distribución</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for r in dashboard.by_estado %}
-                {% widthratio r.count dashboard.total 100 as pct %}
-                <tr>
-                  <td>{% include "solicitudes/_partials/_estado_badge.html" with estado=r.estado %}</td>
-                  <td class="text-end">{{ r.count }}</td>
-                  <td>
-                    <div class="progress" role="progressbar" aria-label="Porcentaje {{ r.estado.display_name }}" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100" style="height: 0.5rem;">
-                      <div class="progress-bar" style="width: {{ pct }}%"></div>
-                    </div>
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        {% else %}
-          <p class="text-muted mb-0">Sin datos para los filtros seleccionados.</p>
-        {% endif %}
-      </div>
-    </div>
-  </div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+  <article class="rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="text-sm font-semibold text-zinc-900 mb-4">Por estado</h2>
+    {% if dashboard.by_estado %}
+      <table class="w-full text-sm">
+        <thead class="text-left text-xs uppercase tracking-wider text-zinc-500">
+          <tr><th class="pb-2 font-semibold">Estado</th><th class="pb-2 font-semibold text-right">Conteo</th><th class="pb-2 font-semibold w-[40%]">Distribución</th></tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-200">
+          {% for r in dashboard.by_estado %}
+            {% widthratio r.count dashboard.total 100 as pct %}
+            <tr>
+              <td class="py-2.5">{% include "solicitudes/_partials/_estado_badge.html" with estado=r.estado %}</td>
+              <td class="py-2.5 text-right text-zinc-900">{{ r.count }}</td>
+              <td class="py-2.5">
+                <div class="h-2 rounded-full bg-zinc-100 overflow-hidden" role="progressbar" aria-label="Porcentaje {{ r.estado.display_name }}" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100">
+                  <div class="h-full bg-zinc-900" style="width: {{ pct }}%"></div>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="text-sm text-zinc-500">Sin datos para los filtros seleccionados.</p>
+    {% endif %}
+  </article>
 
-  <div class="col-12 col-lg-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <h2 class="h5 mb-3">Por tipo</h2>
-        {% if dashboard.by_tipo %}
-          <table class="table table-sm align-middle mb-0">
-            <thead>
-              <tr>
-                <th scope="col">Tipo</th>
-                <th scope="col" class="text-end">Conteo</th>
-                <th scope="col" style="width: 40%">Distribución</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for r in dashboard.by_tipo %}
-                {% widthratio r.count dashboard.total 100 as pct %}
-                <tr>
-                  <td>{{ r.tipo_nombre }}</td>
-                  <td class="text-end">{{ r.count }}</td>
-                  <td>
-                    <div class="progress" role="progressbar" aria-label="Porcentaje {{ r.tipo_nombre }}" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100" style="height: 0.5rem;">
-                      <div class="progress-bar" style="width: {{ pct }}%"></div>
-                    </div>
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        {% else %}
-          <p class="text-muted mb-0">Sin datos para los filtros seleccionados.</p>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-
-  <div class="col-12">
-    <div class="card">
-      <div class="card-body">
-        <h2 class="h5 mb-3">Por mes</h2>
-        {% if dashboard.by_month %}
-          <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
-              <thead>
-                <tr>
-                  <th scope="col">Mes</th>
-                  <th scope="col" class="text-end">Conteo</th>
-                  <th scope="col" style="width: 60%">Distribución</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for r in dashboard.by_month %}
-                  {% widthratio r.count dashboard.total 100 as pct %}
-                  <tr>
-                    <td>{{ r.year }}-{{ r.month|stringformat:"02d" }}</td>
-                    <td class="text-end">{{ r.count }}</td>
-                    <td>
-                      <div class="progress" role="progressbar" aria-label="Porcentaje {{ r.year }}-{{ r.month }}" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100" style="height: 0.5rem;">
-                        <div class="progress-bar" style="width: {{ pct }}%"></div>
-                      </div>
-                    </td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <p class="text-muted mb-0">Sin datos para los filtros seleccionados.</p>
-        {% endif %}
-      </div>
-    </div>
-  </div>
+  <article class="rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="text-sm font-semibold text-zinc-900 mb-4">Por tipo</h2>
+    {% if dashboard.by_tipo %}
+      <table class="w-full text-sm">
+        <thead class="text-left text-xs uppercase tracking-wider text-zinc-500">
+          <tr><th class="pb-2 font-semibold">Tipo</th><th class="pb-2 font-semibold text-right">Conteo</th><th class="pb-2 font-semibold w-[40%]">Distribución</th></tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-200">
+          {% for r in dashboard.by_tipo %}
+            {% widthratio r.count dashboard.total 100 as pct %}
+            <tr>
+              <td class="py-2.5 text-zinc-900">{{ r.tipo_nombre }}</td>
+              <td class="py-2.5 text-right text-zinc-900">{{ r.count }}</td>
+              <td class="py-2.5">
+                <div class="h-2 rounded-full bg-zinc-100 overflow-hidden" role="progressbar" aria-label="Porcentaje {{ r.tipo_nombre }}" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100">
+                  <div class="h-full bg-zinc-900" style="width: {{ pct }}%"></div>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="text-sm text-zinc-500">Sin datos para los filtros seleccionados.</p>
+    {% endif %}
+  </article>
 </div>
+
+<article class="rounded-lg border border-zinc-200 bg-white p-5">
+  <h2 class="text-sm font-semibold text-zinc-900 mb-4">Por mes</h2>
+  {% if dashboard.by_month %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="text-left text-xs uppercase tracking-wider text-zinc-500">
+          <tr><th class="pb-2 font-semibold">Mes</th><th class="pb-2 font-semibold text-right">Conteo</th><th class="pb-2 font-semibold w-[60%]">Distribución</th></tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-200">
+          {% for r in dashboard.by_month %}
+            {% widthratio r.count dashboard.total 100 as pct %}
+            <tr>
+              <td class="py-2.5 text-zinc-900 font-mono text-xs">{{ r.year }}-{{ r.month|stringformat:"02d" }}</td>
+              <td class="py-2.5 text-right text-zinc-900">{{ r.count }}</td>
+              <td class="py-2.5">
+                <div class="h-2 rounded-full bg-zinc-100 overflow-hidden" role="progressbar" aria-label="Porcentaje {{ r.year }}-{{ r.month }}" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100">
+                  <div class="h-full bg-zinc-900" style="width: {{ pct }}%"></div>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-sm text-zinc-500">Sin datos para los filtros seleccionados.</p>
+  {% endif %}
+</article>
 {% endblock %}
