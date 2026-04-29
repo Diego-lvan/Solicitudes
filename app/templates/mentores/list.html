@@ -1,107 +1,104 @@
 {% extends "base.html" %}
+{% load lucide %}
 
 {% block title %}Mentores · {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1 class="h3 mb-0">Catálogo de mentores</h1>
-  <div class="d-flex gap-2">
-    <a class="btn btn-outline-secondary" href="{% url 'mentores:import_csv' %}">
-      <i class="bi bi-upload me-1" aria-hidden="true"></i> Importar CSV
+<header class="flex flex-wrap justify-between items-center gap-3 mb-6">
+  <h1 class="text-2xl font-semibold text-zinc-900">Catálogo de mentores</h1>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'mentores:import_csv' %}"
+       class="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+              hover:bg-zinc-50
+              focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+      {% lucide "upload" class="size-4" %}<span>Importar CSV</span>
     </a>
-    <a class="btn btn-primary" href="{% url 'mentores:add' %}">
-      <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Agregar mentor
+    <a href="{% url 'mentores:add' %}"
+       class="inline-flex items-center gap-1.5 h-9 px-4 rounded-md bg-zinc-900 text-white text-sm font-medium
+              hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+      {% lucide "plus" class="size-4" %}<span>Agregar mentor</span>
     </a>
   </div>
-</div>
+</header>
 
-<form method="get" class="row g-2 align-items-end mb-4">
+<form method="get" class="flex flex-wrap items-end gap-3 mb-6">
   {% comment %}
     Hidden sentinel so the view can distinguish a fresh load (no params) from
     a deliberately-submitted filter where the checkbox was left unchecked.
   {% endcomment %}
   <input type="hidden" name="filtered" value="1" />
-  <div class="col-12 col-md-auto">
-    <div class="form-check">
-      <input
-        type="checkbox"
-        name="only_active"
-        value="1"
-        id="only_active"
-        class="form-check-input"
-        {% if only_active %}checked{% endif %}
-      />
-      <label class="form-check-label" for="only_active">Solo activos</label>
-    </div>
-  </div>
-  <div class="col-12 col-md-auto">
-    <button type="submit" class="btn btn-outline-secondary">Filtrar</button>
-  </div>
+  <label class="inline-flex items-center gap-2 text-sm text-zinc-900 cursor-pointer">
+    <input type="checkbox" name="only_active" value="1" id="only_active"
+           {% if only_active %}checked{% endif %}
+           class="size-4 rounded border-zinc-300 text-zinc-900
+                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900" />
+    <span>Solo activos</span>
+  </label>
+  <button type="submit"
+          class="inline-flex items-center h-9 px-4 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                 hover:bg-zinc-50
+                 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+    Filtrar
+  </button>
 </form>
 
 {% if page.items %}
 <form method="post" action="{% url 'mentores:deactivate_bulk' %}" id="bulk-deactivate-form">
   {% csrf_token %}
-  <div class="d-flex flex-wrap justify-content-end gap-2 mb-3">
-    <button
-      type="button"
-      class="btn btn-outline-secondary btn-sm"
-      id="select-all-active-mentors"
-    >
-      <i class="bi bi-check2-square me-1" aria-hidden="true"></i>
-      Seleccionar todos
+  <div class="flex flex-wrap justify-end gap-2 mb-3">
+    <button type="button" id="select-all-active-mentors"
+            class="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                   hover:bg-zinc-50
+                   focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+      {% lucide "square-check" class="size-3.5" %}<span>Seleccionar todos</span>
     </button>
-    <button
-      type="submit"
-      name="action"
-      value="selected"
-      class="btn btn-outline-danger btn-sm"
-    >
+    <button type="submit" name="action" value="selected"
+            class="inline-flex items-center h-8 px-3 rounded-md border border-red-300 bg-white text-sm text-red-700
+                   hover:bg-red-50
+                   focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
       Desactivar
     </button>
   </div>
 
-  <div class="table-responsive">
-    <table class="table table-hover align-middle">
-      <thead>
+  <div class="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+    <table class="w-full text-sm">
+      <thead class="bg-zinc-50/60 text-left text-xs uppercase tracking-wider text-zinc-500">
         <tr>
-          <th scope="col" style="width: 2.5rem;">
-            <span class="visually-hidden">Selección</span>
-          </th>
-          <th scope="col">Matrícula</th>
-          <th scope="col" class="d-none d-md-table-cell">Origen</th>
-          <th scope="col" class="d-none d-lg-table-cell">Nota</th>
-          <th scope="col" class="d-none d-md-table-cell">Alta</th>
-          <th scope="col">Estado</th>
+          <th scope="col" class="px-4 py-2.5 w-10"><span class="sr-only">Selección</span></th>
+          <th scope="col" class="px-4 py-2.5 font-semibold">Matrícula</th>
+          <th scope="col" class="px-4 py-2.5 font-semibold hidden md:table-cell">Origen</th>
+          <th scope="col" class="px-4 py-2.5 font-semibold hidden lg:table-cell">Nota</th>
+          <th scope="col" class="px-4 py-2.5 font-semibold hidden md:table-cell">Alta</th>
+          <th scope="col" class="px-4 py-2.5 font-semibold">Estado</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody class="divide-y divide-zinc-200">
       {% for m in page.items %}
-        <tr>
-          <td>
+        <tr class="hover:bg-zinc-50">
+          <td class="px-4 py-3">
             {% if not m.fecha_baja %}
-              <input
-                type="checkbox"
-                class="form-check-input"
-                name="matriculas"
-                value="{{ m.matricula }}"
-                aria-label="Seleccionar {{ m.matricula }}"
-              />
+              <input type="checkbox" name="matriculas" value="{{ m.matricula }}"
+                     aria-label="Seleccionar {{ m.matricula }}"
+                     class="size-4 rounded border-zinc-300 text-zinc-900
+                            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900" />
             {% endif %}
           </td>
-          <td class="font-monospace">
-            <a href="{% url 'mentores:detail' matricula=m.matricula %}">{{ m.matricula }}</a>
+          <td class="px-4 py-3 font-mono">
+            <a class="text-zinc-900 hover:underline underline-offset-2"
+               href="{% url 'mentores:detail' matricula=m.matricula %}">{{ m.matricula }}</a>
           </td>
-          <td class="d-none d-md-table-cell">
-            <span class="badge text-bg-secondary">{{ m.fuente.value|title }}</span>
+          <td class="px-4 py-3 hidden md:table-cell">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200">
+              {{ m.fuente.value|title }}
+            </span>
           </td>
-          <td class="d-none d-lg-table-cell text-muted">{{ m.nota|default:"—" }}</td>
-          <td class="d-none d-md-table-cell">{{ m.fecha_alta|date:"Y-m-d" }}</td>
-          <td>
+          <td class="px-4 py-3 text-zinc-500 hidden lg:table-cell">{{ m.nota|default:"—" }}</td>
+          <td class="px-4 py-3 text-zinc-700 hidden md:table-cell">{{ m.fecha_alta|date:"Y-m-d" }}</td>
+          <td class="px-4 py-3">
             {% if m.fecha_baja %}
-              <span class="badge text-bg-secondary">Inactivo</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200">Inactivo</span>
             {% else %}
-              <span class="badge text-bg-success">Activo</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Activo</span>
             {% endif %}
           </td>
         </tr>
@@ -131,6 +128,6 @@
 {% include "components/pagination.html" %}
 
 {% else %}
-  {% include "components/empty_state.html" with icon="people" title="Sin mentores registrados" description="Agrega un mentor manualmente o importa un archivo CSV para comenzar." action_url="/mentores/agregar/" action_label="Agregar mentor" %}
+  {% include "components/empty_state.html" with icon="users" title="Sin mentores registrados" description="Agrega un mentor manualmente o importa un archivo CSV para comenzar." action_url="/mentores/agregar/" action_label="Agregar mentor" %}
 {% endif %}
 {% endblock %}

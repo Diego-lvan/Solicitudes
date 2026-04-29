@@ -3,27 +3,32 @@ Archivos partial — lists files attached to a solicitud with download links.
 Expected context:
   - archivos: list[ArchivoDTO]   (oldest first)
 {% endcomment %}
+{% load lucide %}
 {% if archivos %}
-  <ul class="list-group list-group-flush">
+  <ul class="divide-y divide-zinc-200">
     {% for a in archivos %}
-      <li class="list-group-item d-flex align-items-center justify-content-between gap-3">
-        <div class="d-flex align-items-center gap-2 text-truncate">
-          <i class="bi bi-paperclip text-muted" aria-hidden="true"></i>
-          <span class="text-truncate">{{ a.original_filename }}</span>
+      <li class="flex items-center justify-between gap-3 py-3">
+        <div class="flex items-center gap-2 min-w-0 flex-1">
+          {% lucide "paperclip" class="size-4 text-zinc-500 shrink-0" %}
+          <span class="text-sm text-zinc-900 truncate">{{ a.original_filename }}</span>
           {% if a.kind.value == "COMPROBANTE" %}
-            <span class="badge text-bg-secondary ms-2">Comprobante</span>
+            <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200">
+              Comprobante
+            </span>
           {% endif %}
         </div>
-        <div class="d-flex align-items-center gap-3 small text-muted">
+        <div class="flex items-center gap-3 text-xs text-zinc-500">
           <span>{{ a.size_bytes|filesizeformat }}</span>
-          <a class="btn btn-sm btn-outline-primary"
-             href="{% url 'solicitudes:archivos:download' archivo_id=a.id %}">
-            <i class="bi bi-download me-1" aria-hidden="true"></i> Descargar
+          <a href="{% url 'solicitudes:archivos:download' archivo_id=a.id %}"
+             class="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                    hover:bg-zinc-50
+                    focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+            {% lucide "download" class="size-3.5" %}<span>Descargar</span>
           </a>
         </div>
       </li>
     {% endfor %}
   </ul>
 {% else %}
-  <p class="text-muted small mb-0">No hay archivos adjuntos.</p>
+  <p class="text-sm text-zinc-500">No hay archivos adjuntos.</p>
 {% endif %}

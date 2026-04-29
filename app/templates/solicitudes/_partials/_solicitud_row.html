@@ -1,10 +1,11 @@
 {# Renders one <tr> for a SolicitudRow. Expects `row` (SolicitudRow). #}
-<tr>
-  <td>
-    <a href="{% url 'solicitudes:intake:detail' folio=row.folio %}">{{ row.folio }}</a>
+<tr class="hover:bg-zinc-50">
+  <td class="px-4 py-3 font-mono">
+    <a class="text-zinc-900 hover:underline underline-offset-2"
+       href="{% url 'solicitudes:intake:detail' folio=row.folio %}">{{ row.folio }}</a>
   </td>
-  <td>{{ row.tipo_nombre }}</td>
-  <td class="d-none d-lg-table-cell">{{ row.solicitante_nombre }}</td>
-  <td class="d-none d-md-table-cell">{{ row.created_at|date:"d/m/Y" }}</td>
-  <td>{% include "solicitudes/_partials/_estado_badge.html" with estado=row.estado %}</td>
+  <td class="px-4 py-3 text-zinc-900">{{ row.tipo_nombre }}</td>
+  <td class="px-4 py-3 text-zinc-700 hidden lg:table-cell">{{ row.solicitante_nombre }}</td>
+  <td class="px-4 py-3 text-zinc-500 hidden md:table-cell">{{ row.created_at|date:"d/m/Y" }}</td>
+  <td class="px-4 py-3">{% include "solicitudes/_partials/_estado_badge.html" with estado=row.estado %}</td>
 </tr>

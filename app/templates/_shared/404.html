@@ -1,9 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Página no encontrada — Sistema de Solicitudes{% endblock %}
 {% block content %}
-<div class="text-center py-5">
-  <p class="text-uppercase text-muted small mb-2">Error 404</p>
-  <h1 class="h3 mb-3">La página que buscas no existe.</h1>
-  <a class="btn btn-outline-primary mt-3" href="/">Volver al inicio</a>
+<div class="max-w-xl mx-auto text-center py-16">
+  <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Error 404</p>
+  <h1 class="text-2xl font-semibold text-zinc-900 mb-4">La página que buscas no existe.</h1>
+  <a href="/"
+     class="inline-flex items-center h-10 px-4 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+            hover:bg-zinc-50
+            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+    Volver al inicio
+  </a>
 </div>
 {% endblock %}

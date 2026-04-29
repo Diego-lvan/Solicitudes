@@ -3,79 +3,66 @@
 {% block title %}Resultado de importación · {{ block.super }}{% endblock %}
 
 {% block content %}
-<section class="row justify-content-center">
-  <div class="col-12 col-lg-10">
-    <h1 class="h3 mb-4">Resultado de la importación</h1>
+<section class="max-w-5xl mx-auto">
+  <h1 class="text-2xl font-semibold text-zinc-900 mb-6">Resultado de la importación</h1>
 
-    <dl class="row g-3 mb-4">
-      <div class="col-6 col-md-3">
-        <div class="card h-100">
-          <div class="card-body">
-            <dt class="text-muted small fw-normal">Total filas</dt>
-            <dd class="h2 mb-0 mt-1">{{ result.total_rows }}</dd>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="card h-100">
-          <div class="card-body">
-            <dt class="text-muted small fw-normal">Insertadas</dt>
-            <dd class="h2 mb-0 mt-1">{{ result.inserted }}</dd>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="card h-100">
-          <div class="card-body">
-            <dt class="text-muted small fw-normal">Reactivadas</dt>
-            <dd class="h2 mb-0 mt-1">{{ result.reactivated }}</dd>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="card h-100">
-          <div class="card-body">
-            <dt class="text-muted small fw-normal">Omitidas (ya activas)</dt>
-            <dd class="h2 mb-0 mt-1">{{ result.skipped_duplicates }}</dd>
-          </div>
-        </div>
-      </div>
-    </dl>
+  <dl class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="rounded-lg border border-zinc-200 bg-white p-4">
+      <dt class="text-xs uppercase tracking-wider text-zinc-500">Total filas</dt>
+      <dd class="mt-1 text-3xl font-semibold text-zinc-900">{{ result.total_rows }}</dd>
+    </div>
+    <div class="rounded-lg border border-zinc-200 bg-white p-4">
+      <dt class="text-xs uppercase tracking-wider text-zinc-500">Insertadas</dt>
+      <dd class="mt-1 text-3xl font-semibold text-zinc-900">{{ result.inserted }}</dd>
+    </div>
+    <div class="rounded-lg border border-zinc-200 bg-white p-4">
+      <dt class="text-xs uppercase tracking-wider text-zinc-500">Reactivadas</dt>
+      <dd class="mt-1 text-3xl font-semibold text-zinc-900">{{ result.reactivated }}</dd>
+    </div>
+    <div class="rounded-lg border border-zinc-200 bg-white p-4">
+      <dt class="text-xs uppercase tracking-wider text-zinc-500">Omitidas (ya activas)</dt>
+      <dd class="mt-1 text-3xl font-semibold text-zinc-900">{{ result.skipped_duplicates }}</dd>
+    </div>
+  </dl>
 
-    {% if result.invalid_rows %}
-    <h2 class="h5">Filas rechazadas ({{ result.invalid_rows|length }})</h2>
-    <div class="table-responsive">
-      <table class="table table-sm">
-        <thead>
+  {% if result.invalid_rows %}
+    <h2 class="text-base font-semibold text-zinc-900 mb-3">Filas rechazadas ({{ result.invalid_rows|length }})</h2>
+    <div class="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+      <table class="w-full text-sm">
+        <thead class="bg-zinc-50/60 text-left text-xs uppercase tracking-wider text-zinc-500">
           <tr>
-            <th scope="col">Fila</th>
-            <th scope="col">Matrícula</th>
-            <th scope="col">Motivo</th>
+            <th scope="col" class="px-4 py-2.5 font-semibold">Fila</th>
+            <th scope="col" class="px-4 py-2.5 font-semibold">Matrícula</th>
+            <th scope="col" class="px-4 py-2.5 font-semibold">Motivo</th>
           </tr>
         </thead>
-        <tbody>
-        {% for row in result.invalid_rows %}
-          <tr>
-            <td>{{ row.row }}</td>
-            <td class="font-monospace">{{ row.matricula|default:"—" }}</td>
-            <td class="text-danger">{{ row.error }}</td>
-          </tr>
-        {% endfor %}
+        <tbody class="divide-y divide-zinc-200">
+          {% for row in result.invalid_rows %}
+            <tr>
+              <td class="px-4 py-3 text-zinc-900">{{ row.row }}</td>
+              <td class="px-4 py-3 font-mono text-zinc-900">{{ row.matricula|default:"—" }}</td>
+              <td class="px-4 py-3 text-red-700">{{ row.error }}</td>
+            </tr>
+          {% endfor %}
         </tbody>
       </table>
     </div>
-    {% else %}
-    <p class="text-muted">No se rechazó ninguna fila.</p>
-    {% endif %}
+  {% else %}
+    <p class="text-sm text-zinc-500">No se rechazó ninguna fila.</p>
+  {% endif %}
 
-    <div class="mt-4 d-flex gap-2 justify-content-end">
-      <a href="{% url 'mentores:import_csv' %}" class="btn btn-outline-secondary">
-        Importar otro archivo
-      </a>
-      <a href="{% url 'mentores:list' %}" class="btn btn-primary">
-        Ir al catálogo
-      </a>
-    </div>
+  <div class="mt-6 flex justify-end gap-2">
+    <a href="{% url 'mentores:import_csv' %}"
+       class="inline-flex items-center h-10 px-4 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+              hover:bg-zinc-50
+              focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+      Importar otro archivo
+    </a>
+    <a href="{% url 'mentores:list' %}"
+       class="inline-flex items-center h-10 px-4 rounded-md bg-zinc-900 text-white text-sm font-medium
+              hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+      Ir al catálogo
+    </a>
   </div>
 </section>
 {% endblock %}

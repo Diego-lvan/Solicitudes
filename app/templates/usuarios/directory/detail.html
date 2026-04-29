@@ -1,112 +1,85 @@
 {% extends "base.html" %}
+{% load lucide %}
 
 {% block title %}Usuario {{ user_detail.matricula }} · {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+<header class="flex flex-wrap justify-between items-start gap-3 mb-6">
   <div>
-    <h1 class="h3 mb-1">Detalle de usuario</h1>
-    <p class="text-muted mb-0">Matrícula <code>{{ user_detail.matricula }}</code></p>
+    <h1 class="text-2xl font-semibold text-zinc-900">Detalle de usuario</h1>
+    <p class="mt-1 text-sm text-zinc-500">
+      Matrícula <code class="font-mono text-zinc-900">{{ user_detail.matricula }}</code>
+    </p>
   </div>
-  <a class="btn btn-outline-secondary" href="{{ back_url }}">
-    <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Volver
+  <a href="{{ back_url }}"
+     class="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+            hover:bg-zinc-50
+            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+    {% lucide "arrow-left" class="size-4" %}<span>Volver</span>
   </a>
-</div>
+</header>
 
-<div class="row g-4">
-  <div class="col-12 col-lg-6">
-    <div class="card">
-      <div class="card-body">
-        <h2 class="h5 mb-3">Identidad</h2>
-        <dl class="row mb-0">
-          <dt class="col-sm-4 text-muted fw-normal">Matrícula</dt>
-          <dd class="col-sm-8">{{ user_detail.matricula }}</dd>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  <article class="rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="text-sm font-semibold text-zinc-900 mb-4">Identidad</h2>
+    <dl class="grid grid-cols-[10rem_1fr] gap-y-2.5 text-sm">
+      <dt class="text-zinc-500">Matrícula</dt><dd class="text-zinc-900 font-mono">{{ user_detail.matricula }}</dd>
+      <dt class="text-zinc-500">Nombre completo</dt><dd class="text-zinc-900">{{ user_detail.full_name|default:"—" }}</dd>
+      <dt class="text-zinc-500">Correo</dt><dd class="text-zinc-900">{{ user_detail.email }}</dd>
+      <dt class="text-zinc-500">Género</dt>
+      <dd class="text-zinc-900">
+        {% if user_detail.gender == 'H' %}Hombre
+        {% elif user_detail.gender == 'M' %}Mujer
+        {% else %}—{% endif %}
+      </dd>
+    </dl>
+  </article>
 
-          <dt class="col-sm-4 text-muted fw-normal">Nombre completo</dt>
-          <dd class="col-sm-8">{{ user_detail.full_name|default:"—" }}</dd>
+  <article class="rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="text-sm font-semibold text-zinc-900 mb-4">Académico</h2>
+    <dl class="grid grid-cols-[10rem_1fr] gap-y-2.5 text-sm">
+      <dt class="text-zinc-500">Rol</dt>
+      <dd>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200">
+          {{ user_detail.role.value|title }}
+        </span>
+      </dd>
+      <dt class="text-zinc-500">Programa</dt><dd class="text-zinc-900">{{ user_detail.programa|default:"—" }}</dd>
+      <dt class="text-zinc-500">Semestre</dt>
+      <dd class="text-zinc-900">{% if user_detail.semestre is not None %}{{ user_detail.semestre }}{% else %}—{% endif %}</dd>
+    </dl>
+  </article>
 
-          <dt class="col-sm-4 text-muted fw-normal">Correo</dt>
-          <dd class="col-sm-8">{{ user_detail.email }}</dd>
+  <article class="rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="text-sm font-semibold text-zinc-900 mb-4">Mentor</h2>
+    <p class="text-sm flex items-center gap-2 flex-wrap">
+      {% if user_detail.is_mentor is True %}
+        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+          {% lucide "circle-check" class="size-3.5" %}Sí
+        </span>
+        <span class="text-zinc-500">Está activo en el catálogo de mentores.</span>
+      {% elif user_detail.is_mentor is False %}
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200">No</span>
+        <span class="text-zinc-500">No figura en el catálogo de mentores.</span>
+      {% else %}
+        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+          {% lucide "triangle-alert" class="size-3.5" %}Desconocido
+        </span>
+        <span class="text-zinc-500">No fue posible consultar el catálogo de mentores.</span>
+      {% endif %}
+    </p>
+  </article>
 
-          <dt class="col-sm-4 text-muted fw-normal">Género</dt>
-          <dd class="col-sm-8">
-            {% if user_detail.gender == 'H' %}Hombre
-            {% elif user_detail.gender == 'M' %}Mujer
-            {% else %}—{% endif %}
-          </dd>
-        </dl>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-12 col-lg-6">
-    <div class="card">
-      <div class="card-body">
-        <h2 class="h5 mb-3">Académico</h2>
-        <dl class="row mb-0">
-          <dt class="col-sm-4 text-muted fw-normal">Rol</dt>
-          <dd class="col-sm-8">
-            <span class="badge text-bg-secondary">{{ user_detail.role.value|title }}</span>
-          </dd>
-
-          <dt class="col-sm-4 text-muted fw-normal">Programa</dt>
-          <dd class="col-sm-8">{{ user_detail.programa|default:"—" }}</dd>
-
-          <dt class="col-sm-4 text-muted fw-normal">Semestre</dt>
-          <dd class="col-sm-8">
-            {% if user_detail.semestre is not None %}{{ user_detail.semestre }}{% else %}—{% endif %}
-          </dd>
-        </dl>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-12 col-lg-6">
-    <div class="card">
-      <div class="card-body">
-        <h2 class="h5 mb-3">Mentor</h2>
-        <p class="mb-0">
-          {% if user_detail.is_mentor is True %}
-            <span class="badge text-bg-success">
-              <i class="bi bi-check-circle me-1" aria-hidden="true"></i>Sí
-            </span>
-            <span class="text-muted ms-2">Está activo en el catálogo de mentores.</span>
-          {% elif user_detail.is_mentor is False %}
-            <span class="badge text-bg-secondary">No</span>
-            <span class="text-muted ms-2">No figura en el catálogo de mentores.</span>
-          {% else %}
-            <span class="badge text-bg-warning">
-              <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>Desconocido
-            </span>
-            <span class="text-muted ms-2">No fue posible consultar el catálogo de mentores.</span>
-          {% endif %}
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-12 col-lg-6">
-    <div class="card">
-      <div class="card-body">
-        <h2 class="h5 mb-3">Auditoría</h2>
-        <dl class="row mb-0">
-          <dt class="col-sm-4 text-muted fw-normal">Último acceso</dt>
-          <dd class="col-sm-8">
-            {% if user_detail.last_login_at %}
-              {{ user_detail.last_login_at|date:"d/m/Y H:i" }}
-            {% else %}
-              Nunca
-            {% endif %}
-          </dd>
-
-          <dt class="col-sm-4 text-muted fw-normal">Creado</dt>
-          <dd class="col-sm-8">{{ user_detail.created_at|date:"d/m/Y H:i" }}</dd>
-
-          <dt class="col-sm-4 text-muted fw-normal">Actualizado</dt>
-          <dd class="col-sm-8">{{ user_detail.updated_at|date:"d/m/Y H:i" }}</dd>
-        </dl>
-      </div>
-    </div>
-  </div>
+  <article class="rounded-lg border border-zinc-200 bg-white p-5">
+    <h2 class="text-sm font-semibold text-zinc-900 mb-4">Auditoría</h2>
+    <dl class="grid grid-cols-[10rem_1fr] gap-y-2.5 text-sm">
+      <dt class="text-zinc-500">Último acceso</dt>
+      <dd class="text-zinc-900">
+        {% if user_detail.last_login_at %}{{ user_detail.last_login_at|date:"d/m/Y H:i" }}{% else %}Nunca{% endif %}
+      </dd>
+      <dt class="text-zinc-500">Creado</dt><dd class="text-zinc-900">{{ user_detail.created_at|date:"d/m/Y H:i" }}</dd>
+      <dt class="text-zinc-500">Actualizado</dt><dd class="text-zinc-900">{{ user_detail.updated_at|date:"d/m/Y H:i" }}</dd>
+    </dl>
+  </article>
 </div>
 {% endblock %}

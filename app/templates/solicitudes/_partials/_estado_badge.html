@@ -1,12 +1,2 @@
-{# Renders a Bootstrap badge colored by Estado. Expects `estado` (Estado enum). #}
-{% if estado.value == "CREADA" %}
-  <span class="badge text-bg-info">{{ estado.display_name }}</span>
-{% elif estado.value == "EN_PROCESO" %}
-  <span class="badge text-bg-warning">{{ estado.display_name }}</span>
-{% elif estado.value == "FINALIZADA" %}
-  <span class="badge text-bg-success">{{ estado.display_name }}</span>
-{% elif estado.value == "CANCELADA" %}
-  <span class="badge text-bg-secondary">{{ estado.display_name }}</span>
-{% else %}
-  <span class="badge text-bg-light">{{ estado.value }}</span>
-{% endif %}
+{# Status pill colored by Estado. Expects `estado` (Estado enum). Delegates to the components/badge_estado.html partial for the canonical look. #}
+{% include "components/badge_estado.html" with estado=estado %}
