@@ -28,7 +28,7 @@ def _ensure_screenshot_dir() -> None:
 
 def _login_as(page: Page, base: str, matricula: str) -> None:
     page.goto(f"{base}/auth/dev-login")
-    row = page.locator("li.list-group-item").filter(has_text=matricula).first
+    row = page.locator("li").filter(has_text=matricula).first
     row.get_by_role("button", name="Entrar").click()
     page.wait_for_load_state("networkidle")
 
@@ -103,7 +103,11 @@ def test_admin_dashboard_filter_and_csv_export(
     page.get_by_role("button", name="Aplicar").click()
     page.wait_for_load_state("networkidle")
     # Total tile shows 3 (only the CREADA-state solicitudes).
-    expect(page.locator(".display-6").first).to_have_text("3")
+    # Walk up from the "Total" label paragraph to its parent tile <div>, then
+    # read the count <p>. XPath `parent::div` is unambiguous; `locator("div",
+    # has=...).first` would pick the body wrapper instead.
+    total_tile = page.get_by_text("Total", exact=True).locator("xpath=parent::div")
+    expect(total_tile.locator("p").nth(1)).to_have_text("3")
 
     # ---- CSV export download ----
     with page.expect_download() as download_info:

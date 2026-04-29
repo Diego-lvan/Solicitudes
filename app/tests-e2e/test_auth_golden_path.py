@@ -54,7 +54,7 @@ def test_alumno_dev_login_lands_on_profile_and_logs_out(
     # 2. Click "Entrar" on the ALUMNO quickstart row. The form has no visible
     #    text (just hidden inputs + submit button), so we filter on the
     #    surrounding <li> that holds the role label and the form together.
-    alumno_row = page.locator("li.list-group-item").filter(has_text="ALUMNO").first
+    alumno_row = page.locator("li").filter(has_text="ALUMNO").first
     alumno_row.get_by_role("button", name="Entrar").click()
 
     # 3. The picker → callback → cookie → /auth/me chain runs through the real

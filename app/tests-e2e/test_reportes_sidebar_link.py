@@ -28,7 +28,7 @@ def _ensure_screenshot_dir() -> None:
 
 def _login_as(page: Page, base: str, matricula: str) -> None:
     page.goto(f"{base}/auth/dev-login")
-    row = page.locator("li.list-group-item").filter(has_text=matricula).first
+    row = page.locator("li").filter(has_text=matricula).first
     row.get_by_role("button", name="Entrar").click()
     page.wait_for_load_state("networkidle")
 
@@ -76,18 +76,20 @@ def test_admin_sidebar_has_reportes_link_and_it_navigates(
         path=str(SCREENSHOT_DIR / "home_sidebar_desktop.png"), full_page=True
     )
 
-    sidebar = page.locator("aside.app-sidebar").first
+    # The persistent sidebar is an <aside aria-label="Navegación lateral">
+    # (the mobile drawer uses "Navegación móvil" so this disambiguates).
+    sidebar = page.get_by_role("complementary", name="Navegación lateral")
     expect(sidebar.get_by_role("link", name="Dashboard")).to_be_visible()
     sidebar.get_by_role("link", name="Dashboard").click()
     page.wait_for_load_state("networkidle")
     expect(page).to_have_url(re.compile(r"/reportes/$"))
     expect(page.get_by_role("heading", name="Reportes y dashboard")).to_be_visible()
 
-    # ---- Mobile: open offcanvas to verify the link appears there too ----
+    # ---- Mobile: open the drawer to verify the link appears there too ----
     page.goto(f"{base}/")
     page.set_viewport_size({"width": 320, "height": 800})
-    page.locator('[data-bs-target="#appOffcanvas"]').click()
-    page.wait_for_timeout(400)  # offcanvas slide-in animation
+    page.get_by_role("button", name="Abrir menú").click()
+    page.wait_for_timeout(400)  # drawer slide-in animation
     page.screenshot(
         path=str(SCREENSHOT_DIR / "home_sidebar_mobile.png"), full_page=True
     )

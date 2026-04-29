@@ -47,7 +47,7 @@ def test_admin_creates_lists_and_edits_a_tipo(
     # ---- Log in as ADMIN through the dev picker ----
     page.goto(f"{base}/auth/dev-login")
     admin_row = (
-        page.locator("li.list-group-item").filter(has_text="ADMIN").first
+        page.locator("li").filter(has_text="ADMIN").first
     )
     admin_row.get_by_role("button", name="Entrar").click()
     page.wait_for_load_state("networkidle")
@@ -148,7 +148,7 @@ def test_admin_can_delete_middle_row_without_data_loss(
 
     base = live_server.url
     page.goto(f"{base}/auth/dev-login")
-    page.locator("li.list-group-item").filter(has_text="ADMIN").first.get_by_role(
+    page.locator("li").filter(has_text="ADMIN").first.get_by_role(
         "button", name="Entrar"
     ).click()
     page.wait_for_load_state("networkidle")

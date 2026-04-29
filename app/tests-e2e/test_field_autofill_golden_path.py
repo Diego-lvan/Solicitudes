@@ -37,7 +37,7 @@ def _ensure_screenshot_dir() -> None:
 
 def _login_as(page: Page, base: str, matricula: str) -> None:
     page.goto(f"{base}/auth/dev-login")
-    row = page.locator("li.list-group-item").filter(has_text=matricula).first
+    row = page.locator("li").filter(has_text=matricula).first
     row.get_by_role("button", name="Entrar").click()
     page.wait_for_load_state("networkidle")
 
@@ -93,7 +93,11 @@ def test_admin_creates_tipo_with_auto_fill_text_field(
     row.locator('select[name$="-source"]').select_option("USER_PROGRAMA")
 
     # Live preview should now show the Auto pill instead of an input.
-    expect(page.locator(".tipo-preview-field .badge")).to_contain_text("Auto")
+    # Anchor by the visible "Auto · …" text inside the preview pane rather
+    # than by a CSS class — survives any Bootstrap → Tailwind change.
+    expect(
+        page.locator("#tipo-preview-body").get_by_text("Auto ·")
+    ).to_be_visible()
 
     page.screenshot(
         path=str(SCREENSHOT_DIR / "admin_autofill_pill_desktop.png"),
@@ -209,7 +213,7 @@ def test_alumno_intake_with_auto_fill_panel(
     page.get_by_role("button", name="Enviar solicitud").click()
     page.wait_for_load_state("networkidle")
 
-    expect(page.locator(".alert-success")).to_contain_text("Solicitud creada con folio")
+    expect(page.get_by_role("status").filter(has_text="Solicitud creada con folio")).to_be_visible()
 
     # Both keys land in valores: one alumno-supplied, one backend-resolved.
     [s] = Solicitud.objects.filter(tipo=tipo)
