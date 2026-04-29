@@ -1,0 +1,52 @@
+{% comment %}
+Modal dialog using the native <dialog> element with Alpine for state.
+The native <dialog> handles backdrop, escape-to-close, and focus management
+better than a hand-rolled div; Alpine gates open/close.
+
+SAFETY: `body_html` and `footer_html` are rendered with `|safe`. Callers MUST
+pre-escape any user-controlled text threaded into these slots — passing raw
+form data here is an XSS sink. Render trusted HTML (your own template
+fragments, hard-coded markup) only.
+
+Args:
+  id              required, used as the dialog id and aria-labelledby anchor
+  title           heading text
+  body_html       raw HTML body (TRUSTED — see SAFETY above)
+  footer_html     optional footer (typically the action buttons; TRUSTED)
+  open_state_var  Alpine state variable bound to a parent x-data
+                  (default: "modalOpen")
+  size            sm | md | lg | xl (default: md)
+{% endcomment %}
+{% with var=open_state_var|default:"modalOpen" %}
+{% with sz=size|default:"md" %}
+<dialog id="{{ id }}"
+        x-data
+        x-effect="{{ var }} ? $el.showModal() : $el.close()"
+        @close="{{ var }} = false"
+        @keydown.escape="{{ var }} = false"
+        aria-labelledby="{{ id }}-title"
+        class="rounded-lg border border-zinc-200 bg-white shadow-lg p-0
+               backdrop:bg-zinc-950/40 backdrop:backdrop-blur-[1px]
+               {% if sz == 'sm' %}w-full max-w-sm
+               {% elif sz == 'lg' %}w-full max-w-2xl
+               {% elif sz == 'xl' %}w-full max-w-4xl
+               {% else %}w-full max-w-md{% endif %}">
+  <header class="flex items-start justify-between px-5 py-4 border-b border-zinc-200">
+    <h2 id="{{ id }}-title" class="text-base font-semibold text-zinc-900">{{ title }}</h2>
+    <button type="button"
+            @click="{{ var }} = false"
+            class="text-zinc-500 hover:text-zinc-900 -mr-1 -mt-1 p-1 rounded-md
+                   focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+            aria-label="Cerrar">
+      {% load lucide %}{% lucide "circle-x" class="size-5" %}
+    </button>
+  </header>
+  <div class="px-5 py-4 text-sm text-zinc-700">{{ body_html|safe }}</div>
+  {% if footer_html %}
+    <footer class="px-5 py-3 border-t border-zinc-200 bg-zinc-50/50 rounded-b-lg flex justify-end gap-2">
+      {{ footer_html|safe }}
+    </footer>
+  {% endif %}
+</dialog>
+{% endwith %}
+{% endwith %}

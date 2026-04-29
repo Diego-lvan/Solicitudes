@@ -1,18 +1,37 @@
 {# Expects `page` (Pydantic Page DTO) and optional `param_name` (default 'page'). #}
+{% load lucide %}
 {% with param_name=param_name|default:"page" %}
   {% if page.total_pages > 1 %}
-    <nav aria-label="Paginación">
-      <ul class="pagination">
-        <li class="page-item {% if not page.has_prev %}disabled{% endif %}">
-          <a class="page-link" href="?{{ param_name }}={{ page.page|add:'-1' }}">Anterior</a>
-        </li>
-        <li class="page-item disabled">
-          <span class="page-link">Página {{ page.page }} de {{ page.total_pages }}</span>
-        </li>
-        <li class="page-item {% if not page.has_next %}disabled{% endif %}">
-          <a class="page-link" href="?{{ param_name }}={{ page.page|add:'1' }}">Siguiente</a>
-        </li>
-      </ul>
+    <nav aria-label="Paginación" class="flex items-center justify-between gap-3 mt-4 text-sm">
+      {% if page.has_prev %}
+        <a href="?{{ param_name }}={{ page.page|add:'-1' }}"
+           class="inline-flex items-center gap-1.5 px-3 h-9 rounded-md border border-zinc-300 bg-white text-zinc-700
+                  hover:bg-zinc-50 hover:text-zinc-900
+                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+          {% lucide "chevron-left" class="size-4" %}<span>Anterior</span>
+        </a>
+      {% else %}
+        <span class="inline-flex items-center gap-1.5 px-3 h-9 rounded-md border border-zinc-200 bg-zinc-50 text-zinc-400 cursor-not-allowed"
+              aria-disabled="true">
+          {% lucide "chevron-left" class="size-4" %}<span>Anterior</span>
+        </span>
+      {% endif %}
+
+      <span class="text-zinc-600">Página <span class="font-medium text-zinc-900">{{ page.page }}</span> de {{ page.total_pages }}</span>
+
+      {% if page.has_next %}
+        <a href="?{{ param_name }}={{ page.page|add:'1' }}"
+           class="inline-flex items-center gap-1.5 px-3 h-9 rounded-md border border-zinc-300 bg-white text-zinc-700
+                  hover:bg-zinc-50 hover:text-zinc-900
+                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+          <span>Siguiente</span>{% lucide "chevron-right" class="size-4" %}
+        </a>
+      {% else %}
+        <span class="inline-flex items-center gap-1.5 px-3 h-9 rounded-md border border-zinc-200 bg-zinc-50 text-zinc-400 cursor-not-allowed"
+              aria-disabled="true">
+          <span>Siguiente</span>{% lucide "chevron-right" class="size-4" %}
+        </span>
+      {% endif %}
     </nav>
   {% endif %}
 {% endwith %}

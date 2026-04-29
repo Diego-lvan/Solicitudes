@@ -1,0 +1,28 @@
+{% comment %}
+Mobile sidebar drawer (Alpine-driven). Opens from the left, closes on
+backdrop click, escape key, or any link click inside.
+
+Args:
+  open_state_var   the Alpine state variable name on a parent x-data scope
+                   (default: "drawerOpen")
+{% endcomment %}
+{% with var=open_state_var|default:"drawerOpen" %}
+<div x-cloak x-show="{{ var }}" class="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Menú">
+  <div class="absolute inset-0 bg-zinc-950/40"
+       x-show="{{ var }}"
+       x-transition.opacity.duration.150ms
+       @click="{{ var }} = false"></div>
+  <div class="absolute inset-y-0 left-0 w-72 max-w-[85%] bg-white shadow-lg overflow-y-auto"
+       x-show="{{ var }}"
+       x-transition:enter="transition transform duration-200"
+       x-transition:enter-start="-translate-x-full"
+       x-transition:enter-end="translate-x-0"
+       x-transition:leave="transition transform duration-150"
+       x-transition:leave-start="translate-x-0"
+       x-transition:leave-end="-translate-x-full"
+       @keydown.escape.window="{{ var }} = false"
+       @click="if ($event.target.tagName === 'A') { {{ var }} = false }">
+    {% include "components/sidebar.html" with variant="mobile" %}
+  </div>
+</div>
+{% endwith %}

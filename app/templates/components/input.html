@@ -1,0 +1,43 @@
+{% comment %}
+Text input with label, optional hint, and error association via aria-describedby.
+
+Manual mode only. For Django bound fields, prefer rendering `{{ form.field }}`
+directly — the `app.css` base-layer fallbacks style raw widgets, and that path
+preserves widget attrs (`maxlength`, `pattern`, `autocomplete`, custom `data-*`)
+that this partial would silently drop.
+
+Args:
+  name        required — input name attribute
+  id          required — input id; also drives -err and -hint suffixed children
+  label       required — label text
+  value       initial value
+  type        text | email | url | number | password | tel | search | date  (default: text)
+  required    truthy → adds required attribute and red asterisk
+  placeholder placeholder text
+  hint        help text (string)
+  error       error message (string)
+  extra       extra Tailwind classes appended to the input
+{% endcomment %}
+<div class="space-y-1.5">
+  {% if label %}
+    <label for="{{ id }}" class="block text-sm font-medium text-zinc-900">
+      {{ label }}{% if required %}<span class="text-red-600 ml-0.5" aria-hidden="true">*</span>{% endif %}
+    </label>
+  {% endif %}
+  <input id="{{ id }}"
+         name="{{ name }}"
+         type="{{ type|default:'text' }}"
+         value="{{ value|default:'' }}"
+         {% if required %}required{% endif %}
+         {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+         {% if error or hint %}aria-describedby="{% if error %}{{ id }}-err{% endif %}{% if error and hint %} {% endif %}{% if hint %}{{ id }}-hint{% endif %}"{% endif %}
+         {% if error %}aria-invalid="true"{% endif %}
+         class="block w-full h-10 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                placeholder:text-zinc-400
+                focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900
+                disabled:bg-zinc-50 disabled:text-zinc-500
+                {% if error %}border-red-500{% endif %}
+                {{ extra|default:'' }}" />
+  {% if hint %}<p id="{{ id }}-hint" class="text-xs text-zinc-500">{{ hint }}</p>{% endif %}
+  {% if error %}<p id="{{ id }}-err" class="text-xs text-red-600" role="alert">{{ error }}</p>{% endif %}
+</div>

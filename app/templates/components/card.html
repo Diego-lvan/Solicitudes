@@ -1,0 +1,27 @@
+{% comment %}
+Card surface — used as a structural include with `{% include ... with %}` for
+the simple case, OR composed via blocks when header/body/footer are needed.
+For the block-based version, a sibling `card_open.html` / `card_close.html`
+pair is cleaner; this single-file include covers the common case.
+
+Args:
+  title       optional header line
+  body_html   raw HTML for body (use |safe in caller)
+  footer_html optional raw footer HTML
+  extra       extra utility classes
+{% endcomment %}
+<div class="rounded-lg border border-zinc-200 bg-white shadow-sm {{ extra|default:'' }}">
+  {% if title %}
+    <header class="px-4 py-3 border-b border-zinc-200">
+      <h2 class="text-sm font-semibold text-zinc-900">{{ title }}</h2>
+    </header>
+  {% endif %}
+  <div class="px-4 py-4 text-sm text-zinc-700">
+    {{ body_html|safe }}
+  </div>
+  {% if footer_html %}
+    <footer class="px-4 py-3 border-t border-zinc-200 bg-zinc-50/50 rounded-b-lg">
+      {{ footer_html|safe }}
+    </footer>
+  {% endif %}
+</div>
