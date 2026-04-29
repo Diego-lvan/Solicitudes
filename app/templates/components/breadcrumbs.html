@@ -1,0 +1,21 @@
+{% comment %}
+Breadcrumb nav. Last item rendered as plain text with aria-current="page".
+
+Args:
+  items   list of dicts: {"label": "...", "url": "..."} (last item omits url)
+{% endcomment %}
+{% load lucide %}
+<nav aria-label="Breadcrumbs" class="flex">
+  <ol class="flex items-center gap-1.5 text-sm text-zinc-500">
+    {% for item in items %}
+      <li class="flex items-center gap-1.5">
+        {% if item.url and not forloop.last %}
+          <a href="{{ item.url }}" class="hover:text-zinc-900 hover:underline underline-offset-2">{{ item.label }}</a>
+        {% else %}
+          <span class="text-zinc-900 font-medium" aria-current="page">{{ item.label }}</span>
+        {% endif %}
+        {% if not forloop.last %}{% lucide "chevron-right" class="size-3.5 text-zinc-400" %}{% endif %}
+      </li>
+    {% endfor %}
+  </ol>
+</nav>

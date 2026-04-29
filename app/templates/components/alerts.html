@@ -1,10 +1,14 @@
+{% comment %}
+Django messages framework renderer. Each message becomes a dismissible alert.
+Tags map to alert variants; default is 'info'.
+{% endcomment %}
 {% if messages %}
-  <div class="mb-3" role="status" aria-live="polite">
+  {# Each inner alert already carries role="status" / role="alert"; the wrapper
+     is presentation-only. Adding role="status" here would create a strict-mode
+     duplicate the test selectors trip on. #}
+  <div class="space-y-2 mb-4">
     {% for message in messages %}
-      <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-      </div>
+      {% include "components/alert.html" with variant=message.tags|default:"info" message=message dismissible=True %}
     {% endfor %}
   </div>
 {% endif %}

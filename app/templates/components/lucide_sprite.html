@@ -1,0 +1,6 @@
+{% comment %}
+Inlines the Lucide SVG sprite once per page so {% lucide %} can reference
+symbols by id with a single static fetch (or none, when inlined). Place
+immediately after <body> in base.html.
+{% endcomment %}
+{% load lucide %}{% lucide_sprite %}

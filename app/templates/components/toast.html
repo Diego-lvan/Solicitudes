@@ -1,0 +1,31 @@
+{% comment %}
+Toast notification (Alpine + aria-live).
+
+Args:
+  variant   info | success | warning | danger (default: info)
+  message   text content
+  timeout   ms before auto-dismiss (default: 5000; pass 0 to keep open)
+{% endcomment %}
+{# `default_if_none` (not `default`) so `timeout=0` correctly disables auto-dismiss
+   instead of collapsing 0 to 5000 (Django's `default` filter treats 0 as falsy). #}
+{% with t=timeout|default_if_none:5000 %}
+<div x-data="{ show: true }"
+     x-show="show"
+     {% if t %}x-init="setTimeout(() => show = false, {{ t }})"{% endif %}
+     x-transition.opacity.duration.150ms
+     role="status"
+     aria-live="polite"
+     aria-atomic="true"
+     class="pointer-events-auto rounded-md border shadow-sm bg-white px-4 py-3 text-sm flex items-start gap-3
+            {% if variant == 'success' %}border-emerald-200 bg-emerald-50 text-emerald-900
+            {% elif variant == 'warning' %}border-amber-200 bg-amber-50 text-amber-900
+            {% elif variant == 'danger' %}border-red-200 bg-red-50 text-red-900
+            {% else %}border-zinc-200 text-zinc-900{% endif %}">
+  <span class="flex-1">{{ message }}</span>
+  <button type="button" @click="show = false" class="text-current opacity-60 hover:opacity-100 -mr-1 -mt-1 p-1 rounded
+                                                       focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+          aria-label="Cerrar">
+    {% load lucide %}{% lucide "circle-x" class="size-4" %}
+  </button>
+</div>
+{% endwith %}

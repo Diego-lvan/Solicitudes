@@ -1,0 +1,37 @@
+{% comment %}
+Select dropdown.
+
+Manual mode only. For Django bound fields, prefer rendering `{{ form.field }}`
+directly — see input.html for the rationale.
+
+Args:
+  name      required
+  id        required
+  label     required
+  choices   iterable of (value, label) tuples
+  value     selected value (string-equality compared)
+  required  truthy → adds required and red asterisk
+  hint, error, extra
+{% endcomment %}
+<div class="space-y-1.5">
+  {% if label %}
+    <label for="{{ id }}" class="block text-sm font-medium text-zinc-900">
+      {{ label }}{% if required %}<span class="text-red-600 ml-0.5" aria-hidden="true">*</span>{% endif %}
+    </label>
+  {% endif %}
+  <select id="{{ id }}"
+          name="{{ name }}"
+          {% if required %}required{% endif %}
+          {% if error or hint %}aria-describedby="{% if error %}{{ id }}-err{% endif %}{% if error and hint %} {% endif %}{% if hint %}{{ id }}-hint{% endif %}"{% endif %}
+          {% if error %}aria-invalid="true"{% endif %}
+          class="block w-full h-10 px-3 pr-8 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900
+                 {% if error %}border-red-500{% endif %}
+                 {{ extra|default:'' }}">
+    {% for v, lbl in choices %}
+      <option value="{{ v }}" {% if v|stringformat:'s' == value|stringformat:'s' %}selected{% endif %}>{{ lbl }}</option>
+    {% endfor %}
+  </select>
+  {% if hint %}<p id="{{ id }}-hint" class="text-xs text-zinc-500">{{ hint }}</p>{% endif %}
+  {% if error %}<p id="{{ id }}-err" class="text-xs text-red-600" role="alert">{{ error }}</p>{% endif %}
+</div>

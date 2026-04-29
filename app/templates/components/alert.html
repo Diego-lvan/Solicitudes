@@ -1,0 +1,41 @@
+{% comment %}
+Static alert / banner.
+
+Args:
+  variant   info | success | warning | danger (default: info)
+  title     optional bold lead
+  message   body text
+  icon      lucide icon name (default: variant-appropriate)
+  dismissible  if truthy, renders an X close button (Alpine x-data wraps)
+{% endcomment %}
+{% load lucide %}
+{% with v=variant|default:"info" %}
+<div {% if dismissible %}x-data="{ open: true }" x-show="open"{% endif %}
+     role="{% if v == 'danger' %}alert{% else %}status{% endif %}"
+     class="rounded-md border px-4 py-3 text-sm flex items-start gap-3
+            {% if v == 'success' %}border-emerald-200 bg-emerald-50 text-emerald-900
+            {% elif v == 'warning' %}border-amber-200 bg-amber-50 text-amber-900
+            {% elif v == 'danger' %}border-red-200 bg-red-50 text-red-900
+            {% else %}border-sky-200 bg-sky-50 text-sky-900{% endif %}">
+  {% if icon %}
+    {% lucide icon class="size-5 shrink-0 mt-0.5" %}
+  {% else %}
+    {% if v == 'success' %}{% lucide "circle-check" class="size-5 shrink-0 mt-0.5" %}
+    {% elif v == 'warning' %}{% lucide "triangle-alert" class="size-5 shrink-0 mt-0.5" %}
+    {% elif v == 'danger' %}{% lucide "triangle-alert" class="size-5 shrink-0 mt-0.5" %}
+    {% else %}{% lucide "info" class="size-5 shrink-0 mt-0.5" %}
+    {% endif %}
+  {% endif %}
+  <div class="flex-1">
+    {% if title %}<p class="font-medium mb-0.5">{{ title }}</p>{% endif %}
+    <p>{{ message }}</p>
+  </div>
+  {% if dismissible %}
+    <button type="button" @click="open = false" class="opacity-60 hover:opacity-100 -mr-1 -mt-1 p-1 rounded
+                                                         focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+            aria-label="Cerrar">
+      {% lucide "circle-x" class="size-4" %}
+    </button>
+  {% endif %}
+</div>
+{% endwith %}

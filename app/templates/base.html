@@ -1,55 +1,49 @@
 {% load static %}
 <!doctype html>
-<html lang="es-MX">
+<html lang="es-MX" class="h-full">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}Sistema de Solicitudes — UAZ{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" />
-    <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.css' %}" />
-    <link rel="stylesheet" href="{% static 'css/app.css' %}" />
+    <link rel="preload" href="{% static 'fonts/Inter/InterVariable.woff2' %}" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="{% static 'css/app.build.css' %}" />
+    <script src="{% static 'vendor/alpinejs/alpine-collapse.min.js' %}" defer></script>
+    <script src="{% static 'vendor/alpinejs/alpine-focus.min.js' %}" defer></script>
+    <script src="{% static 'vendor/alpinejs/alpine.min.js' %}" defer></script>
     {% block extra_head %}{% endblock %}
   </head>
-  <body class="d-flex flex-column min-vh-100 app-shell {% if request.user.is_authenticated %}has-sidebar{% endif %}">
-    <a href="#main" class="visually-hidden-focusable">Saltar al contenido</a>
+  <body class="min-h-full bg-white text-zinc-950 font-sans antialiased flex flex-col">
+    <a href="#main"
+       class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50
+              focus:bg-white focus:text-zinc-900 focus:px-3 focus:py-2 focus:rounded-md
+              focus:shadow focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+      Saltar al contenido
+    </a>
+
+    {# Inlined Lucide sprite — must be first in <body> so {% lucide %} refs resolve. #}
+    {% include "components/lucide_sprite.html" %}
 
     {% block nav %}
-      {% include "components/nav.html" %}
+      {% include "components/navbar.html" %}
     {% endblock %}
 
-    <div class="app-body flex-grow-1 d-flex">
+    <div class="flex flex-1 min-w-0">
       {% block sidebar %}
         {% include "components/sidebar.html" %}
       {% endblock %}
 
-      <main id="main" class="app-main flex-grow-1" role="main" tabindex="-1">
-        <div class="container-fluid container-xl py-4">
+      <main id="main" tabindex="-1" class="flex-1 min-w-0 focus:outline-none">
+        <div class="mx-auto w-full max-w-7xl px-4 md:px-6 py-6">
           {% include "components/alerts.html" %}
           {% block content %}{% endblock %}
         </div>
       </main>
     </div>
 
-    <footer class="border-top py-3 mt-auto bg-light">
-      <div class="container small text-muted">
-        Universidad Autónoma de Zacatecas &middot; Sistema de Solicitudes
-      </div>
+    <footer class="mt-auto border-t border-zinc-200 py-4 px-4 md:px-6">
+      <p class="text-xs text-zinc-500">Universidad Autónoma de Zacatecas · Sistema de Solicitudes</p>
     </footer>
 
-    {# Offcanvas drawer holds the same sidebar for mobile (toggled by the navbar hamburger). #}
-    {% if request.user.is_authenticated %}
-    <div class="offcanvas offcanvas-start app-offcanvas" tabindex="-1" id="appOffcanvas" aria-labelledby="appOffcanvasLabel">
-      <div class="offcanvas-header border-bottom">
-        <h2 class="offcanvas-title h6 mb-0" id="appOffcanvasLabel">Navegación</h2>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
-      </div>
-      <div class="offcanvas-body p-0">
-        {% include "components/sidebar.html" with variant="mobile" %}
-      </div>
-    </div>
-    {% endif %}
-
-    <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}" defer></script>
     {% block extra_scripts %}{% endblock %}
   </body>
 </html>
