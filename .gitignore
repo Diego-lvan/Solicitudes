@@ -39,11 +39,7 @@ htmlcov/
 .coverage
 coverage.xml
 
-# TLS certs (dev = self-signed, prod = mounted from secret store)
-certs/
-*.crt
-*.key
-*.pem
+# TLS certs — dev self-signed certs are tracked in certs/; prod certs are mounted from secret store
 
 # LaTeX build artifacts
 *.aux
