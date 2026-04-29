@@ -32,7 +32,7 @@ def _ensure_screenshot_dir() -> None:
 def _login_as(page: Page, base: str, matricula: str) -> None:
     """Sign in via the dev-login picker as the seeded user with ``matricula``."""
     page.goto(f"{base}/auth/dev-login")
-    row = page.locator("li.list-group-item").filter(has_text=matricula).first
+    row = page.locator("li").filter(has_text=matricula).first
     row.get_by_role("button", name="Entrar").click()
     page.wait_for_load_state("networkidle")
 
@@ -123,7 +123,7 @@ def test_alumno_creates_solicitud_through_dynamic_form(
     page.wait_for_load_state("networkidle")
 
     # Detail page renders the new folio + historial.
-    expect(page.locator(".alert-success")).to_contain_text("Solicitud creada con folio")
+    expect(page.get_by_role("status").filter(has_text="Solicitud creada con folio")).to_be_visible()
     expect(page.get_by_role("heading", name="Datos de la solicitud")).to_be_visible()
     page.screenshot(
         path=str(SCREENSHOT_DIR / "intake_detail_desktop.png"), full_page=True
@@ -239,7 +239,7 @@ def test_personal_takes_and_finalizes_solicitud(
     page.wait_for_load_state("networkidle")
     expect(page.get_by_role("heading", name="SOL-2026-90001")).to_be_visible()
     # RF-REV-12: Solicitante card shows nombre, matrícula and email-as-mailto.
-    solicitante_card = page.locator(".card", has=page.locator("h2", has_text="Solicitante"))
+    solicitante_card = page.locator("article", has=page.locator("h2", has_text="Solicitante"))
     expect(solicitante_card).to_be_visible()
     expect(solicitante_card).to_contain_text("Alumna Demo")
     expect(solicitante_card).to_contain_text("ALU-E2E")
@@ -251,7 +251,7 @@ def test_personal_takes_and_finalizes_solicitud(
     # Take the solicitud (CREADA → EN_PROCESO).
     page.get_by_role("button", name="Atender").click()
     page.wait_for_load_state("networkidle")
-    expect(page.locator(".alert-success")).to_contain_text("tomada")
+    expect(page.get_by_role("status").filter(has_text="tomada")).to_be_visible()
     # RF-REV-13: handler line surfaces immediately after atender.
     expect(page.get_by_text("Atendida por", exact=False).first).to_be_visible()
     expect(page.locator("body")).to_contain_text("Carla Control Escolar")
@@ -272,7 +272,7 @@ def test_personal_takes_and_finalizes_solicitud(
     # Finalize it (EN_PROCESO → FINALIZADA).
     page.get_by_role("button", name="Finalizar").click()
     page.wait_for_load_state("networkidle")
-    expect(page.locator(".alert-success")).to_contain_text("finalizada")
+    expect(page.get_by_role("status").filter(has_text="finalizada")).to_be_visible()
 
     s.refresh_from_db()
     assert s.estado == Estado.FINALIZADA.value
