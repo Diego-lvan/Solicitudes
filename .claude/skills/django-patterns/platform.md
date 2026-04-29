@@ -418,7 +418,7 @@ templates/
 
 `base.html` provides `{% block title %}`, `{% block content %}`, `{% block extra_css %}`, `{% block extra_js %}`. Optional `base_<app>.html` extends `base.html` to add an app-specific sidebar or breadcrumbs and re-exports the same blocks.
 
-For UI design conventions (Bootstrap 5, anti-AI-look, accessibility), see the `frontend-design` skill.
+For UI design conventions (Tailwind v4 + Alpine.js + Lucide, shadcn/Vercel monochrome aesthetic, accessibility), see the `frontend-design` skill.
 
 ---
 

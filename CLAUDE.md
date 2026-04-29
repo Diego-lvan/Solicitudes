@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Sistema de Solicitudes for the Universidad Autónoma de Zacatecas. Monolithic Django application with server-side templates (Bootstrap 5, no DRF). Lets students and faculty file academic and administrative requests with dynamic forms, state-machine tracking, PDF generation from templates, and role-based management. See `specs/global/requirements.md` for full context.
+Sistema de Solicitudes for the Universidad Autónoma de Zacatecas. Monolithic Django application with server-side templates (Tailwind v4 + Alpine.js, no DRF). Lets students and faculty file academic and administrative requests with dynamic forms, state-machine tracking, PDF generation from templates, and role-based management. See `specs/global/requirements.md` for full context.
 
 > **Note:** `code_example/` at the project root is the deprecated old code. It is reference material only — do not extend it. New code follows the layered architecture described below and lives **inside `app/`** (the project-root wrapper that contains `manage.py`, `config/`, `templates/`, and one folder per Django app: `_shared/`, `usuarios/`, `solicitudes/`, …). The git repo root only holds infrastructure: `Dockerfile`, `docker-compose.*.yml`, `Makefile`, `.env.example`, `.gitignore`.
 
@@ -28,7 +28,7 @@ solicitudes/
 │   │   ├── review/                   # Final initiative validation
 │   │   ├── commit/                   # Manual conventional commits
 │   │   ├── django-patterns/          # Canonical Django code examples
-│   │   └── frontend-design/          # Bootstrap 5 + Django templates UI conventions
+│   │   └── frontend-design/          # Tailwind v4 + Alpine.js + Django templates UI conventions
 │   ├── agents/
 │   │   └── code-reviewer.md          # Fresh-context reviewer at section boundaries
 │   └── rules/
@@ -160,7 +160,7 @@ roadmap.md status updated
 | `/review` | Final validation against `plan.md` at initiative end. |
 | `/commit` | **Manual only.** User-invoked. |
 | `django-patterns` | Reference skill — full code examples for views, services, repos, forms, exceptions. |
-| `frontend-design` | Reference skill — Bootstrap 5 + Django templates UI conventions, accessibility, anti-AI-look. |
+| `frontend-design` | Reference skill — Tailwind v4 + Alpine.js + Lucide icons + Django templates; shadcn/Vercel monochrome aesthetic; accessibility; anti-AI-look. |
 
 **Agents** (`.claude/agents/`):
 | Agent | When |
@@ -179,7 +179,7 @@ roadmap.md status updated
 - **Python 3.12+**, **Django 5.x** (server-side templates, no DRF)
 - **Pydantic v2** — DTOs at every layer boundary
 - **PostgreSQL** (prod) / **SQLite** (dev) via Django ORM (contained in repositories)
-- **Bootstrap 5** templates (see `frontend-design` skill for UI conventions)
+- **Tailwind CSS v4** + **Alpine.js v3** + **Lucide** icons (see `frontend-design` skill for UI conventions). Tailwind standalone CLI runs inside the dev `web` container; `make css` for one-shot builds, `make css-watch` for live rebuilds.
 - **WeasyPrint** for PDF generation
 - JWT validation in middleware (external auth provider)
 - **Celery + Redis** for async email (optional)
