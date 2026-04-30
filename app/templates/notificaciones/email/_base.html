@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <title>{% block subject %}Sistema de Solicitudes{% endblock %}</title>
+  </head>
+  <body style="font-family: Arial, Helvetica, sans-serif; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 24px;">
+    <header style="border-bottom: 1px solid #e5e7eb; padding-bottom: 12px; margin-bottom: 24px;">
+      <strong style="font-size: 16px;">Sistema de Solicitudes &mdash; UAZ</strong>
+    </header>
+
+    <main>
+      {% block body %}{% endblock %}
+    </main>
+
+    <footer style="margin-top: 32px; padding-top: 12px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 12px;">
+      Este mensaje fue enviado automáticamente. No respondas a este correo.
+    </footer>
+  </body>
+</html>

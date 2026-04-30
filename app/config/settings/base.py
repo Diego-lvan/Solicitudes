@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "solicitudes",
     "mentores",
     "reportes",
+    "notificaciones",
 ]
 
 MIDDLEWARE = [
@@ -93,6 +94,7 @@ AUTH_USER_MODEL = "usuarios.User"
 
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "no-reply@uaz.edu.mx")
+EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "10"))
 
 LOGIN_URL = os.environ.get("AUTH_PROVIDER_LOGIN_URL", "/auth/login/")
 LOGIN_REDIRECT_URL = LOGIN_URL

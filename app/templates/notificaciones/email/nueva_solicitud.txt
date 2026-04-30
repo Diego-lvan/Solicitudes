@@ -1,0 +1,12 @@
+Hola{% if recipient.full_name %} {{ recipient.full_name }}{% endif %},
+
+Se registró una nueva solicitud que requiere tu atención.
+
+  Folio:       {{ solicitud.folio }}
+  Tipo:        {{ solicitud.tipo.nombre }}
+  Solicitante: {{ solicitud.solicitante.full_name|default:solicitud.solicitante.matricula }} ({{ solicitud.solicitante.matricula }})
+
+Revísala aquí: {{ SITE_BASE_URL }}{% url 'solicitudes:revision:detail' folio=solicitud.folio %}
+
+— Sistema de Solicitudes (UAZ)
+Este mensaje fue enviado automáticamente; no respondas a este correo.

@@ -1,0 +1,34 @@
+{% extends "notificaciones/email/_base.html" %}
+
+{% block subject %}Recibimos tu solicitud {{ solicitud.folio }}{% endblock %}
+
+{% block body %}
+  <p>Hola{% if solicitud.solicitante.full_name %} {{ solicitud.solicitante.full_name }}{% endif %},</p>
+
+  <p>
+    Recibimos tu solicitud y la enviamos al área responsable. Te avisaremos
+    por este medio cuando cambie de estado.
+  </p>
+
+  <table style="border-collapse: collapse; margin: 16px 0;">
+    <tr>
+      <td style="padding: 4px 12px 4px 0; color: #6b7280;">Folio</td>
+      <td style="padding: 4px 0;"><strong>{{ solicitud.folio }}</strong></td>
+    </tr>
+    <tr>
+      <td style="padding: 4px 12px 4px 0; color: #6b7280;">Tipo</td>
+      <td style="padding: 4px 0;">{{ solicitud.tipo.nombre }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 4px 12px 4px 0; color: #6b7280;">Estado</td>
+      <td style="padding: 4px 0;">creada</td>
+    </tr>
+  </table>
+
+  <p>
+    <a href="{{ SITE_BASE_URL }}{% url 'solicitudes:intake:detail' folio=solicitud.folio %}"
+       style="display: inline-block; background: #1d4ed8; color: #ffffff; padding: 10px 18px; border-radius: 4px; text-decoration: none;">
+      Ver mi solicitud
+    </a>
+  </p>
+{% endblock %}

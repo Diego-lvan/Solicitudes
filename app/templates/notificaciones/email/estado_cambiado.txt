@@ -1,0 +1,11 @@
+Hola{% if solicitud.solicitante.full_name %} {{ solicitud.solicitante.full_name }}{% endif %},
+
+Tu solicitud {{ solicitud.folio }} ({{ solicitud.tipo.nombre }}) cambió de estado a {{ estado_label }}.
+
+{% if observaciones %}Observaciones:
+{{ observaciones }}
+
+{% endif %}Consulta el detalle en: {{ SITE_BASE_URL }}{% url 'solicitudes:intake:detail' folio=solicitud.folio %}
+
+— Sistema de Solicitudes (UAZ)
+Este mensaje fue enviado automáticamente; no respondas a este correo.
