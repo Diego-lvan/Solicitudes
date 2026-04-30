@@ -1,3 +1,3 @@
-from mentores.models.mentor import Mentor
+from mentores.models.mentor_periodo import MentorPeriodo
 
-__all__ = ["Mentor"]
+__all__ = ["MentorPeriodo"]
