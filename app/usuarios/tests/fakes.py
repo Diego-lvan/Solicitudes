@@ -52,6 +52,12 @@ class InMemoryUserRepository(UserRepository):
             raise UserNotFound(f"matricula={matricula}")
         self._last_logins[matricula] = when
 
+    def list_by_role(self, role: Role) -> list[UserDTO]:
+        return sorted(
+            (dto for dto in self._rows.values() if dto.role is role and dto.email),
+            key=lambda dto: dto.matricula,
+        )
+
     def list_all(self, *, limit: int = 200) -> list[UserDTO]:
         ordered = sorted(
             self._rows.values(),

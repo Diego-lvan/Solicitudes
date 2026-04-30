@@ -49,6 +49,14 @@ class OrmUserRepository(UserRepository):
         if updated == 0:
             raise UserNotFound(f"matricula={matricula}")
 
+    def list_by_role(self, role: Role) -> list[UserDTO]:
+        return [
+            self._to_dto(u)
+            for u in User.objects.filter(role=role.value)
+            .exclude(email="")
+            .order_by("matricula")
+        ]
+
     def list_all(self, *, limit: int = 200) -> list[UserDTO]:
         return [
             self._to_dto(u)

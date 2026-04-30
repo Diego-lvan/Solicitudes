@@ -47,6 +47,9 @@ EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "true").lower() == "true"
+EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "10"))
+DEFAULT_FROM_EMAIL = _required("DEFAULT_FROM_EMAIL")
+SITE_BASE_URL = _required("SITE_BASE_URL")
 
 # Security hardening (TLS terminates at nginx; we only see X-Forwarded-Proto).
 SECURE_SSL_REDIRECT = False  # nginx already redirects 80→443

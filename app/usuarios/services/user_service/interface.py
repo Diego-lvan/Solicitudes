@@ -4,6 +4,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 from _shared.auth import JwtClaims
+from usuarios.constants import Role
 from usuarios.schemas import UserDTO
 
 
@@ -25,3 +26,7 @@ class UserService(ABC):
     @abstractmethod
     def hydrate_from_siga(self, matricula: str) -> UserDTO:
         """Best-effort enrichment from SIGA. Never raises ``SigaUnavailable``."""
+
+    @abstractmethod
+    def list_by_role(self, role: Role) -> list[UserDTO]:
+        """Return every user with ``role`` and a deliverable email."""

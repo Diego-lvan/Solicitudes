@@ -5,6 +5,7 @@ import logging
 from datetime import UTC, datetime
 
 from _shared.auth import JwtClaims
+from usuarios.constants import Role
 from usuarios.exceptions import SigaUnavailable
 from usuarios.repositories.user.interface import UserRepository
 from usuarios.schemas import CreateOrUpdateUserInput, UserDTO
@@ -43,6 +44,9 @@ class DefaultUserService(UserService):
 
     def get_by_matricula(self, matricula: str) -> UserDTO:
         return self._repo.get_by_matricula(matricula)
+
+    def list_by_role(self, role: Role) -> list[UserDTO]:
+        return self._repo.list_by_role(role)
 
     def hydrate_from_siga(self, matricula: str) -> UserDTO:
         existing = self._repo.get_by_matricula(matricula)

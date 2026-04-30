@@ -4,6 +4,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from datetime import datetime
 
+from usuarios.constants import Role
 from usuarios.schemas import CreateOrUpdateUserInput, UserDTO
 
 
@@ -25,6 +26,15 @@ class UserRepository(ABC):
     @abstractmethod
     def update_last_login(self, matricula: str, *, when: datetime) -> None:
         """Set ``last_login_at`` on an existing user; raise ``UserNotFound`` if missing."""
+
+    @abstractmethod
+    def list_by_role(self, role: Role) -> list[UserDTO]:
+        """Return every user with ``role`` and a non-empty email, ordered by matricula.
+
+        Used by ``notificaciones`` to fan out creation emails to every member
+        of the responsible role. Recipients with empty emails are filtered
+        here so service-layer callers don't re-implement the rule.
+        """
 
     @abstractmethod
     def list_all(self, *, limit: int = 200) -> list[UserDTO]:
