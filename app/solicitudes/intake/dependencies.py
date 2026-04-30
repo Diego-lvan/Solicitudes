@@ -1,7 +1,8 @@
 """DI wiring for the intake feature."""
 from __future__ import annotations
 
-from solicitudes.intake.mentor_port import FalseMentorService, MentorService
+from mentores.dependencies import get_intake_mentor_adapter
+from solicitudes.intake.mentor_port import MentorService
 from solicitudes.intake.services.intake_service.implementation import (
     DefaultIntakeService,
 )
@@ -17,8 +18,13 @@ from solicitudes.tipos.dependencies import get_tipo_service
 
 
 def get_mentor_service() -> MentorService:
-    # Until 008 lands, every user is treated as non-mentor.
-    return FalseMentorService()
+    # Real binding (008): the adapter lives on the producer side
+    # (`mentores.adapters.intake_adapter.MentoresIntakeAdapter`) per the
+    # cross-feature dependency rule — intake's runtime code never imports
+    # `mentores.*`; only this wiring file does, and only at boot.
+    # `FalseMentorService` remains in `mentor_port.py` as a doc-only fallback
+    # for tests that want to bypass the catalog entirely.
+    return get_intake_mentor_adapter()
 
 
 def get_intake_service() -> IntakeService:

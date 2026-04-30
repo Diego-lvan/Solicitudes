@@ -40,7 +40,7 @@ markers = [
 
 [tool.coverage.run]
 # Add each app to `source` as it ships (002 → usuarios, 003 → solicitudes, …).
-source = ["_shared", "config", "usuarios", "solicitudes"]
+source = ["_shared", "config", "usuarios", "solicitudes", "mentores"]
 omit = ["*/migrations/*", "*/tests/*"]
 
 [tool.coverage.report]

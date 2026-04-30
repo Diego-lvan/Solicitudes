@@ -10,7 +10,7 @@ urlpatterns = [
     path("", home, name="home"),
     path("", include(("usuarios.urls", "usuarios"))),
     path("solicitudes/", include(("solicitudes.urls", "solicitudes"))),
+    path("mentores/", include(("mentores.urls", "mentores"))),
     # Filled by later initiatives:
-    # path("mentores/", include(("mentores.urls", "mentores"))),
     # path("reportes/", include(("reportes.urls", "reportes"))),
 ]

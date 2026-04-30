@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Desactivar mentor · {{ block.super }}{% endblock %}
+
+{% block content %}
+<section class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6">
+    <h1 class="h3 mb-4">Desactivar mentor</h1>
+
+    <div class="card border-warning mb-4">
+      <div class="card-body">
+        <p class="mb-2">
+          ¿Confirmas la desactivación del mentor con matrícula
+          <strong class="font-monospace">{{ matricula }}</strong>?
+        </p>
+        <p class="text-muted small mb-0">
+          Las solicitudes anteriores conservan su estado de exención de pago.
+          Las solicitudes futuras requerirán comprobante de pago.
+        </p>
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="d-flex gap-2 justify-content-end">
+        <a href="{% url 'mentores:list' %}" class="btn btn-outline-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-danger">Desactivar</button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

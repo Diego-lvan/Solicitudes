@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     "_shared",
     "usuarios",
     "solicitudes",
+    "mentores",
 ]
 
 MIDDLEWARE = [
