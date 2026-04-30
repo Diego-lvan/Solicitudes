@@ -1,236 +1,138 @@
-:root {
-  --uaz-primary: #006341;
-  --uaz-primary-dark: #00472f;
-  --uaz-accent: #b88a44;
-  --bs-primary: var(--uaz-primary);
-  --bs-primary-rgb: 0, 99, 65;
-  --bs-link-color: var(--uaz-primary);
-  --app-sidebar-width: 16rem;
+@import "tailwindcss";
+
+@source "../../templates/**/*.html";
+@source "../../**/*.py";
+
+@theme {
+  --color-bg:            #ffffff;
+  --color-bg-subtle:     #fafafa;
+  --color-bg-muted:      #f4f4f5;
+  --color-border:        #e4e4e7;
+  --color-border-strong: #d4d4d8;
+  --color-text:          #09090b;
+  --color-text-muted:    #71717a;
+  --color-text-subtle:   #a1a1aa;
+  --color-primary:       #18181b;
+  --color-primary-hover: #000000;
+  --color-primary-fg:    #ffffff;
+
+  --color-success:       #16a34a;
+  --color-success-soft:  #f0fdf4;
+  --color-warning:       #d97706;
+  --color-warning-soft:  #fffbeb;
+  --color-danger:        #dc2626;
+  --color-danger-soft:   #fef2f2;
+  --color-info:          #0284c7;
+  --color-info-soft:     #f0f9ff;
+
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --radius-sm: 4px;
+  --radius:    6px;
+  --radius-lg: 8px;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / .04), 0 1px 1px rgb(0 0 0 / .03);
+  --shadow:    0 4px 12px rgb(0 0 0 / .06), 0 2px 4px rgb(0 0 0 / .04);
 }
 
-a {
-  color: var(--uaz-primary);
+@font-face {
+  font-family: "Inter";
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/static/fonts/Inter/InterVariable.woff2") format("woff2-variations");
 }
 
-.btn-primary {
-  background-color: var(--uaz-primary);
-  border-color: var(--uaz-primary);
-}
+@layer base {
+  body {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-.btn-primary:hover,
-.btn-primary:focus {
-  background-color: var(--uaz-primary-dark);
-  border-color: var(--uaz-primary-dark);
-}
+  h1, h2, h3, h4 {
+    letter-spacing: -0.02em;
+    font-weight: 600;
+  }
 
-.btn-outline-primary {
-  color: var(--uaz-primary);
-  border-color: var(--uaz-primary);
-}
+  :focus-visible {
+    outline: 2px solid var(--color-text);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
 
-.btn-outline-primary:hover,
-.btn-outline-primary:focus {
-  background-color: var(--uaz-primary);
-  border-color: var(--uaz-primary);
-  color: #fff;
-}
+  [x-cloak] {
+    display: none !important;
+  }
 
-.text-primary {
-  color: var(--uaz-primary) !important;
-}
-
-.bg-primary-subtle {
-  background-color: rgba(0, 99, 65, 0.12) !important;
-}
-.text-primary,
-.bg-primary-subtle.text-primary {
-  color: var(--uaz-primary) !important;
-}
-
-.navbar-brand {
-  color: var(--uaz-primary) !important;
-}
-
-main:focus,
-.app-main:focus {
-  outline: none;
-}
-
-/* ---------- Sidebar layout ---------- */
-
-.app-body {
-  /* On large screens we lay out as [sidebar][main]. Below lg, the sidebar is
-     hidden; mobile users open it via the offcanvas drawer in the navbar. */
-  width: 100%;
-  min-width: 0;
-}
-
-.app-sidebar {
-  width: var(--app-sidebar-width);
-  flex-shrink: 0;
-  display: none;
-}
-
-@media (min-width: 992px) {
-  .app-shell.has-sidebar .app-sidebar {
+  /* Tailwind v4 Preflight strips default browser styling from form controls.
+     Django-rendered widgets (`{{ form.field }}`) carry no utility classes, so
+     without this fallback they render borderless and invisible. The component
+     partials in `templates/components/{input,select,textarea}.html` apply
+     explicit utility classes that override these defaults thanks to higher
+     specificity. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]),
+  textarea,
+  select {
     display: block;
-    position: sticky;
-    top: 0;
-    align-self: flex-start;
-    height: calc(100vh - 0px);
-    overflow-y: auto;
+    width: 100%;
+    height: 2.5rem;             /* matches partial: h-10 */
+    padding: 0 0.75rem;          /* matches partial: px-3 */
+    font-size: 0.875rem;         /* text-sm */
+    line-height: 1.25rem;
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius);
+  }
+  textarea {
+    height: auto;
+    min-height: 4.5rem;
+    padding: 0.5rem 0.75rem;     /* py-2 px-3 */
+    line-height: 1.5;
+  }
+  select {
+    padding-right: 2rem;         /* room for the native chevron */
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-text-subtle);
+  }
+  input:disabled,
+  textarea:disabled,
+  select:disabled {
+    background-color: var(--color-bg-subtle);
+    color: var(--color-text-muted);
+    cursor: not-allowed;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
-.app-sidebar-link {
-  color: #495057;
-  border-radius: .375rem;
-  padding: .5rem .75rem;
-  font-size: .9375rem;
-  display: flex;
-  align-items: center;
-}
+@layer components {
+  /* Project-specific overrides only. Components are Django partials. */
 
-.app-sidebar-link:hover,
-.app-sidebar-link:focus-visible {
-  background-color: rgba(0, 99, 65, 0.08);
-  color: var(--uaz-primary-dark);
-  text-decoration: none;
-}
-
-.app-sidebar-link.active {
-  background-color: rgba(0, 99, 65, 0.12);
-  color: var(--uaz-primary-dark);
-  font-weight: 500;
-}
-
-.app-sidebar-link.text-danger:hover,
-.app-sidebar-link.text-danger:focus-visible {
-  background-color: rgba(220, 53, 69, 0.08);
-  color: #b02a37 !important;
-}
-
-/* The offcanvas drawer reuses the sidebar component; trim its top padding so
-   the sidebar's own padding still controls spacing. */
-.app-offcanvas .app-sidebar {
-  display: block;
-  width: 100%;
-  border-right: 0 !important;
-}
-
-/* ---------- Chip-style options input ---------- */
-
-.chip-input {
-  border: 1px solid #ced4da;
-  border-radius: .375rem;
-  padding: .375rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: .375rem;
-  background-color: #fff;
-  min-height: 2.5rem;
-  align-items: center;
-}
-
-.chip-input:focus-within {
-  border-color: var(--uaz-primary);
-  box-shadow: 0 0 0 .2rem rgba(0, 99, 65, .25);
-}
-
-.chip-input input {
-  border: 0;
-  outline: 0;
-  flex: 1 0 8rem;
-  min-width: 8rem;
-  padding: .25rem .25rem;
-  font-size: .9375rem;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  background-color: rgba(0, 99, 65, 0.12);
-  color: var(--uaz-primary-dark);
-  border-radius: 999px;
-  padding: .15rem .5rem .15rem .75rem;
-  font-size: .875rem;
-  gap: .25rem;
-}
-
-.chip button {
-  background: none;
-  border: 0;
-  padding: 0 .25rem;
-  color: inherit;
-  line-height: 1;
-  cursor: pointer;
-  font-size: 1rem;
-}
-.chip button:hover,
-.chip button:focus-visible {
-  color: #b02a37;
-}
-
-
-/* ---------- Tipo form: collapsible field rows + drag handle ---------- */
-.field-row {
-  transition: box-shadow .15s ease;
-}
-.field-row .field-row-header {
-  padding: .5rem .75rem;
-  border-bottom: 1px solid transparent;
-}
-.field-row.is-open .field-row-header {
-  border-bottom-color: var(--bs-border-color);
-}
-.field-row .field-drag-handle {
-  cursor: grab;
-}
-.field-row .field-drag-handle:active {
-  cursor: grabbing;
-}
-.field-row .field-row-toggle {
-  min-width: 0;
-}
-.field-row .field-row-summary-label {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-/* The caret icon class is swapped in JS (bi-chevron-down ↔ bi-chevron-right);
-   no rotate transform — that would mislead if CSS transforms are disabled. */
-.field-row:not(.is-open) .field-row-body {
-  display: none;
-}
-.field-row.is-dragging {
-  box-shadow: 0 .5rem 1rem rgba(0,0,0,.1);
-}
-.field-row.is-ghost {
-  opacity: .4;
-}
-
-
-/* ---------- Tipo form: live preview pane ---------- */
-.tipo-preview-col {
-  /* On <xl, the aside stacks below the editor — no special styling needed. */
-}
-@media (min-width: 1200px) {
-  .tipo-preview-sticky {
-    position: sticky;
-    top: 1rem;
-    max-height: calc(100vh - 2rem);
-    overflow-y: auto;
+  /* Tipo form — collapsible field rows.
+     Body hidden by default; expanded when .is-open is toggled by tipo_form.js.
+     Caret rotates -90° when collapsed (Lucide chevron-down points right). */
+  .field-row:not(.is-open) .field-row-body {
+    display: none;
   }
-}
-.tipo-preview-empty {
-  color: var(--bs-secondary-color);
-  font-style: italic;
-}
-.tipo-preview-field + .tipo-preview-field {
-  margin-top: 1rem;
-}
-.tipo-preview-required-mark {
-  color: var(--bs-danger);
-  margin-left: .15rem;
+  .field-row:not(.is-open) .field-row-caret {
+    transform: rotate(-90deg);
+  }
+  .field-row .field-row-caret {
+    transition: transform 0.15s ease;
+  }
+  .field-row.is-dragging {
+    box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 0.1);
+  }
+  .field-row.is-ghost {
+    opacity: 0.4;
+  }
 }

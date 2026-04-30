@@ -13,30 +13,20 @@ Context:
   ``auto_fill``  — :class:`AutoFillPreview` (items + has_missing_required).
 {% endcomment %}
 {% if auto_fill.items %}
-<aside class="card mb-4" aria-label="Datos del solicitante">
-  <div class="card-body">
-    <h2 class="h6 mb-2">Datos del solicitante</h2>
-    {% if auto_fill.has_missing_required %}
-      <div class="alert alert-danger d-flex align-items-start gap-2 mb-3" role="alert">
-        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1" aria-hidden="true"></i>
-        <div>
-          <strong class="d-block">No pudimos cargar tus datos académicos.</strong>
-          Este formulario los necesita y SIGA no respondió. Intenta más tarde
-          o contacta a Control Escolar si el problema persiste.
-        </div>
-      </div>
-    {% else %}
-      <p class="form-text mb-3">
-        Estos datos se incluirán automáticamente en tu solicitud. Si están
-        desactualizados, contacta a Control Escolar.
-      </p>
-    {% endif %}
-    <dl class="row mb-0">
-      {% for label, value in auto_fill.items %}
-        <dt class="col-sm-5 col-md-4 fw-medium">{{ label }}</dt>
-        <dd class="col-sm-7 col-md-8 mb-2">{{ value }}</dd>
-      {% endfor %}
-    </dl>
-  </div>
+<aside class="rounded-lg border border-zinc-200 bg-white p-5 mb-4" aria-label="Datos del solicitante">
+  <h2 class="text-sm font-semibold text-zinc-900 mb-3">Datos del solicitante</h2>
+  {% if auto_fill.has_missing_required %}
+    {% include "components/alert.html" with variant="danger" title="No pudimos cargar tus datos académicos." message="Este formulario los necesita y SIGA no respondió. Intenta más tarde o contacta a Control Escolar si el problema persiste." %}
+  {% else %}
+    <p class="text-xs text-zinc-500 mb-4">
+      Estos datos se incluirán automáticamente en tu solicitud. Si están desactualizados, contacta a Control Escolar.
+    </p>
+  {% endif %}
+  <dl class="grid grid-cols-1 sm:grid-cols-[10rem_1fr] gap-y-2.5 text-sm">
+    {% for label, value in auto_fill.items %}
+      <dt class="text-zinc-500 font-medium">{{ label }}</dt>
+      <dd class="text-zinc-900">{{ value }}</dd>
+    {% endfor %}
+  </dl>
 </aside>
 {% endif %}

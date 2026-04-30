@@ -1,0 +1,34 @@
+{% comment %}
+Button partial.
+
+Args:
+  type      submit | button | reset                 (default: button)
+  variant   primary | outline | ghost | destructive (default: primary)
+  size      sm | md | lg                            (default: md)
+  label     text content
+  icon      lucide icon name (optional, rendered to the left of label)
+  href      if set, renders an <a> instead of <button>
+  extra     extra Tailwind utility classes
+  attrs     extra raw HTML attributes (e.g. 'name="action" value="approve"')
+{% endcomment %}
+{% load lucide %}
+
+{# NOTE: `attrs` is rendered via `|safe` — callers MUST pre-escape any
+   user-controlled text before threading it through. Same caveat applies to
+   modal.html / dropdown.html body_html slots. #}
+
+{% if href %}<a href="{{ href }}"{% else %}<button type="{{ type|default:'button' }}"{% endif %}
+  class="inline-flex items-center justify-center gap-2 font-medium rounded-md
+         disabled:opacity-50 disabled:pointer-events-none transition-colors
+         {% if variant == 'outline' %}border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50
+         {% elif variant == 'ghost' %}text-zinc-900 hover:bg-zinc-100
+         {% elif variant == 'destructive' %}bg-red-600 text-white hover:bg-red-700
+         {% else %}bg-zinc-900 text-white hover:bg-black{% endif %}
+         {% if size == 'sm' %}h-8 px-3 text-sm
+         {% elif size == 'lg' %}h-11 px-6 text-base
+         {% else %}h-10 px-4 text-sm{% endif %}
+         {{ extra|default:'' }}"
+  {{ attrs|default:''|safe }}>
+  {% if icon %}{% lucide icon class="size-4" %}{% endif %}
+  {% if label %}<span>{{ label }}</span>{% endif %}
+{% if href %}</a>{% else %}</button>{% endif %}

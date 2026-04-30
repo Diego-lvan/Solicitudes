@@ -3,30 +3,35 @@
 {% block title %}Desactivar mentor · {{ block.super }}{% endblock %}
 
 {% block content %}
-<section class="row justify-content-center">
-  <div class="col-12 col-md-8 col-lg-6">
-    <h1 class="h3 mb-4">Desactivar mentor</h1>
+<section class="max-w-xl mx-auto">
+  <h1 class="text-2xl font-semibold text-zinc-900 mb-6">Desactivar mentor</h1>
 
-    <div class="card border-warning mb-4">
-      <div class="card-body">
-        <p class="mb-2">
-          ¿Confirmas la desactivación del mentor con matrícula
-          <strong class="font-monospace">{{ matricula }}</strong>?
-        </p>
-        <p class="text-muted small mb-0">
-          Las solicitudes anteriores conservan su estado de exención de pago.
-          Las solicitudes futuras requerirán comprobante de pago.
-        </p>
-      </div>
-    </div>
-
-    <form method="post">
-      {% csrf_token %}
-      <div class="d-flex gap-2 justify-content-end">
-        <a href="{% url 'mentores:list' %}" class="btn btn-outline-secondary">Cancelar</a>
-        <button type="submit" class="btn btn-danger">Desactivar</button>
-      </div>
-    </form>
+  <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 mb-6">
+    <p class="text-sm text-amber-900">
+      ¿Confirmas la desactivación del mentor con matrícula
+      <strong class="font-mono">{{ matricula }}</strong>?
+    </p>
+    <p class="mt-2 text-xs text-amber-800/80">
+      Las solicitudes anteriores conservan su estado de exención de pago.
+      Las solicitudes futuras requerirán comprobante de pago.
+    </p>
   </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="flex justify-end gap-2">
+      <a href="{% url 'mentores:list' %}"
+         class="inline-flex items-center h-10 px-4 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                hover:bg-zinc-50
+                focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+        Cancelar
+      </a>
+      <button type="submit"
+              class="inline-flex items-center h-10 px-4 rounded-md bg-red-600 text-white text-sm font-medium
+                     hover:bg-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+        Desactivar
+      </button>
+    </div>
+  </form>
 </section>
 {% endblock %}

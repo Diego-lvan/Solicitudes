@@ -1,0 +1,76 @@
+{% comment %}
+Top bar with brand mark, mobile drawer trigger, and user menu (dropdown).
+The drawer state lives on this same x-data scope so the mobile trigger can
+flip it directly.
+{% endcomment %}
+{% load lucide role_display %}
+<header x-data="{ drawerOpen: false }" class="sticky top-0 z-30 bg-white border-b border-zinc-200">
+  <div class="flex items-center h-14 px-4 md:px-6 gap-3">
+    {% if request.user.is_authenticated %}
+      <button type="button"
+              @click="drawerOpen = true"
+              class="lg:hidden inline-flex items-center justify-center size-9 rounded-md text-zinc-700
+                     hover:bg-zinc-100 hover:text-zinc-900
+                     focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+              aria-label="Abrir menú">
+        {% lucide "menu" class="size-5" %}
+      </button>
+    {% endif %}
+
+    <a href="{% url 'home' %}"
+       class="flex items-center gap-2 font-semibold text-zinc-900
+              focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 rounded">
+      {% lucide "graduation-cap" class="size-5" %}
+      <span class="text-sm">Sistema de Solicitudes</span>
+    </a>
+
+    <div class="ml-auto flex items-center gap-2">
+      {% if request.user.is_authenticated %}
+        <div x-data="{ open: false }" class="relative">
+          <button type="button"
+                  @click="open = !open"
+                  @keydown.escape.window="open = false"
+                  class="flex items-center gap-2 rounded-md px-2 h-9 text-sm text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900
+                         focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+                  aria-haspopup="menu"
+                  :aria-expanded="open">
+            <span class="inline-flex items-center justify-center size-7 rounded-full bg-zinc-100 text-zinc-700 text-xs font-semibold">
+              {{ request.user.get_username|slice:":1"|upper }}
+            </span>
+            <span class="hidden sm:flex flex-col leading-tight items-start">
+              <span class="text-sm font-medium text-zinc-900">{{ request.user.get_full_name|default:request.user.get_username }}</span>
+              <span class="text-[11px] text-zinc-500">{{ request.user.role|role_label }}</span>
+            </span>
+            {% lucide "chevron-down" class="size-4 text-zinc-500" %}
+          </button>
+          <div x-cloak x-show="open" @click.outside="open = false"
+               x-transition:enter="transition ease-out duration-100"
+               x-transition:enter-start="opacity-0 scale-95"
+               x-transition:enter-end="opacity-100 scale-100"
+               role="menu"
+               class="absolute right-0 mt-1 w-56 rounded-md border border-zinc-200 bg-white shadow-md py-1 text-sm">
+            <a href="{% url 'usuarios:me' %}" role="menuitem"
+               class="flex items-center gap-2 px-3 py-2 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900">
+              {% lucide "user" class="size-4" %}<span>Mi perfil</span>
+            </a>
+            <hr class="my-1 border-zinc-200" />
+            <a href="{% url 'usuarios:logout' %}" role="menuitem"
+               class="flex items-center gap-2 px-3 py-2 text-red-700 hover:bg-red-50 hover:text-red-800">
+              {% lucide "log-out" class="size-4" %}<span>Cerrar sesión</span>
+            </a>
+          </div>
+        </div>
+      {% else %}
+        <a href="{{ settings.LOGIN_URL|default:'/auth/login/' }}"
+           class="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                  hover:bg-zinc-50
+                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+          {% lucide "log-in" class="size-4" %}<span>Iniciar sesión</span>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Mobile drawer mounts here so it shares the navbar's x-data scope. #}
+  {% include "components/offcanvas_drawer.html" with open_state_var="drawerOpen" %}
+</header>

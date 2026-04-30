@@ -1,28 +1,31 @@
 {# Timeline of HistorialEntry rows. Expects `historial` (list[HistorialEntry]). #}
 {% if historial %}
-<ol class="list-unstyled mb-0">
+<ol class="space-y-4">
   {% for entry in historial %}
-  <li class="d-flex gap-3 pb-3 mb-3 border-bottom">
-    <div class="flex-shrink-0">
+  <li class="flex gap-3 pb-4 border-b border-zinc-200 last:border-b-0 last:pb-0">
+    <div class="shrink-0">
       {% include "solicitudes/_partials/_estado_badge.html" with estado=entry.estado_nuevo %}
     </div>
-    <div class="flex-grow-1">
-      <div class="small text-muted">
+    <div class="flex-1 min-w-0 text-sm">
+      <p class="text-xs text-zinc-500">
         {{ entry.created_at|date:"d/m/Y H:i" }} ·
         {{ entry.actor_nombre }} ({{ entry.actor_role.value|title }})
-      </div>
+      </p>
       {% if entry.estado_anterior %}
-        <div>De <code>{{ entry.estado_anterior.value }}</code> a <code>{{ entry.estado_nuevo.value }}</code></div>
+        <p class="text-zinc-700 mt-0.5">
+          De <code class="font-mono text-zinc-900">{{ entry.estado_anterior.value }}</code>
+          a <code class="font-mono text-zinc-900">{{ entry.estado_nuevo.value }}</code>
+        </p>
       {% else %}
-        <div>Solicitud creada</div>
+        <p class="text-zinc-700 mt-0.5">Solicitud creada</p>
       {% endif %}
       {% if entry.observaciones %}
-        <p class="mb-0 mt-1">{{ entry.observaciones }}</p>
+        <p class="mt-1 text-zinc-700">{{ entry.observaciones }}</p>
       {% endif %}
     </div>
   </li>
   {% endfor %}
 </ol>
 {% else %}
-<p class="text-muted mb-0">Sin historial.</p>
+<p class="text-sm text-zinc-500">Sin historial.</p>
 {% endif %}

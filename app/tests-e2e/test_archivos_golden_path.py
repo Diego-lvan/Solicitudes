@@ -27,7 +27,7 @@ def _ensure_screenshot_dir() -> None:
 
 def _login_as(page: Page, base: str, matricula: str) -> None:
     page.goto(f"{base}/auth/dev-login")
-    row = page.locator("li.list-group-item").filter(has_text=matricula).first
+    row = page.locator("li").filter(has_text=matricula).first
     row.get_by_role("button", name="Entrar").click()
     page.wait_for_load_state("networkidle")
 
@@ -112,9 +112,9 @@ def test_alumno_attaches_pdf_sees_it_in_detail_and_downloads(
     page.wait_for_load_state("networkidle")
 
     # Detail page lists the archivo and offers a download link.
-    expect(page.locator(".alert-success")).to_contain_text("Solicitud creada")
+    expect(page.get_by_role("status").filter(has_text="Solicitud creada")).to_be_visible()
     expect(page.get_by_role("heading", name="Archivos")).to_be_visible()
-    expect(page.locator(".list-group-item")).to_contain_text("soporte.pdf")
+    expect(page.locator("ul > li")).to_contain_text("soporte.pdf")
     page.screenshot(
         path=str(SCREENSHOT_DIR / "intake_detail_archivos_desktop.png"),
         full_page=True,

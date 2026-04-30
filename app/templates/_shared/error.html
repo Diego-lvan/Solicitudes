@@ -1,13 +1,18 @@
 {% extends "base.html" %}
 {% block title %}Error {{ http_status }} — Sistema de Solicitudes{% endblock %}
 {% block content %}
-<div class="text-center py-5">
-  <p class="text-uppercase text-muted small mb-2">Error {{ http_status }}</p>
-  <h1 class="h3 mb-3">{{ message }}</h1>
-  <p class="text-muted">Código: <code>{{ code }}</code></p>
+<div class="max-w-xl mx-auto text-center py-16">
+  <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Error {{ http_status }}</p>
+  <h1 class="text-2xl font-semibold text-zinc-900 mb-4">{{ message }}</h1>
+  <p class="text-sm text-zinc-500">Código: <code class="font-mono text-zinc-900">{{ code }}</code></p>
   {% if request_id %}
-    <p class="text-muted small">Identificador de la solicitud: <code>{{ request_id }}</code></p>
+    <p class="text-xs text-zinc-500 mt-1">Identificador de la solicitud: <code class="font-mono">{{ request_id }}</code></p>
   {% endif %}
-  <a class="btn btn-outline-primary mt-3" href="/">Volver al inicio</a>
+  <a href="/"
+     class="mt-6 inline-flex items-center h-10 px-4 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+            hover:bg-zinc-50
+            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+    Volver al inicio
+  </a>
 </div>
 {% endblock %}

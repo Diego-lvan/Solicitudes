@@ -3,42 +3,31 @@
 {% block title %}Confirmar desactivación · {{ block.super }}{% endblock %}
 
 {% block content %}
-<nav aria-label="breadcrumb" class="mb-3">
-  <ol class="breadcrumb mb-0">
-    <li class="breadcrumb-item">
-      <a href="{% url 'mentores:list' %}">Catálogo</a>
-    </li>
-    <li class="breadcrumb-item active" aria-current="page">
-      Confirmar desactivación
-    </li>
+<nav aria-label="Breadcrumbs" class="mb-3">
+  <ol class="flex items-center gap-1.5 text-sm text-zinc-500">
+    <li><a href="{% url 'mentores:list' %}" class="hover:text-zinc-900 hover:underline underline-offset-2">Catálogo</a></li>
+    <li aria-hidden="true" class="text-zinc-400">/</li>
+    <li><span aria-current="page" class="text-zinc-900 font-medium">Confirmar desactivación</span></li>
   </ol>
 </nav>
 
-<h1 class="h3 mb-3">Confirmar desactivación</h1>
+<h1 class="text-2xl font-semibold text-zinc-900 mb-4">Confirmar desactivación</h1>
 
 {% if action == "all" %}
-  <div class="alert alert-warning" role="alert">
-    <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
-    Vas a desactivar <strong>todos los mentores actualmente activos</strong>
-    del catálogo. Esta acción cierra cada periodo abierto y no se puede
-    deshacer (se necesita re-agregar manualmente o reimportar para volver
-    a activar).
-  </div>
+  {% include "components/alert.html" with variant="warning" message="Vas a desactivar todos los mentores actualmente activos del catálogo. Esta acción cierra cada periodo abierto y no se puede deshacer (se necesita re-agregar manualmente o reimportar para volver a activar)." %}
 {% else %}
-  <p class="lead mb-3">
+  <p class="text-base text-zinc-700 mb-4">
     Vas a desactivar
-    <strong>{{ matriculas|length }}</strong>
+    <strong class="text-zinc-900">{{ matriculas|length }}</strong>
     {% if matriculas|length == 1 %}mentor{% else %}mentores{% endif %}.
     Esta acción cierra los periodos abiertos seleccionados.
   </p>
-  <div class="card mb-4">
-    <div class="card-body p-0">
-      <ul class="list-group list-group-flush">
-        {% for matricula in matriculas %}
-          <li class="list-group-item font-monospace">{{ matricula }}</li>
-        {% endfor %}
-      </ul>
-    </div>
+  <div class="rounded-lg border border-zinc-200 bg-white mb-6">
+    <ul class="divide-y divide-zinc-200">
+      {% for matricula in matriculas %}
+        <li class="px-4 py-2.5 font-mono text-sm text-zinc-900">{{ matricula }}</li>
+      {% endfor %}
+    </ul>
   </div>
 {% endif %}
 
@@ -50,16 +39,17 @@
   {% endcomment %}
   <input type="hidden" name="token" value="{{ token }}" />
 
-  <div class="d-flex gap-2 justify-content-end">
-    <a class="btn btn-outline-secondary" href="{% url 'mentores:list' %}">
+  <div class="flex justify-end gap-2">
+    <a href="{% url 'mentores:list' %}"
+       class="inline-flex items-center h-10 px-4 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+              hover:bg-zinc-50
+              focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
       Cancelar
     </a>
-    <button type="submit" class="btn btn-danger">
-      {% if action == "all" %}
-        Sí, desactivar todos
-      {% else %}
-        Sí, desactivar seleccionados
-      {% endif %}
+    <button type="submit"
+            class="inline-flex items-center h-10 px-4 rounded-md bg-red-600 text-white text-sm font-medium
+                   hover:bg-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+      {% if action == "all" %}Sí, desactivar todos{% else %}Sí, desactivar seleccionados{% endif %}
     </button>
   </div>
 </form>

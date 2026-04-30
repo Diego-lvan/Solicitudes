@@ -1,0 +1,17 @@
+{% comment %}
+Status pill keyed off the Estado enum. Color encodes status; the text label
+is always present so it's not color-only signal (WCAG 1.4.1).
+
+Args:
+  estado    Estado enum instance OR string value
+{% endcomment %}
+{% with v=estado.value|default:estado %}
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border
+  {% if v == 'CREADA' %}bg-sky-50 text-sky-700 border-sky-200
+  {% elif v == 'EN_PROCESO' or v == 'PENDIENTE' %}bg-amber-50 text-amber-800 border-amber-200
+  {% elif v == 'FINALIZADA' or v == 'APROBADA' %}bg-emerald-50 text-emerald-700 border-emerald-200
+  {% elif v == 'CANCELADA' or v == 'RECHAZADA' %}bg-zinc-100 text-zinc-700 border-zinc-200
+  {% else %}bg-zinc-50 text-zinc-700 border-zinc-200{% endif %}">
+  {{ estado.display_name|default:v }}
+</span>
+{% endwith %}

@@ -1,22 +1,22 @@
 {% load solicitudes_tags %}
 {# Renders snapshot fields with their submitted values. #}
 {# Expects `snapshot` (FormSnapshot) and `valores` (dict[str, Any]). #}
-<dl class="row mb-0">
+<dl class="grid grid-cols-1 sm:grid-cols-[10rem_1fr] gap-y-3 gap-x-6 text-sm">
   {% for field in snapshot.fields %}
-    <dt class="col-sm-4 text-sm-end fw-semibold">{{ field.label }}</dt>
-    <dd class="col-sm-8">
+    <dt class="text-zinc-500">{{ field.label }}</dt>
+    <dd class="text-zinc-900">
       {% with value=valores|get_valor:field.field_id %}
         {% if field.field_type.value == "FILE" %}
           {% if value %}
-            <span class="text-body">{{ value }}</span>
+            <span>{{ value }}</span>
           {% else %}
-            <span class="text-muted">Sin archivo</span>
+            <span class="text-zinc-500">Sin archivo</span>
           {% endif %}
         {% else %}
           {% if value %}
-            <span class="text-body">{{ value|linebreaksbr }}</span>
+            <span>{{ value|linebreaksbr }}</span>
           {% else %}
-            <span class="text-muted">—</span>
+            <span class="text-zinc-500">—</span>
           {% endif %}
         {% endif %}
       {% endwith %}
