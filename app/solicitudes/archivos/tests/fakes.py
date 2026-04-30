@@ -170,3 +170,24 @@ class InMemoryLifecycleService(LifecycleService):
         actor: UserDTO,
     ) -> SolicitudDetail:
         raise NotImplementedError
+
+    # ---- aggregations: archivos never invokes these; raise to surface misuse. ----
+
+    def list_for_admin(
+        self, *, page: PageRequest, filters: SolicitudFilter
+    ) -> Page[SolicitudRow]:  # pragma: no cover
+        raise NotImplementedError
+
+    def iter_for_admin(  # pragma: no cover
+        self, *, filters: SolicitudFilter, chunk_size: int = 500
+    ):
+        raise NotImplementedError
+
+    def aggregate_by_estado(self, *, filters: SolicitudFilter):  # pragma: no cover
+        raise NotImplementedError
+
+    def aggregate_by_tipo(self, *, filters: SolicitudFilter):  # pragma: no cover
+        raise NotImplementedError
+
+    def aggregate_by_month(self, *, filters: SolicitudFilter):  # pragma: no cover
+        raise NotImplementedError

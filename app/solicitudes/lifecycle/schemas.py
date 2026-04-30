@@ -39,6 +39,7 @@ class SolicitudRow(BaseModel):
     solicitante_nombre: str
     estado: Estado
     requiere_pago: bool
+    pago_exento: bool = False
     created_at: datetime
     updated_at: datetime
 
@@ -71,6 +72,37 @@ class SolicitudFilter(BaseModel):
     solicitante_contains: str | None = None
     created_from: date | None = None
     created_to: date | None = None
+    # Filters by the solicitud's tipo.responsible_role; used by reportes/.
+    responsible_role: Role | None = None
+
+
+class AggregateByEstado(BaseModel):
+    """Repository-level aggregate row: count of solicitudes per estado."""
+
+    model_config = ConfigDict(frozen=True)
+
+    estado: Estado
+    count: int
+
+
+class AggregateByTipo(BaseModel):
+    """Repository-level aggregate row: count of solicitudes per tipo."""
+
+    model_config = ConfigDict(frozen=True)
+
+    tipo_id: UUID
+    tipo_nombre: str
+    count: int
+
+
+class AggregateByMonth(BaseModel):
+    """Repository-level aggregate row: count of solicitudes per (year, month)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    year: int
+    month: int  # 1..12
+    count: int
 
 
 class TransitionInput(BaseModel):
