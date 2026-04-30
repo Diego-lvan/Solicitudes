@@ -214,7 +214,7 @@ Service writes through a storage abstraction; repository never touches the files
 ## What this document is NOT
 
 - It does not list specific endpoints, DDL, or code patterns. Those live in `plan.md` per initiative (in flight) and in per-feature `design.md` (after completion).
-- It does not list deprecated code paths. The old code under `code_example/` is reference material; new code follows this architecture.
+- It does not list deprecated code paths. New code follows this architecture.
 
 ## Related Specs
 

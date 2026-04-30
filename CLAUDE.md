@@ -4,7 +4,7 @@
 
 Sistema de Solicitudes for the Universidad Autónoma de Zacatecas. Monolithic Django application with server-side templates (Tailwind v4 + Alpine.js, no DRF). Lets students and faculty file academic and administrative requests with dynamic forms, state-machine tracking, PDF generation from templates, and role-based management. See `specs/global/requirements.md` for full context.
 
-> **Note:** `code_example/` at the project root is the deprecated old code. It is reference material only — do not extend it. New code follows the layered architecture described below and lives **inside `app/`** (the project-root wrapper that contains `manage.py`, `config/`, `templates/`, and one folder per Django app: `_shared/`, `usuarios/`, `solicitudes/`, …). The git repo root only holds infrastructure: `Dockerfile`, `docker-compose.*.yml`, `Makefile`, `.env.example`, `.gitignore`.
+New code lives **inside `app/`** (the project-root wrapper that contains `manage.py`, `config/`, `templates/`, and one folder per Django app: `_shared/`, `usuarios/`, `solicitudes/`, …). The git repo root only holds infrastructure: `Dockerfile`, `docker-compose.*.yml`, `Makefile`, `.env.example`, `.gitignore`.
 
 ## Architectural Style
 
@@ -79,9 +79,7 @@ solicitudes/
 │   ├── media/                        # Uploaded files (gitignored)
 │   ├── locale/                       # i18n (es_MX)
 │   └── tests-e2e/                    # browser flows (Playwright)
-├── code_example/                     # DEPRECATED — old code, reference only
 ├── srs/                              # Formal SRS (LaTeX)
-├── requerimientos_solicitudes.md     # Original written requirements
 └── CLAUDE.md
 ```
 
