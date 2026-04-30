@@ -130,7 +130,7 @@ Both are caught at the view boundary and translated to a `messages.error(...)` f
 - **005 (archivos)** — replaces the file-discard branch in `CreateSolicitudView.post` with a call to `archivo_service.store_for_solicitud(folio, ...)` inside the same `atomic()` block as the row insert.
 - **006 (pdf)** — adds a "Descargar PDF" button on `intake/detail.html` and `revision/detail.html` when estado is FINALIZADA and the tipo has a plantilla. PDF rendering reads `Solicitud.form_snapshot` + `Solicitud.valores` and feeds them into the WeasyPrint pipeline.
 - **007 (notificaciones)** — replaces the `NoOpNotificationService` binding in `lifecycle/dependencies.py` with the email adapter. The interface (`NotificationService` ABC in `lifecycle/notification_port.py`) does not change.
-- **008 (mentores)** — replaces the `FalseMentorService` binding in `intake/dependencies.py` with the mentor-catalog lookup. The interface (`MentorService` ABC in `intake/mentor_port.py`) does not change.
+- **008 (mentores)** — *shipped.* Replaced the `FalseMentorService` binding in `intake/dependencies.py` with the real catalog lookup via `mentores.adapters.intake_adapter.MentoresIntakeAdapter` (producer-side adapter). The port interface (`MentorService` ABC in `intake/mentor_port.py`) is unchanged; intake's runtime code imports zero from `mentores.*` — only `intake/dependencies.py` does, at boot. See `specs/apps/mentores/catalog/design.md` for the catalog contract.
 - **009 (reportes)** — reads from the same `Solicitud` and `HistorialEstado` tables; no schema or service changes here. The audit log lines provide the secondary timeline.
 
 ## Related Specs
