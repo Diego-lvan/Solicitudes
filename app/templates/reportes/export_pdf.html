@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8" />
+  <title>Reporte de solicitudes</title>
+  <style>
+    @page { size: Letter; margin: 1.5cm; }
+    body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: #212529; font-size: 10pt; }
+    h1 { font-size: 16pt; margin: 0 0 4pt 0; }
+    h2 { font-size: 12pt; margin: 12pt 0 4pt 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 4pt; }
+    th, td { border-bottom: 1px solid #dee2e6; padding: 4pt 6pt; text-align: left; vertical-align: top; }
+    th { background: #f8f9fa; font-weight: 600; }
+    .muted { color: #6c757d; font-size: 9pt; }
+    .num { text-align: right; }
+    .summary td { border: none; padding: 2pt 6pt; }
+    .notice { border: 1px solid #ffc107; background: #fff8e1; padding: 8pt; margin: 8pt 0; }
+  </style>
+</head>
+<body>
+  <h1>Reporte de solicitudes</h1>
+  <p class="muted">Total: {{ dashboard.total }}</p>
+
+  <h2>Por estado</h2>
+  <table>
+    <thead><tr><th>Estado</th><th class="num">Conteo</th></tr></thead>
+    <tbody>
+      {% for r in dashboard.by_estado %}
+        <tr><td>{{ r.estado.display_name }}</td><td class="num">{{ r.count }}</td></tr>
+      {% empty %}
+        <tr><td colspan="2" class="muted">Sin datos.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Por tipo</h2>
+  <table>
+    <thead><tr><th>Tipo</th><th class="num">Conteo</th></tr></thead>
+    <tbody>
+      {% for r in dashboard.by_tipo %}
+        <tr><td>{{ r.tipo_nombre }}</td><td class="num">{{ r.count }}</td></tr>
+      {% empty %}
+        <tr><td colspan="2" class="muted">Sin datos.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if truncated %}
+    <div class="notice">
+      Demasiados registros ({{ dashboard.total }} &gt; {{ row_cap }}). Para obtener
+      el detalle completo, use la exportación CSV.
+    </div>
+  {% else %}
+    <h2>Detalle</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Folio</th><th>Tipo</th><th>Solicitante</th>
+          <th>Estado</th><th>Creada</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td>{{ row.folio }}</td>
+            <td>{{ row.tipo_nombre }}</td>
+            <td>{{ row.solicitante_nombre }}</td>
+            <td>{{ row.estado.display_name }}</td>
+            <td>{{ row.created_at|date:"d/m/Y" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="muted">Sin solicitudes en el rango.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</body>
+</html>

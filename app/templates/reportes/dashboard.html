@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Reportes · {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">Reportes y dashboard</h1>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{% url 'reportes:export_csv' %}?{{ querystring }}">
+      <i class="bi bi-filetype-csv me-1" aria-hidden="true"></i> Exportar CSV
+    </a>
+    <a class="btn btn-outline-secondary" href="{% url 'reportes:export_pdf' %}?{{ querystring }}">
+      <i class="bi bi-filetype-pdf me-1" aria-hidden="true"></i> Exportar PDF
+    </a>
+    <a class="btn btn-primary" href="{% url 'reportes:list' %}?{{ querystring }}">
+      <i class="bi bi-list-ul me-1" aria-hidden="true"></i> Ver lista
+    </a>
+  </div>
+</div>
+
+{% include "reportes/_filter_form.html" %}
+
+<div class="row g-3 mb-4">
+  <div class="col-12 col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <p class="text-muted text-uppercase small mb-1">Total</p>
+        <p class="display-6 mb-0">{{ dashboard.total }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Por estado</h2>
+        {% if dashboard.by_estado %}
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th scope="col">Estado</th>
+                <th scope="col" class="text-end">Conteo</th>
+                <th scope="col" style="width: 40%">Distribución</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in dashboard.by_estado %}
+                {% widthratio r.count dashboard.total 100 as pct %}
+                <tr>
+                  <td>{% include "solicitudes/_partials/_estado_badge.html" with estado=r.estado %}</td>
+                  <td class="text-end">{{ r.count }}</td>
+                  <td>
+                    <div class="progress" role="progressbar" aria-label="Porcentaje {{ r.estado.display_name }}" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100" style="height: 0.5rem;">
+                      <div class="progress-bar" style="width: {{ pct }}%"></div>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="text-muted mb-0">Sin datos para los filtros seleccionados.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Por tipo</h2>
+        {% if dashboard.by_tipo %}
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th scope="col">Tipo</th>
+                <th scope="col" class="text-end">Conteo</th>
+                <th scope="col" style="width: 40%">Distribución</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in dashboard.by_tipo %}
+                {% widthratio r.count dashboard.total 100 as pct %}
+                <tr>
+                  <td>{{ r.tipo_nombre }}</td>
+                  <td class="text-end">{{ r.count }}</td>
+                  <td>
+                    <div class="progress" role="progressbar" aria-label="Porcentaje {{ r.tipo_nombre }}" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100" style="height: 0.5rem;">
+                      <div class="progress-bar" style="width: {{ pct }}%"></div>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="text-muted mb-0">Sin datos para los filtros seleccionados.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Por mes</h2>
+        {% if dashboard.by_month %}
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th scope="col">Mes</th>
+                  <th scope="col" class="text-end">Conteo</th>
+                  <th scope="col" style="width: 60%">Distribución</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in dashboard.by_month %}
+                  {% widthratio r.count dashboard.total 100 as pct %}
+                  <tr>
+                    <td>{{ r.year }}-{{ r.month|stringformat:"02d" }}</td>
+                    <td class="text-end">{{ r.count }}</td>
+                    <td>
+                      <div class="progress" role="progressbar" aria-label="Porcentaje {{ r.year }}-{{ r.month }}" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100" style="height: 0.5rem;">
+                        <div class="progress-bar" style="width: {{ pct }}%"></div>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted mb-0">Sin datos para los filtros seleccionados.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
