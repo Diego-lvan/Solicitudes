@@ -70,7 +70,7 @@ class DefaultMentorCsvImporter(MentorCsvImporter):
                         }
                     )
                     continue
-                _, outcome = self._repo.upsert(
+                _, outcome = self._repo.add_or_reactivate(
                     MentorUpsertInput(
                         matricula=raw,
                         fuente=MentorSource.CSV,

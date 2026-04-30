@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Confirmar desactivación · {{ block.super }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item">
+      <a href="{% url 'mentores:list' %}">Catálogo</a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">
+      Confirmar desactivación
+    </li>
+  </ol>
+</nav>
+
+<h1 class="h3 mb-3">Confirmar desactivación</h1>
+
+{% if action == "all" %}
+  <div class="alert alert-warning" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
+    Vas a desactivar <strong>todos los mentores actualmente activos</strong>
+    del catálogo. Esta acción cierra cada periodo abierto y no se puede
+    deshacer (se necesita re-agregar manualmente o reimportar para volver
+    a activar).
+  </div>
+{% else %}
+  <p class="lead mb-3">
+    Vas a desactivar
+    <strong>{{ matriculas|length }}</strong>
+    {% if matriculas|length == 1 %}mentor{% else %}mentores{% endif %}.
+    Esta acción cierra los periodos abiertos seleccionados.
+  </p>
+  <div class="card mb-4">
+    <div class="card-body p-0">
+      <ul class="list-group list-group-flush">
+        {% for matricula in matriculas %}
+          <li class="list-group-item font-monospace">{{ matricula }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+{% endif %}
+
+<form method="post" action="{% url 'mentores:deactivate_bulk' %}">
+  {% csrf_token %}
+  {% comment %}
+    The signed ``token`` carries action + matriculas server-side so a
+    second POST cannot bypass step 1 nor tamper with the target set.
+  {% endcomment %}
+  <input type="hidden" name="token" value="{{ token }}" />
+
+  <div class="d-flex gap-2 justify-content-end">
+    <a class="btn btn-outline-secondary" href="{% url 'mentores:list' %}">
+      Cancelar
+    </a>
+    <button type="submit" class="btn btn-danger">
+      {% if action == "all" %}
+        Sí, desactivar todos
+      {% else %}
+        Sí, desactivar seleccionados
+      {% endif %}
+    </button>
+  </div>
+</form>
+{% endblock %}
