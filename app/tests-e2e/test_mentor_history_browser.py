@@ -39,7 +39,7 @@ def _ensure_screenshot_dir() -> None:
 def _login_as(page: Page, base: str, matricula: str) -> None:
     """Sign in via the dev-login picker as the seeded user with ``matricula``."""
     page.goto(f"{base}/auth/dev-login")
-    row = page.locator("li.list-group-item").filter(has_text=matricula).first
+    row = page.locator("li").filter(has_text=matricula).first
     row.get_by_role("button", name="Entrar").click()
     page.wait_for_load_state("networkidle")
 
@@ -129,7 +129,7 @@ def test_admin_views_mentor_history_with_two_periods(
     expect(page.get_by_text("Actualmente activo")).to_be_visible()
 
     # Two timeline entries.
-    items = page.locator("ol.list-group li.list-group-item")
+    items = page.locator("ol > li")
     expect(items).to_have_count(2)
 
     page.screenshot(
@@ -195,13 +195,17 @@ def test_admin_reactivates_via_csv_and_history_shows_new_period(
     # Result page shows the import counts. Find the "Reactivadas" card and
     # confirm its value is 1 — that's the contract guarantee.
     expect(page.get_by_text("Reactivadas")).to_be_visible()
-    reactivadas_card = page.locator(".card", has_text="Reactivadas")
-    expect(reactivadas_card.locator("dd")).to_have_text("1")
+    # Each tile is a <div> wrapping one <dt>/<dd> pair. Walk up from the
+    # "Reactivadas" <dt> to its parent <div> with XPath, then read the <dd>.
+    # `locator("div", has=...)` matches every ancestor <div>, which trips strict
+    # mode — the XPath `parent::div` step is unambiguous.
+    reactivadas_tile = page.locator("dt", has_text="Reactivadas").locator("xpath=parent::div")
+    expect(reactivadas_tile.locator("dd")).to_have_text("1")
 
     # Now open the history page for that matrícula.
     page.goto(f"{base}/mentores/70000002/")
     expect(page.get_by_text("Actualmente activo")).to_be_visible()
-    items = page.locator("ol.list-group li.list-group-item")
+    items = page.locator("ol > li")
     expect(items).to_have_count(2)
 
     page.screenshot(

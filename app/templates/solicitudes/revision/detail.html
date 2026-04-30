@@ -1,137 +1,135 @@
 {% extends "base.html" %}
+{% load lucide %}
 
 {% block title %}Revisión · {{ detail.folio }} · {{ block.super }}{% endblock %}
 
 {% block content %}
-<nav aria-label="Ruta" class="mb-3">
-  <ol class="breadcrumb small mb-0">
-    <li class="breadcrumb-item">
-      <a href="{% url 'solicitudes:revision:queue' %}">Cola de revisión</a>
-    </li>
-    <li class="breadcrumb-item active" aria-current="page">{{ detail.folio }}</li>
+<nav aria-label="Breadcrumbs" class="mb-3">
+  <ol class="flex items-center gap-1.5 text-sm text-zinc-500">
+    <li><a href="{% url 'solicitudes:revision:queue' %}" class="hover:text-zinc-900 hover:underline underline-offset-2">Cola de revisión</a></li>
+    <li aria-hidden="true" class="text-zinc-400">/</li>
+    <li><span aria-current="page" class="text-zinc-900 font-medium">{{ detail.folio }}</span></li>
   </ol>
 </nav>
 
-<div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-2 mb-4">
+<header class="flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-6">
   <div>
-    <h1 class="h3 mb-1">{{ detail.folio }}</h1>
-    <div class="text-muted small">{{ detail.tipo.nombre }}</div>
+    <h1 class="text-2xl font-semibold text-zinc-900 font-mono">{{ detail.folio }}</h1>
+    <p class="mt-1 text-sm text-zinc-500">{{ detail.tipo.nombre }}</p>
     {% if detail.atendida_por %}
-      <div class="text-muted small mt-1">
+      <p class="mt-1 text-sm text-zinc-500">
         Atendida por
-        <span class="fw-semibold text-body">{{ detail.atendida_por.full_name }}</span>
+        <span class="text-zinc-900 font-medium">{{ detail.atendida_por.full_name }}</span>
         ({{ detail.atendida_por.matricula }}) · {{ detail.atendida_por.taken_at|date:"d/m/Y H:i" }}
-      </div>
+      </p>
     {% endif %}
   </div>
-  <div class="d-flex align-items-center gap-2">
+  <div class="flex items-center gap-2">
     {% include "solicitudes/_partials/_estado_badge.html" with estado=detail.estado %}
     {% if detail.tipo.plantilla_id %}
-      <a class="btn btn-outline-secondary btn-sm"
-         href="{% url 'solicitudes:pdf_download' folio=detail.folio %}"
-         target="_blank" rel="noopener">
-        <i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i> Generar PDF
+      <a href="{% url 'solicitudes:pdf_download' folio=detail.folio %}"
+         target="_blank" rel="noopener"
+         class="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                hover:bg-zinc-50
+                focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+        {% lucide "file-text" class="size-3.5" %}<span>Generar PDF</span>
       </a>
     {% endif %}
   </div>
-</div>
+</header>
 
-<div class="row g-4">
-  <div class="col-12 col-lg-8">
-    <div class="card mb-4">
-      <div class="card-body">
-        <h2 class="h5 card-title">Datos de la solicitud</h2>
-        {% include "solicitudes/_partials/_valores_render.html" with snapshot=detail.form_snapshot valores=detail.valores %}
-      </div>
-    </div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+  <div class="lg:col-span-2 space-y-4">
+    <article class="rounded-lg border border-zinc-200 bg-white p-5">
+      <h2 class="text-sm font-semibold text-zinc-900 mb-4">Datos de la solicitud</h2>
+      {% include "solicitudes/_partials/_valores_render.html" with snapshot=detail.form_snapshot valores=detail.valores %}
+    </article>
 
-    <div class="card mb-4">
-      <div class="card-body">
-        <h2 class="h5 card-title">Archivos</h2>
-        {% include "solicitudes/_partials/_archivos.html" with archivos=archivos %}
-      </div>
-    </div>
+    <article class="rounded-lg border border-zinc-200 bg-white p-5">
+      <h2 class="text-sm font-semibold text-zinc-900 mb-4">Archivos</h2>
+      {% include "solicitudes/_partials/_archivos.html" with archivos=archivos %}
+    </article>
 
     {% if can_atender or can_finalizar or can_cancelar %}
-    <div class="card">
-      <div class="card-body">
-        <h2 class="h5 card-title">Acciones</h2>
+      <article class="rounded-lg border border-zinc-200 bg-white p-5">
+        <h2 class="text-sm font-semibold text-zinc-900 mb-4">Acciones</h2>
 
-        <div class="mb-3">
-          <label for="id_observaciones" class="form-label">Observaciones (opcional)</label>
-          <textarea id="id_observaciones" class="form-control"
-                    rows="3" maxlength="2000"
+        <div class="space-y-1.5 mb-4">
+          <label for="id_observaciones" class="block text-sm font-medium text-zinc-900">Observaciones (opcional)</label>
+          <textarea id="id_observaciones" rows="3" maxlength="2000" name="observaciones"
                     form="form-action"
-                    name="observaciones"
-                    placeholder="Notas para el solicitante o el historial."></textarea>
-          <div class="form-text">Se incluyen en el historial.</div>
+                    placeholder="Notas para el solicitante o el historial."
+                    class="block w-full px-3 py-2 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                           placeholder:text-zinc-400
+                           focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"></textarea>
+          <p class="text-xs text-zinc-500">Se incluyen en el historial.</p>
         </div>
 
-        <div class="d-flex flex-column flex-md-row gap-2">
+        <div class="flex flex-col md:flex-row gap-2">
           {% if can_atender %}
-          <form id="form-action" method="post"
-                action="{% url 'solicitudes:revision:take' folio=detail.folio %}"
-                class="d-grid d-md-inline">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-primary">
-              <i class="bi bi-play-fill me-1" aria-hidden="true"></i> Atender
-            </button>
-          </form>
+            <form id="form-action" method="post"
+                  action="{% url 'solicitudes:revision:take' folio=detail.folio %}">
+              {% csrf_token %}
+              <button type="submit"
+                      class="w-full md:w-auto inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-md bg-zinc-900 text-white text-sm font-medium
+                             hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+                {% lucide "play" class="size-4" %}<span>Atender</span>
+              </button>
+            </form>
           {% endif %}
 
           {% if can_finalizar %}
-          <form method="post"
-                action="{% url 'solicitudes:revision:finalize' folio=detail.folio %}"
-                class="d-grid d-md-inline"
-                onsubmit="this.querySelector('[name=observaciones]').value = document.getElementById('id_observaciones').value;">
-            {% csrf_token %}
-            <input type="hidden" name="observaciones" value="" />
-            <button type="submit" class="btn btn-success">
-              <i class="bi bi-check2 me-1" aria-hidden="true"></i> Finalizar
-            </button>
-          </form>
+            <form method="post"
+                  action="{% url 'solicitudes:revision:finalize' folio=detail.folio %}"
+                  onsubmit="this.querySelector('[name=observaciones]').value = document.getElementById('id_observaciones').value;">
+              {% csrf_token %}
+              <input type="hidden" name="observaciones" value="" />
+              <button type="submit"
+                      class="w-full md:w-auto inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-md bg-emerald-600 text-white text-sm font-medium
+                             hover:bg-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">
+                {% lucide "check" class="size-4" %}<span>Finalizar</span>
+              </button>
+            </form>
           {% endif %}
 
           {% if can_cancelar %}
-          <form method="post"
-                action="{% url 'solicitudes:revision:cancel' folio=detail.folio %}"
-                class="d-grid d-md-inline ms-md-auto"
-                onsubmit="if (!confirm('¿Cancelar esta solicitud?')) return false; this.querySelector('[name=observaciones]').value = document.getElementById('id_observaciones').value;">
-            {% csrf_token %}
-            <input type="hidden" name="observaciones" value="" />
-            <button type="submit" class="btn btn-outline-danger">
-              <i class="bi bi-x-circle me-1" aria-hidden="true"></i> Cancelar
-            </button>
-          </form>
+            <form method="post"
+                  action="{% url 'solicitudes:revision:cancel' folio=detail.folio %}"
+                  class="md:ml-auto"
+                  onsubmit="if (!confirm('¿Cancelar esta solicitud?')) return false; this.querySelector('[name=observaciones]').value = document.getElementById('id_observaciones').value;">
+              {% csrf_token %}
+              <input type="hidden" name="observaciones" value="" />
+              <button type="submit"
+                      class="w-full md:w-auto inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-md border border-red-300 bg-white text-sm text-red-700
+                             hover:bg-red-50
+                             focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+                {% lucide "circle-x" class="size-4" %}<span>Cancelar</span>
+              </button>
+            </form>
           {% endif %}
         </div>
-      </div>
-    </div>
+      </article>
     {% endif %}
   </div>
 
-  <div class="col-12 col-lg-4">
-    <div class="card mb-4">
-      <div class="card-body">
-        <h2 class="h6 card-title text-muted text-uppercase small mb-3">Solicitante</h2>
-        <div class="fw-semibold">
-          {{ detail.solicitante.full_name|default:detail.solicitante.matricula }}
-        </div>
-        <div class="small text-muted">Matrícula: {{ detail.solicitante.matricula }}</div>
-        {% if detail.solicitante.email %}
-        <div class="small mt-1">
-          <a href="mailto:{{ detail.solicitante.email }}">{{ detail.solicitante.email }}</a>
-        </div>
-        {% endif %}
-      </div>
-    </div>
+  <div class="space-y-4">
+    <article class="rounded-lg border border-zinc-200 bg-white p-5">
+      <h2 class="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-3">Solicitante</h2>
+      <p class="text-sm font-medium text-zinc-900">
+        {{ detail.solicitante.full_name|default:detail.solicitante.matricula }}
+      </p>
+      <p class="text-xs text-zinc-500">Matrícula: {{ detail.solicitante.matricula }}</p>
+      {% if detail.solicitante.email %}
+        <p class="mt-1 text-xs">
+          <a class="text-zinc-900 hover:underline underline-offset-2" href="mailto:{{ detail.solicitante.email }}">{{ detail.solicitante.email }}</a>
+        </p>
+      {% endif %}
+    </article>
 
-    <div class="card">
-      <div class="card-body">
-        <h2 class="h5 card-title">Historial</h2>
-        {% include "solicitudes/_partials/_historial.html" with historial=detail.historial %}
-      </div>
-    </div>
+    <article class="rounded-lg border border-zinc-200 bg-white p-5">
+      <h2 class="text-sm font-semibold text-zinc-900 mb-4">Historial</h2>
+      {% include "solicitudes/_partials/_historial.html" with historial=detail.historial %}
+    </article>
   </div>
 </div>
 {% endblock %}

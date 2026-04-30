@@ -1,0 +1,22 @@
+{% comment %}
+Chip-style multi-value input. The visible row of pills + free-text entry; the
+real value is stored in a hidden input that the caller wires up (form field
+name, initial CSV value, JS keeps them in sync).
+
+Args:
+  name           hidden input name (e.g. "options_csv")
+  id             hidden input id (also drives -chips and -text suffixed children)
+  value          initial CSV string
+  placeholder    free-text placeholder
+  aria_label     accessible label for the chip group
+{% endcomment %}
+<div class="rounded-md border border-zinc-300 bg-white px-2 py-1.5 flex flex-wrap items-center gap-1.5
+            focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-zinc-900"
+     role="group" aria-label="{{ aria_label|default:'Lista de opciones' }}"
+     data-chip-input-for="{{ id }}">
+  <input type="text"
+         id="{{ id }}-text"
+         class="chip-input-text border-0 outline-none flex-1 min-w-32 py-1 px-1 text-sm placeholder:text-zinc-400"
+         placeholder="{{ placeholder|default:'Escribe y presiona Enter' }}" />
+</div>
+<input type="hidden" name="{{ name }}" id="{{ id }}" value="{{ value|default:'' }}" />

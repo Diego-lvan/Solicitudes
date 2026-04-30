@@ -17,7 +17,7 @@ services:
     build:
       context: .
       target: runtime
-    command: python manage.py runserver 0.0.0.0:8000
+    command: ["sh", "-c", "tailwindcss -i /app/static/css/app.css -o /app/static/css/app.build.css --watch=always & python manage.py runserver 0.0.0.0:8000"]
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.dev
       SECRET_KEY: dev-only-change-me

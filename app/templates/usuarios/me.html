@@ -1,70 +1,66 @@
 {% extends "base.html" %}
-{% load role_display %}
+{% load lucide role_display %}
 
 {% block title %}Mi perfil · {{ block.super }}{% endblock %}
 
 {% block content %}
-<section class="row justify-content-center">
-  <div class="col-12 col-md-10 col-lg-8">
-    <h1 class="h3 mb-4">Mi perfil</h1>
+<section class="max-w-3xl mx-auto">
+  <h1 class="text-2xl font-semibold text-zinc-900 mb-6">Mi perfil</h1>
 
-    <div class="card mb-3">
-      <div class="card-body d-flex flex-column flex-md-row align-items-md-center gap-3">
-        <div class="d-inline-flex justify-content-center align-items-center rounded-circle bg-primary-subtle text-primary fw-semibold flex-shrink-0"
-             style="width:4rem;height:4rem;font-size:1.5rem;">
-          {{ user.matricula|slice:":1"|upper }}
-        </div>
-        <div class="flex-grow-1">
-          <div class="h5 mb-1">{{ user.full_name|default:user.matricula }}</div>
-          <div class="d-flex flex-wrap gap-2 align-items-center">
-            <span class="badge text-bg-secondary">{{ user.role|role_label }}</span>
-            <span class="text-muted small">{{ user.email }}</span>
-          </div>
-        </div>
+  <article class="rounded-lg border border-zinc-200 bg-white p-5 mb-4 flex items-center gap-4">
+    <div class="shrink-0 inline-flex items-center justify-center size-16 rounded-full bg-zinc-100 text-zinc-700 text-xl font-semibold">
+      {{ user.matricula|slice:":1"|upper }}
+    </div>
+    <div class="flex-1 min-w-0">
+      <h2 class="text-lg font-semibold text-zinc-900">{{ user.full_name|default:user.matricula }}</h2>
+      <div class="mt-1 flex flex-wrap gap-2 items-center">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200">
+          {{ user.role|role_label }}
+        </span>
+        <span class="text-xs text-zinc-500">{{ user.email }}</span>
       </div>
     </div>
+  </article>
 
-    <div class="card">
-      <div class="card-body">
-        <h2 class="h6 text-muted text-uppercase mb-3" style="letter-spacing:.05em;">
-          Identidad académica
-        </h2>
-        <dl class="row mb-0">
-          <dt class="col-sm-4 col-md-3">Matrícula</dt>
-          <dd class="col-sm-8 col-md-9 font-monospace">{{ user.matricula }}</dd>
+  <article class="rounded-lg border border-zinc-200 bg-white p-5">
+    <h3 class="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-4">Identidad académica</h3>
+    <dl class="grid grid-cols-1 sm:grid-cols-[10rem_1fr] gap-y-3 gap-x-6 text-sm">
+      <dt class="text-zinc-500">Matrícula</dt>
+      <dd class="text-zinc-900 font-mono">{{ user.matricula }}</dd>
 
-          <dt class="col-sm-4 col-md-3">Correo</dt>
-          <dd class="col-sm-8 col-md-9">{{ user.email }}</dd>
+      <dt class="text-zinc-500">Correo</dt>
+      <dd class="text-zinc-900">{{ user.email }}</dd>
 
-          <dt class="col-sm-4 col-md-3">Rol</dt>
-          <dd class="col-sm-8 col-md-9">
-            <span class="badge text-bg-secondary">{{ user.role|role_label }}</span>
-            <span class="text-muted small ms-2 font-monospace">{{ user.role.value }}</span>
-          </dd>
+      <dt class="text-zinc-500">Rol</dt>
+      <dd class="text-zinc-900 flex items-center gap-2">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200">
+          {{ user.role|role_label }}
+        </span>
+        <span class="text-xs text-zinc-500 font-mono">{{ user.role.value }}</span>
+      </dd>
 
-          <dt class="col-sm-4 col-md-3">Nombre</dt>
-          <dd class="col-sm-8 col-md-9">{{ user.full_name|default:"—" }}</dd>
+      <dt class="text-zinc-500">Nombre</dt>
+      <dd class="text-zinc-900">{{ user.full_name|default:"—" }}</dd>
 
-          <dt class="col-sm-4 col-md-3">Programa</dt>
-          <dd class="col-sm-8 col-md-9">{{ user.programa|default:"—" }}</dd>
+      <dt class="text-zinc-500">Programa</dt>
+      <dd class="text-zinc-900">{{ user.programa|default:"—" }}</dd>
 
-          <dt class="col-sm-4 col-md-3">Semestre</dt>
-          <dd class="col-sm-8 col-md-9">{{ user.semestre|default:"—" }}</dd>
-        </dl>
-        <p class="text-muted small mt-3 mb-0">
-          <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
-          La información proviene del proveedor de autenticación y de SIGA. Para corregir
-          algún dato, contacta al área de Control Escolar.
-        </p>
-      </div>
-    </div>
+      <dt class="text-zinc-500">Semestre</dt>
+      <dd class="text-zinc-900">{{ user.semestre|default:"—" }}</dd>
+    </dl>
+    <p class="mt-4 text-xs text-zinc-500 flex items-start gap-1.5">
+      {% lucide "info" class="size-3.5 mt-0.5 shrink-0" %}
+      <span>La información proviene del proveedor de autenticación y de SIGA. Para corregir algún dato, contacta al área de Control Escolar.</span>
+    </p>
+  </article>
 
-    <div class="mt-4 d-flex justify-content-end">
-      <a href="{% url 'usuarios:logout' %}" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i>
-        Cerrar sesión
-      </a>
-    </div>
+  <div class="mt-6 flex justify-end">
+    <a href="{% url 'usuarios:logout' %}"
+       class="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+              hover:bg-zinc-50
+              focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+      {% lucide "log-out" class="size-4" %}<span>Cerrar sesión</span>
+    </a>
   </div>
 </section>
 {% endblock %}

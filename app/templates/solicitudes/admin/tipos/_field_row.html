@@ -1,84 +1,93 @@
 {% comment %}
 One row of the dynamic-fields formset. Cloned by tipo_form.js for new rows.
-Card has two halves:
-  - .field-row-header — always visible: drag handle, label/type summary,
-    up/down/expand/delete controls.
-  - .field-row-body — collapsible; holds the editable fields.
+The class hooks (.field-row, .field-row-toggle, .field-row-caret,
+.field-label-input, .field-row-summary-label, .field-row-summary-type,
+.field-drag-handle, .field-move-up, .field-move-down, .field-row-delete-btn,
+.chip-input, .chip-input-text, .chip-options-cell, .ext-multiselect,
+.ext-multiselect-cell, .ext-check, .ext-custom-group, [data-shows-for],
+[data-hide-when-auto-fill]) are JS-load-bearing — do not rename.
 {% endcomment %}
-<div class="card mb-2 field-row" data-form-index="{{ form.prefix }}">
-  <div class="card-header bg-white d-flex align-items-center gap-2 field-row-header">
+{% load lucide tipos_tags %}
+<div class="field-row rounded-lg border border-zinc-200 bg-white" data-form-index="{{ form.prefix }}">
+  <div class="field-row-header flex items-center gap-2 px-3 py-2 border-b border-transparent transition-colors">
     <button type="button"
-            class="btn btn-sm btn-link text-secondary p-1 field-drag-handle"
+            class="field-drag-handle inline-flex items-center justify-center size-7 rounded text-zinc-400 hover:text-zinc-700 cursor-grab active:cursor-grabbing"
             aria-label="Reordenar arrastrando"
             tabindex="-1">
-      <i class="bi bi-grip-vertical fs-5" aria-hidden="true"></i>
+      {% lucide "grip-vertical" class="size-4" %}
     </button>
 
     <button type="button"
-            class="btn btn-sm btn-link text-decoration-none text-body p-0 flex-grow-1 d-flex align-items-center gap-2 text-start field-row-toggle"
+            class="field-row-toggle flex-1 inline-flex items-center gap-2 px-1 py-1 rounded text-left min-w-0
+                   hover:bg-zinc-50
+                   focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
             aria-expanded="true"
             aria-controls="field-body-{{ form.prefix }}">
-      <i class="bi bi-chevron-down field-row-caret" aria-hidden="true"></i>
-      <span class="field-row-summary-label fw-medium text-truncate">
+      <span class="field-row-caret inline-flex items-center justify-center size-4 text-zinc-500">
+        {% lucide "chevron-down" class="size-4" %}
+      </span>
+      <span class="field-row-summary-label flex-1 min-w-0 truncate text-sm font-medium text-zinc-900">
         {{ form.label.value|default:"Campo sin etiqueta" }}
       </span>
-      <span class="badge text-bg-light border field-row-summary-type">
+      <span class="field-row-summary-type inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200">
         {{ form.field_type.value|default:"TEXT" }}
       </span>
     </button>
 
-    <div class="btn-group btn-group-sm" role="group" aria-label="Reordenar">
-      <button type="button" class="btn btn-outline-secondary field-move-up" aria-label="Subir campo">
-        <i class="bi bi-chevron-up" aria-hidden="true"></i>
+    <div class="inline-flex" role="group" aria-label="Reordenar">
+      <button type="button"
+              class="field-move-up inline-flex items-center justify-center size-8 border border-zinc-300 bg-white text-zinc-700 rounded-l-md hover:bg-zinc-50
+                     focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+              aria-label="Subir campo">
+        {% lucide "chevron-up" class="size-4" %}
       </button>
-      <button type="button" class="btn btn-outline-secondary field-move-down" aria-label="Bajar campo">
-        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+      <button type="button"
+              class="field-move-down inline-flex items-center justify-center size-8 border-y border-r border-zinc-300 bg-white text-zinc-700 rounded-r-md hover:bg-zinc-50
+                     focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+              aria-label="Bajar campo">
+        {% lucide "chevron-down" class="size-4" %}
       </button>
     </div>
 
     <button type="button"
-            class="btn btn-sm btn-outline-danger field-row-delete-btn"
+            class="field-row-delete-btn inline-flex items-center justify-center size-8 border border-red-300 bg-white text-red-700 rounded-md hover:bg-red-50
+                   focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
             aria-label="Eliminar este campo">
-      <i class="bi bi-trash" aria-hidden="true"></i>
+      {% lucide "trash-2" class="size-4" %}
     </button>
   </div>
 
-  <div class="card-body field-row-body" id="field-body-{{ form.prefix }}">
+  <div class="field-row-body px-4 py-4" id="field-body-{{ form.prefix }}">
     {{ form.field_id }}
     {{ form.order }}
 
-    <div class="row g-3">
-      <div class="col-12 col-md-7">
-        <label for="{{ form.label.id_for_label }}" class="form-label">
-          Etiqueta <span class="text-danger" aria-hidden="true">*</span>
+    <div class="grid grid-cols-12 gap-4">
+      <div class="col-span-12 md:col-span-7 space-y-1.5">
+        <label for="{{ form.label.id_for_label }}" class="block text-sm font-medium text-zinc-900">
+          Etiqueta <span class="text-red-600 ml-0.5" aria-hidden="true">*</span>
         </label>
-        <input
-          type="text"
-          name="{{ form.label.html_name }}"
-          id="{{ form.label.id_for_label }}"
-          value="{{ form.label.value|default_if_none:'' }}"
-          class="form-control field-label-input"
-          maxlength="120"
-          required
-        />
-        {% if form.label.errors %}
-          <div class="invalid-feedback d-block" role="alert">{{ form.label.errors.0 }}</div>
-        {% endif %}
+        <input type="text"
+               name="{{ form.label.html_name }}"
+               id="{{ form.label.id_for_label }}"
+               value="{{ form.label.value|default_if_none:'' }}"
+               class="field-label-input block w-full h-10 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+               maxlength="120"
+               required />
+        {% if form.label.errors %}<p class="text-xs text-red-600" role="alert">{{ form.label.errors.0 }}</p>{% endif %}
       </div>
 
-      <div class="col-12 col-md-3">
-        <label for="{{ form.field_type.id_for_label }}" class="form-label">Tipo</label>
+      <div class="col-span-12 md:col-span-3 space-y-1.5">
+        <label for="{{ form.field_type.id_for_label }}" class="block text-sm font-medium text-zinc-900">Tipo</label>
         {{ form.field_type }}
-        {% if form.field_type.errors %}
-          <div class="invalid-feedback d-block" role="alert">{{ form.field_type.errors.0 }}</div>
-        {% endif %}
+        {% if form.field_type.errors %}<p class="text-xs text-red-600" role="alert">{{ form.field_type.errors.0 }}</p>{% endif %}
       </div>
 
-      <div class="col-12 col-md-2 d-flex align-items-end">
-        <div class="form-check">
+      <div class="col-span-12 md:col-span-2 flex items-end">
+        <label class="inline-flex items-center gap-2 text-sm text-zinc-900 cursor-pointer">
           {{ form.required }}
-          <label class="form-check-label" for="{{ form.required.id_for_label }}">Obligatorio</label>
-        </div>
+          <span>Obligatorio</span>
+        </label>
       </div>
 
       {% comment %}
@@ -86,38 +95,39 @@ Card has two halves:
       `options_csv` input below is hidden but still posted; the JS keeps it
       in sync with the chips.
       {% endcomment %}
-      <div class="col-12 col-md-6 chip-options-cell" data-shows-for="SELECT" data-options-for="{{ form.options_csv.id_for_label }}">
-        <label class="form-label">Opciones del SELECT</label>
-        <div class="chip-input" role="group" aria-label="Opciones del menú desplegable">
-          <input type="text" class="chip-input-text" placeholder="Escribe una opción y presiona Enter" />
+      <div class="chip-options-cell col-span-12 md:col-span-6 space-y-1.5"
+           data-shows-for="SELECT" data-options-for="{{ form.options_csv.id_for_label }}">
+        <label class="block text-sm font-medium text-zinc-900">Opciones del SELECT</label>
+        <div class="chip-input rounded-md border border-zinc-300 bg-white px-2 py-1.5 flex flex-wrap items-center gap-1.5
+                    focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-zinc-900"
+             role="group" aria-label="Opciones del menú desplegable">
+          <input type="text" class="chip-input-text border-0 outline-none flex-1 min-w-32 py-1 px-1 text-sm placeholder:text-zinc-400" placeholder="Escribe una opción y presiona Enter" />
         </div>
-        <div class="form-text">Presiona Enter o coma para agregar. La vista previa de la derecha se actualiza al instante.</div>
-        <div class="d-none">{{ form.options_csv }}</div>
-        {% if form.options_csv.errors %}
-          <div class="invalid-feedback d-block" role="alert">{{ form.options_csv.errors.0 }}</div>
-        {% endif %}
+        <p class="text-xs text-zinc-500">Presiona Enter o coma para agregar. La vista previa de la derecha se actualiza al instante.</p>
+        <div class="hidden">{{ form.options_csv }}</div>
+        {% if form.options_csv.errors %}<p class="text-xs text-red-600" role="alert">{{ form.options_csv.errors.0 }}</p>{% endif %}
       </div>
 
-      {% load tipos_tags %}
       {% common_file_extensions as ext_groups %}
-      <div class="col-12 col-md-6 ext-multiselect-cell"
+      <div class="ext-multiselect-cell col-span-12 md:col-span-6 space-y-1.5"
            data-shows-for="FILE"
            data-options-for="{{ form.accepted_extensions_csv.id_for_label }}">
-        <label class="form-label">Extensiones aceptadas (FILE)</label>
-        <div class="border rounded p-2 bg-light-subtle ext-multiselect">
+        <label class="block text-sm font-medium text-zinc-900">Extensiones aceptadas (FILE)</label>
+        <div class="ext-multiselect rounded-md border border-zinc-300 bg-zinc-50 p-3">
           {% for group_label, exts in ext_groups %}
-            <div class="ext-group {% if not forloop.first %}mt-2{% endif %}">
-              <div class="text-muted text-uppercase small fw-semibold mb-1"
-                   style="letter-spacing:.05em;">{{ group_label }}</div>
-              <div class="d-flex flex-wrap gap-1">
+            <div class="ext-group {% if not forloop.first %}mt-3{% endif %}">
+              <p class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 mb-1">{{ group_label }}</p>
+              <div class="flex flex-wrap gap-1">
                 {% for ext in exts %}
                   <input type="checkbox"
-                         class="btn-check ext-check"
+                         class="btn-check ext-check sr-only peer"
                          id="ext-{{ form.prefix }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"
                          data-ext="{{ ext }}"
                          autocomplete="off" />
-                  <label class="btn btn-sm btn-outline-secondary"
-                         for="ext-{{ form.prefix }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
+                  <label for="ext-{{ form.prefix }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"
+                         class="inline-flex items-center h-7 px-2 rounded-md border border-zinc-300 bg-white text-xs text-zinc-700 cursor-pointer
+                                hover:bg-zinc-100
+                                peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900">
                     {{ ext }}
                   </label>
                 {% endfor %}
@@ -125,27 +135,21 @@ Card has two halves:
             </div>
           {% endfor %}
         </div>
-        <div class="form-text">Selecciona uno o más tipos de archivo permitidos.</div>
-        <div class="d-none">{{ form.accepted_extensions_csv }}</div>
-        {% if form.accepted_extensions_csv.errors %}
-          <div class="invalid-feedback d-block" role="alert">{{ form.accepted_extensions_csv.errors.0 }}</div>
-        {% endif %}
+        <p class="text-xs text-zinc-500">Selecciona uno o más tipos de archivo permitidos.</p>
+        <div class="hidden">{{ form.accepted_extensions_csv }}</div>
+        {% if form.accepted_extensions_csv.errors %}<p class="text-xs text-red-600" role="alert">{{ form.accepted_extensions_csv.errors.0 }}</p>{% endif %}
       </div>
 
-      <div class="col-6 col-md-3 size-mb-cell" data-shows-for="FILE">
-        <label for="{{ form.max_size_mb.id_for_label }}" class="form-label">Tamaño máx. (MB)</label>
+      <div class="size-mb-cell col-span-6 md:col-span-3 space-y-1.5" data-shows-for="FILE">
+        <label for="{{ form.max_size_mb.id_for_label }}" class="block text-sm font-medium text-zinc-900">Tamaño máx. (MB)</label>
         {{ form.max_size_mb }}
-        {% if form.max_size_mb.help_text %}
-          <div class="form-text">{{ form.max_size_mb.help_text }}</div>
-        {% endif %}
+        {% if form.max_size_mb.help_text %}<p class="text-xs text-zinc-500">{{ form.max_size_mb.help_text }}</p>{% endif %}
       </div>
 
-      <div class="col-6 col-md-3 max-chars-cell" data-shows-for="TEXT,TEXTAREA" data-hide-when-auto-fill>
-        <label for="{{ form.max_chars.id_for_label }}" class="form-label">Largo máx. (caracteres)</label>
+      <div class="max-chars-cell col-span-6 md:col-span-3 space-y-1.5" data-shows-for="TEXT,TEXTAREA" data-hide-when-auto-fill>
+        <label for="{{ form.max_chars.id_for_label }}" class="block text-sm font-medium text-zinc-900">Largo máx. (caracteres)</label>
         {{ form.max_chars }}
-        {% if form.max_chars.help_text %}
-          <div class="form-text">{{ form.max_chars.help_text }}</div>
-        {% endif %}
+        {% if form.max_chars.help_text %}<p class="text-xs text-zinc-500">{{ form.max_chars.help_text }}</p>{% endif %}
       </div>
 
       {% comment %}
@@ -154,43 +158,33 @@ Card has two halves:
       The form-clean layer also resets stale values to USER_INPUT, so toggling
       type after picking a source can never persist an inconsistent pair.
       {% endcomment %}
-      <div class="col-12 col-md-6 source-cell" data-shows-for="TEXT,NUMBER">
-        <label for="{{ form.source.id_for_label }}" class="form-label">{{ form.source.label }}</label>
+      <div class="source-cell col-span-12 md:col-span-6 space-y-1.5" data-shows-for="TEXT,NUMBER">
+        <label for="{{ form.source.id_for_label }}" class="block text-sm font-medium text-zinc-900">{{ form.source.label }}</label>
         {{ form.source }}
-        {% if form.source.help_text %}
-          <div class="form-text">{{ form.source.help_text }}</div>
-        {% endif %}
-        {% if form.source.errors %}
-          <div class="invalid-feedback d-block" role="alert">{{ form.source.errors.0 }}</div>
-        {% endif %}
+        {% if form.source.help_text %}<p class="text-xs text-zinc-500">{{ form.source.help_text }}</p>{% endif %}
+        {% if form.source.errors %}<p class="text-xs text-red-600" role="alert">{{ form.source.errors.0 }}</p>{% endif %}
       </div>
 
-      <div class="col-12 col-md-9 placeholder-cell" data-hide-when-auto-fill>
-        <label for="{{ form.placeholder.id_for_label }}" class="form-label">{{ form.placeholder.label }}</label>
+      <div class="placeholder-cell col-span-12 md:col-span-9 space-y-1.5" data-hide-when-auto-fill>
+        <label for="{{ form.placeholder.id_for_label }}" class="block text-sm font-medium text-zinc-900">{{ form.placeholder.label }}</label>
         {{ form.placeholder }}
-        {% if form.placeholder.help_text %}
-          <div class="form-text">{{ form.placeholder.help_text }}</div>
-        {% endif %}
+        {% if form.placeholder.help_text %}<p class="text-xs text-zinc-500">{{ form.placeholder.help_text }}</p>{% endif %}
       </div>
 
-      <div class="col-12 help-text-cell" data-hide-when-auto-fill>
-        <label for="{{ form.help_text.id_for_label }}" class="form-label">{{ form.help_text.label }}</label>
+      <div class="help-text-cell col-span-12 space-y-1.5" data-hide-when-auto-fill>
+        <label for="{{ form.help_text.id_for_label }}" class="block text-sm font-medium text-zinc-900">{{ form.help_text.label }}</label>
         {{ form.help_text }}
       </div>
 
       {# DELETE checkbox kept off-screen; the trash button in the header drives it. #}
       {% if form.DELETE %}
-        <div class="d-none">
-          {{ form.DELETE }}
-        </div>
+        <div class="hidden">{{ form.DELETE }}</div>
       {% endif %}
 
       {% if form.non_field_errors %}
-      <div class="col-12">
-        <div class="alert alert-danger mb-0" role="alert">
-          {{ form.non_field_errors }}
+        <div class="col-span-12">
+          {% include "components/alert.html" with variant="danger" message=form.non_field_errors %}
         </div>
-      </div>
       {% endif %}
     </div>
   </div>

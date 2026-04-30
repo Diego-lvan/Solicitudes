@@ -1,0 +1,32 @@
+{% comment %}
+Dropdown menu (Alpine-driven; click-outside closes).
+
+SAFETY: `trigger_html` and `body_html` are rendered with `|safe`. Callers MUST
+pre-escape any user-controlled text threaded into these slots — passing raw
+form data here is an XSS sink. Render trusted HTML (your own template
+fragments, hard-coded markup) only.
+
+Args:
+  trigger_html   raw HTML for the trigger element (TRUSTED)
+  body_html      raw HTML for the menu items, each <a> or <button> (TRUSTED)
+  align          left | right (default: right; controls menu alignment)
+  width          extra Tailwind width utility (default: w-56)
+{% endcomment %}
+<div x-data="{ open: false }" class="relative inline-block">
+  <div @click="open = !open" @keydown.escape.window="open = false">
+    {{ trigger_html|safe }}
+  </div>
+  <div x-cloak x-show="open" @click.outside="open = false"
+       x-transition:enter="transition ease-out duration-100"
+       x-transition:enter-start="opacity-0 scale-95"
+       x-transition:enter-end="opacity-100 scale-100"
+       x-transition:leave="transition ease-in duration-75"
+       x-transition:leave-start="opacity-100 scale-100"
+       x-transition:leave-end="opacity-0 scale-95"
+       role="menu"
+       class="absolute z-30 mt-1 {{ width|default:'w-56' }}
+              {% if align == 'left' %}left-0{% else %}right-0{% endif %}
+              rounded-md border border-zinc-200 bg-white shadow-md py-1">
+    {{ body_html|safe }}
+  </div>
+</div>

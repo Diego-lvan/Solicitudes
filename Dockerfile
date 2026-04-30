@@ -44,8 +44,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         fonts-dejavu \
         fonts-liberation \
         libpq5 \
+        curl \
+        ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --shell /bin/bash app
+
+# Tailwind standalone CLI binary (no Node required).
+ARG TAILWIND_VERSION=4.2.4
+ARG TARGETARCH
+RUN case "${TARGETARCH}" in \
+        amd64) TW_ARCH=x64 ;; \
+        arm64) TW_ARCH=arm64 ;; \
+        *) echo "Unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac \
+    && curl -sSL -o /usr/local/bin/tailwindcss \
+        "https://github.com/tailwindlabs/tailwindcss/releases/download/v${TAILWIND_VERSION}/tailwindcss-linux-${TW_ARCH}" \
+    && chmod +x /usr/local/bin/tailwindcss
 
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin

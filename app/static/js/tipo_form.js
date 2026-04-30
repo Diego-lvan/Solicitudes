@@ -54,14 +54,9 @@
     row.classList.toggle("is-open", open);
     const toggle = row.querySelector(".field-row-toggle");
     if (toggle) toggle.setAttribute("aria-expanded", open ? "true" : "false");
-    // Swap the actual icon class so the visual state survives even if CSS
-    // transforms are disabled (a pure rotate would mislead users in that
-    // edge case — flagged by the post-UX code review).
-    const caret = row.querySelector(".field-row-caret");
-    if (caret) {
-      caret.classList.toggle("bi-chevron-down", open);
-      caret.classList.toggle("bi-chevron-right", !open);
-    }
+    // The caret is a single Lucide chevron-down. Collapsed state rotates it
+    // -90° via CSS in app.css (`.field-row:not(.is-open) .field-row-caret`),
+    // which rotates the wrapper span and the inlined SVG inside it together.
   }
 
   function initToggle(row) {
@@ -88,7 +83,8 @@
       if (summaryLabel) {
         const v = (labelInput?.value || "").trim();
         summaryLabel.textContent = v || "Campo sin etiqueta";
-        summaryLabel.classList.toggle("text-muted", !v);
+        summaryLabel.classList.toggle("text-zinc-500", !v);
+        summaryLabel.classList.toggle("text-zinc-900", !!v);
       }
       if (summaryType && typeSelect) {
         summaryType.textContent = typeSelect.value || "TEXT";
@@ -217,12 +213,13 @@
 
     function insertChip(value) {
       const chip = document.createElement("span");
-      chip.className = "chip";
+      chip.className = "chip inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full bg-zinc-100 text-zinc-800 text-xs border border-zinc-200";
       const label = document.createElement("span");
       label.className = "chip-label";
       label.textContent = value;
       const remove = document.createElement("button");
       remove.type = "button";
+      remove.className = "ml-0.5 inline-flex items-center justify-center size-4 rounded-full text-zinc-500 hover:text-red-700 hover:bg-zinc-200";
       remove.setAttribute("aria-label", `Quitar ${value}`);
       remove.textContent = "×";
       remove.addEventListener("click", (e) => {
@@ -371,14 +368,16 @@
         const id = `ext-custom-${cell.dataset.optionsFor}-${i}`;
         const cb = document.createElement("input");
         cb.type = "checkbox";
-        cb.className = "btn-check ext-check";
+        cb.className = "btn-check ext-check sr-only peer";
         cb.id = id;
         cb.dataset.ext = ext;
         cb.autocomplete = "off";
         cb.checked = true;
         cb.addEventListener("change", onChange);
         const lbl = document.createElement("label");
-        lbl.className = "btn btn-sm btn-outline-secondary";
+        lbl.className =
+          "inline-flex items-center h-7 px-2 rounded-md border border-zinc-300 bg-white text-xs text-zinc-700 cursor-pointer " +
+          "hover:bg-zinc-100 peer-checked:bg-zinc-900 peer-checked:text-white peer-checked:border-zinc-900";
         lbl.setAttribute("for", id);
         lbl.textContent = ext;
         customHost.appendChild(cb);
@@ -390,15 +389,16 @@
 
     function buildCustomGroup() {
       const wrap = document.createElement("div");
-      wrap.className = "ext-group ext-custom-group mt-2";
+      wrap.className = "ext-group ext-custom-group mt-3";
       wrap.hidden = true;
-      const heading = document.createElement("div");
-      heading.className = "text-muted text-uppercase small fw-semibold mb-1";
-      heading.style.letterSpacing = ".05em";
+      const heading = document.createElement("p");
+      heading.className = "text-[11px] uppercase tracking-wider font-semibold text-zinc-500 mb-1";
       heading.textContent = "Personalizadas";
       wrap.appendChild(heading);
       const flex = document.createElement("div");
-      flex.className = "d-flex flex-wrap gap-1";
+      // The `.d-flex` class is JS-load-bearing — `customWrap.querySelector('.d-flex')`
+      // looks it up later. Visual layout is handled by the Tailwind utilities.
+      flex.className = "d-flex flex flex-wrap gap-1";
       wrap.appendChild(flex);
       groupsHost.appendChild(wrap);
       return wrap;
@@ -491,14 +491,17 @@
     wrap.className = "tipo-preview-field";
 
     const label = document.createElement("label");
-    label.className = "form-label";
+    label.className = "block text-sm font-medium text-zinc-900 mb-1";
     const id = `preview-field-${idx}`;
     label.setAttribute("for", id);
     label.textContent = state.label || "Campo sin etiqueta";
-    if (!state.label) label.classList.add("text-muted");
+    if (!state.label) {
+      label.classList.remove("text-zinc-900");
+      label.classList.add("text-zinc-500");
+    }
     if (state.required) {
       const star = document.createElement("span");
-      star.className = "tipo-preview-required-mark";
+      star.className = "text-red-600 ml-0.5";
       star.setAttribute("aria-hidden", "true");
       star.textContent = "*";
       label.appendChild(star);
@@ -510,34 +513,44 @@
     // which fields the alumno will *not* see as form controls.
     if (state.source && state.source !== "USER_INPUT") {
       const pill = document.createElement("span");
-      pill.className = "badge text-bg-light border";
+      pill.className = "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200";
       const variant = state.source.replace(/^USER_/, "").toLowerCase();
       pill.textContent = `Auto · ${variant}`;
       wrap.appendChild(pill);
       return wrap;
     }
 
+    const inputCls =
+      "block w-full h-10 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900 " +
+      "placeholder:text-zinc-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900";
+    const taCls =
+      "block w-full px-3 py-2 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900 " +
+      "placeholder:text-zinc-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900";
+    const selCls =
+      "block w-full h-10 px-3 pr-8 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900 " +
+      "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900";
+
     let control;
     switch (state.type) {
       case "TEXTAREA":
         control = document.createElement("textarea");
-        control.className = "form-control";
+        control.className = taCls;
         control.rows = 3;
         if (state.maxChars) control.maxLength = state.maxChars;
         break;
       case "NUMBER":
         control = document.createElement("input");
         control.type = "number";
-        control.className = "form-control";
+        control.className = inputCls;
         break;
       case "DATE":
         control = document.createElement("input");
         control.type = "date";
-        control.className = "form-control";
+        control.className = inputCls;
         break;
       case "SELECT": {
         control = document.createElement("select");
-        control.className = "form-select";
+        control.className = selCls;
         const placeholderOpt = document.createElement("option");
         placeholderOpt.textContent = "Selecciona una opción";
         placeholderOpt.disabled = true;
@@ -553,7 +566,7 @@
       case "FILE":
         control = document.createElement("input");
         control.type = "file";
-        control.className = "form-control";
+        control.className = "block w-full text-sm text-zinc-700";
         if (state.extensions.length) {
           control.accept = state.extensions.join(",");
         }
@@ -562,7 +575,7 @@
       default:
         control = document.createElement("input");
         control.type = "text";
-        control.className = "form-control";
+        control.className = inputCls;
         if (state.maxChars) control.maxLength = state.maxChars;
     }
     control.id = id;
@@ -575,8 +588,8 @@
     wrap.appendChild(control);
 
     if (state.helpText) {
-      const help = document.createElement("div");
-      help.className = "form-text";
+      const help = document.createElement("p");
+      help.className = "mt-1 text-xs text-zinc-500";
       help.textContent = state.helpText;
       wrap.appendChild(help);
     }
@@ -588,17 +601,17 @@
     previewBody.innerHTML = "";
 
     const heading = document.createElement("div");
-    heading.className = "mb-3";
-    const h = document.createElement("div");
-    h.className = "fw-semibold";
+    heading.className = "mb-4";
+    const h = document.createElement("p");
+    h.className = "font-semibold";
     const nombre = (tipoNombreInput?.value || "").trim();
     h.textContent = nombre || "Nuevo tipo de solicitud";
-    if (!nombre) h.classList.add("text-muted");
+    h.classList.add(nombre ? "text-zinc-900" : "text-zinc-500");
     heading.appendChild(h);
     const desc = (tipoDescInput?.value || "").trim();
     if (desc) {
-      const d = document.createElement("div");
-      d.className = "small text-muted";
+      const d = document.createElement("p");
+      d.className = "text-xs text-zinc-500 mt-0.5";
       d.textContent = desc;
       heading.appendChild(d);
     }
@@ -608,12 +621,15 @@
     const states = rows.map(readRowState).filter(Boolean);
     if (!states.length) {
       const empty = document.createElement("p");
-      empty.className = "tipo-preview-empty mb-0";
+      empty.className = "text-sm text-zinc-500 italic";
       empty.textContent = "Agrega un campo para ver la vista previa.";
       previewBody.appendChild(empty);
       return;
     }
-    states.forEach((s, i) => previewBody.appendChild(renderField(s, i)));
+    const list = document.createElement("div");
+    list.className = "space-y-4";
+    states.forEach((s, i) => list.appendChild(renderField(s, i)));
+    previewBody.appendChild(list);
   }
 
   function initLivePreview() {

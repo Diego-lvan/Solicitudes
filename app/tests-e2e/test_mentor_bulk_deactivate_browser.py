@@ -37,7 +37,7 @@ def _ensure_screenshot_dir() -> None:
 
 def _login_as(page: Page, base: str, matricula: str) -> None:
     page.goto(f"{base}/auth/dev-login")
-    row = page.locator("li.list-group-item").filter(has_text=matricula).first
+    row = page.locator("li").filter(has_text=matricula).first
     row.get_by_role("button", name="Entrar").click()
     page.wait_for_load_state("networkidle")
 

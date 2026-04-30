@@ -1,66 +1,60 @@
 {% extends "base.html" %}
+{% load lucide %}
 
 {% block title %}Mentor {{ matricula }} · {{ block.super }}{% endblock %}
 
 {% block content %}
-<nav aria-label="breadcrumb" class="mb-3">
-  <ol class="breadcrumb mb-0">
-    <li class="breadcrumb-item">
-      <a href="{% url 'mentores:list' %}">Catálogo</a>
-    </li>
-    <li class="breadcrumb-item active" aria-current="page">{{ matricula }}</li>
-  </ol>
-</nav>
+{% include "components/breadcrumbs.html" with items=breadcrumbs %}
 
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-  <h1 class="h3 mb-0">
-    Historial del mentor
-    <span class="font-monospace">{{ matricula }}</span>
+<header class="flex flex-wrap justify-between items-center gap-3 mt-3 mb-6">
+  <h1 class="text-2xl font-semibold text-zinc-900">
+    Historial del mentor <span class="font-mono">{{ matricula }}</span>
   </h1>
   {% if is_currently_active %}
-    <span class="badge text-bg-success fs-6">Actualmente activo</span>
+    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+      Actualmente activo
+    </span>
   {% else %}
-    <span class="badge text-bg-secondary fs-6">Inactivo</span>
+    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-zinc-100 text-zinc-700 border border-zinc-200">
+      Inactivo
+    </span>
   {% endif %}
-</div>
+</header>
 
-<ol class="list-group list-group-flush">
+<ol class="rounded-lg border border-zinc-200 bg-white divide-y divide-zinc-200">
   {% for periodo in history %}
-    <li class="list-group-item px-0">
-      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
-        <div>
-          <p class="mb-1">
-            <strong>{{ periodo.fecha_alta|date:"Y-m-d H:i" }}</strong>
-            <span class="text-muted">→</span>
-            {% if periodo.fecha_baja %}
-              <strong>{{ periodo.fecha_baja|date:"Y-m-d H:i" }}</strong>
-            {% else %}
-              <span class="badge text-bg-success">Activo</span>
-            {% endif %}
-          </p>
-          <p class="mb-1 small text-muted">
-            <span class="badge text-bg-secondary me-1">{{ periodo.fuente.value|title }}</span>
-            {% if periodo.nota %}
-              <span class="ms-1">{{ periodo.nota }}</span>
-            {% endif %}
-          </p>
-          <p class="mb-0 small text-muted">
-            Iniciado por
-            <span class="font-monospace">{{ periodo.creado_por_matricula }}</span>
-            {% if periodo.desactivado_por_matricula %}
-              · Desactivado por
-              <span class="font-monospace">{{ periodo.desactivado_por_matricula }}</span>
-            {% endif %}
-          </p>
-        </div>
-      </div>
+    <li class="px-4 py-4">
+      <p class="text-sm">
+        <strong class="text-zinc-900">{{ periodo.fecha_alta|date:"Y-m-d H:i" }}</strong>
+        <span class="text-zinc-500 mx-1">→</span>
+        {% if periodo.fecha_baja %}
+          <strong class="text-zinc-900">{{ periodo.fecha_baja|date:"Y-m-d H:i" }}</strong>
+        {% else %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Activo</span>
+        {% endif %}
+      </p>
+      <p class="mt-1.5 text-xs text-zinc-500 flex flex-wrap items-center gap-2">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200">
+          {{ periodo.fuente.value|title }}
+        </span>
+        {% if periodo.nota %}<span>{{ periodo.nota }}</span>{% endif %}
+      </p>
+      <p class="mt-1 text-xs text-zinc-500">
+        Iniciado por <span class="font-mono text-zinc-700">{{ periodo.creado_por_matricula }}</span>
+        {% if periodo.desactivado_por_matricula %}
+          · Desactivado por <span class="font-mono text-zinc-700">{{ periodo.desactivado_por_matricula }}</span>
+        {% endif %}
+      </p>
     </li>
   {% endfor %}
 </ol>
 
-<div class="mt-4">
-  <a class="btn btn-outline-secondary" href="{% url 'mentores:list' %}">
-    <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Volver al catálogo
+<div class="mt-6">
+  <a href="{% url 'mentores:list' %}"
+     class="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+            hover:bg-zinc-50
+            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+    {% lucide "arrow-left" class="size-4" %}<span>Volver al catálogo</span>
   </a>
 </div>
 {% endblock %}

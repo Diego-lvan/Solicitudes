@@ -14,7 +14,7 @@ Concise summary of the project's Django conventions. **For the canonical, deep a
 - PostgreSQL (prod) / SQLite (dev) via Django ORM
 - Pydantic v2 for DTOs at every layer boundary
 - WeasyPrint for PDF generation
-- Bootstrap 5 templates
+- Tailwind CSS v4 + Alpine.js v3 + Lucide SVG sprite (see `frontend-design` skill)
 
 ## Architecture (one-liner)
 

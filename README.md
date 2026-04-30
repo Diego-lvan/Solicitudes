@@ -13,35 +13,21 @@ A `Makefile` is provided for convenience but **every command also has a raw `doc
 ### Prerequisites
 
 - Docker Desktop (or Docker Engine 24+ with Compose v2)
-- `mkcert` (recommended) or `openssl` for self-signed dev certs
 - `git`
 
 ### One-time setup
 
+Dev TLS certs for `localhost` are already checked in — no need to generate them.
+
 ```sh
-# 1) Generate self-signed TLS certs for https://localhost
-#    (mkcert is preferred — installs a trusted local CA so the browser doesn't warn)
-mkdir -p certs
-mkcert -install \
-  && mkcert -cert-file certs/server.crt -key-file certs/server.key localhost 127.0.0.1
-#    Fallback if you don't have mkcert (browser will warn — accept once):
-# openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-#   -keyout certs/server.key -out certs/server.crt \
-#   -subj "/CN=localhost" \
-#   -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
-
-# 2) Start the stack (builds the web image first time)
 docker compose -f docker-compose.dev.yml up -d --build
-
-# 3) Apply database migrations
 docker compose -f docker-compose.dev.yml exec -T web python manage.py migrate
-
-# 4) Seed dev data (5 users, 2 tipos with their fields)
 docker compose -f docker-compose.dev.yml exec -T web python manage.py seed
-
-# 5) Open the app
-#    https://localhost/auth/dev-login → click any role to log in
 ```
+
+Then open `https://localhost/auth/dev-login` and click any role to log in.
+
+> The browser may warn about the self-signed cert — accept it once.
 
 ### Daily commands
 

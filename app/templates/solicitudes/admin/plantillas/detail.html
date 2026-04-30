@@ -3,53 +3,62 @@
 {% block title %}{{ plantilla.nombre }} · Plantillas · {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<header class="flex flex-wrap justify-between items-center gap-3 mb-6">
   <div>
-    <h1 class="h3 mb-1">{{ plantilla.nombre }}</h1>
+    <h1 class="text-2xl font-semibold text-zinc-900">{{ plantilla.nombre }}</h1>
+    <div class="mt-2">
+      {% if plantilla.activo %}
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Activa</span>
+      {% else %}
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200">Inactiva</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="flex gap-2">
+    <a href="{% url 'solicitudes:plantillas:list' %}"
+       class="inline-flex items-center h-9 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+              hover:bg-zinc-50
+              focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">Volver</a>
+    <a href="{% url 'solicitudes:plantillas:edit' plantilla_id=plantilla.id %}"
+       class="inline-flex items-center h-9 px-3 rounded-md bg-zinc-900 text-white text-sm font-medium
+              hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">Editar</a>
     {% if plantilla.activo %}
-      <span class="badge text-bg-success">Activa</span>
-    {% else %}
-      <span class="badge text-bg-secondary">Inactiva</span>
+      <form method="post"
+            action="{% url 'solicitudes:plantillas:deactivate' plantilla_id=plantilla.id %}"
+            onsubmit="return confirm('¿Desactivar esta plantilla?');">
+        {% csrf_token %}
+        <button type="submit"
+                class="inline-flex items-center h-9 px-3 rounded-md border border-red-300 bg-white text-sm text-red-700
+                       hover:bg-red-50
+                       focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+          Desactivar
+        </button>
+      </form>
     {% endif %}
   </div>
-  <div class="d-flex gap-2">
-    <a class="btn btn-outline-secondary"
-       href="{% url 'solicitudes:plantillas:list' %}">Volver</a>
-    <a class="btn btn-primary"
-       href="{% url 'solicitudes:plantillas:edit' plantilla_id=plantilla.id %}">Editar</a>
-    {% if plantilla.activo %}
-    <form method="post"
-          action="{% url 'solicitudes:plantillas:deactivate' plantilla_id=plantilla.id %}"
-          onsubmit="return confirm('¿Desactivar esta plantilla?');">
-      {% csrf_token %}
-      <button type="submit" class="btn btn-outline-danger">Desactivar</button>
-    </form>
-    {% endif %}
-  </div>
-</div>
+</header>
 
 {% if plantilla.descripcion %}
-<p class="text-muted">{{ plantilla.descripcion }}</p>
+  <p class="text-sm text-zinc-500 mb-4">{{ plantilla.descripcion }}</p>
 {% endif %}
 
-<h2 class="h5 mt-4">Vista previa</h2>
-<p class="form-text mb-2">
+<h2 class="text-base font-semibold text-zinc-900 mt-6 mb-2">Vista previa</h2>
+<p class="text-xs text-zinc-500 mb-3">
   Renderizada con datos de ejemplo (matrícula 99999, valores genéricos).
-  <a href="{% url 'solicitudes:plantillas:preview' plantilla_id=plantilla.id %}"
+  <a class="text-zinc-900 hover:underline underline-offset-2"
+     href="{% url 'solicitudes:plantillas:preview' plantilla_id=plantilla.id %}"
      target="_blank" rel="noopener">Abrir en pestaña nueva</a>.
 </p>
-<iframe
-  src="{% url 'solicitudes:plantillas:preview' plantilla_id=plantilla.id %}"
-  title="Vista previa de la plantilla"
-  class="border rounded w-100"
-  style="height: 60vh; min-height: 480px;"
-></iframe>
+<iframe src="{% url 'solicitudes:plantillas:preview' plantilla_id=plantilla.id %}"
+        title="Vista previa de la plantilla"
+        class="block w-full rounded-lg border border-zinc-200 bg-white"
+        style="height: 60vh; min-height: 480px;"></iframe>
 
-<h2 class="h5 mt-4">HTML</h2>
-<pre class="border rounded p-3 bg-light small"><code>{{ plantilla.html }}</code></pre>
+<h2 class="text-base font-semibold text-zinc-900 mt-6 mb-2">HTML</h2>
+<pre class="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-xs overflow-x-auto"><code>{{ plantilla.html }}</code></pre>
 
 {% if plantilla.css %}
-<h2 class="h5 mt-4">CSS</h2>
-<pre class="border rounded p-3 bg-light small"><code>{{ plantilla.css }}</code></pre>
+  <h2 class="text-base font-semibold text-zinc-900 mt-6 mb-2">CSS</h2>
+  <pre class="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-xs overflow-x-auto"><code>{{ plantilla.css }}</code></pre>
 {% endif %}
 {% endblock %}

@@ -9,7 +9,7 @@
 | Language | Python 3.12+ |
 | Framework | Django 5.x (server-side templates, no DRF) |
 | DTOs | Pydantic v2 (every layer boundary) |
-| Rendering | Django Templates + Bootstrap 5 |
+| Rendering | Django Templates + Tailwind CSS v4 (CSS-first via `@theme`) + Alpine.js v3 + Lucide SVG sprite. Tailwind standalone CLI runs inside the dev `web` container; `make css` builds, `make css-watch` rebuilds on change. |
 | Database | PostgreSQL 16 (dev via Compose, prod via env) — SQLite only for the default in-process test loop. Django ORM contained in repositories. |
 | PDF Generation | WeasyPrint (system deps baked into the image) |
 | Async Tasks | None in v1 — RF-07 uses sync email with try/except. Celery + Redis are deferred until volume justifies them. |
@@ -214,7 +214,7 @@ Service writes through a storage abstraction; repository never touches the files
 ## What this document is NOT
 
 - It does not list specific endpoints, DDL, or code patterns. Those live in `plan.md` per initiative (in flight) and in per-feature `design.md` (after completion).
-- It does not list deprecated code paths. The old code under `code_example/` is reference material; new code follows this architecture.
+- It does not list deprecated code paths. New code follows this architecture.
 
 ## Related Specs
 

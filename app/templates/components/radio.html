@@ -1,0 +1,24 @@
+{% comment %}
+Single radio input + label. For a group, the caller renders a <fieldset>
+with multiple {% include %} of this partial.
+
+Args:
+  name, id, label, value, checked, required
+  hint, error
+{% endcomment %}
+<div class="space-y-1">
+  <label for="{{ id }}" class="inline-flex items-start gap-2 text-sm text-zinc-900 cursor-pointer">
+    <input id="{{ id }}"
+           name="{{ name }}"
+           type="radio"
+           value="{{ value }}"
+           {% if checked %}checked{% endif %}
+           {% if required %}required{% endif %}
+           aria-describedby="{% if error %}{{ id }}-err {% endif %}{% if hint %}{{ id }}-hint{% endif %}"
+           class="mt-0.5 size-4 border-zinc-300 text-zinc-900
+                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900" />
+    <span>{{ label }}</span>
+  </label>
+  {% if hint %}<p id="{{ id }}-hint" class="text-xs text-zinc-500 ml-6">{{ hint }}</p>{% endif %}
+  {% if error %}<p id="{{ id }}-err" class="text-xs text-red-600 ml-6" role="alert">{{ error }}</p>{% endif %}
+</div>

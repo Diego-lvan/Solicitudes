@@ -1,0 +1,28 @@
+{% comment %}
+Checkbox + label. Manual mode only — see input.html for the rationale.
+
+Args:
+  name      required
+  id        required
+  label     required
+  value     posted value when checked (default: "on")
+  checked   truthy → starts checked
+  required
+  hint, error
+{% endcomment %}
+<div class="space-y-1">
+  <label for="{{ id }}" class="inline-flex items-start gap-2 text-sm text-zinc-900 cursor-pointer">
+    <input id="{{ id }}"
+           name="{{ name }}"
+           type="checkbox"
+           value="{{ value|default:'on' }}"
+           {% if checked %}checked{% endif %}
+           {% if required %}required{% endif %}
+           {% if error or hint %}aria-describedby="{% if error %}{{ id }}-err{% endif %}{% if error and hint %} {% endif %}{% if hint %}{{ id }}-hint{% endif %}"{% endif %}
+           class="mt-0.5 size-4 rounded border-zinc-300 text-zinc-900
+                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900" />
+    <span>{{ label }}{% if required %}<span class="text-red-600 ml-0.5" aria-hidden="true">*</span>{% endif %}</span>
+  </label>
+  {% if hint %}<p id="{{ id }}-hint" class="text-xs text-zinc-500 ml-6">{{ hint }}</p>{% endif %}
+  {% if error %}<p id="{{ id }}-err" class="text-xs text-red-600 ml-6" role="alert">{{ error }}</p>{% endif %}
+</div>

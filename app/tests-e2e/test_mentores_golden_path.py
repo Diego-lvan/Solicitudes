@@ -32,7 +32,7 @@ def _ensure_screenshot_dir() -> None:
 def _login_as(page: Page, base: str, matricula: str) -> None:
     """Sign in via the dev-login picker as the seeded user with ``matricula``."""
     page.goto(f"{base}/auth/dev-login")
-    row = page.locator("li.list-group-item").filter(has_text=matricula).first
+    row = page.locator("li").filter(has_text=matricula).first
     row.get_by_role("button", name="Entrar").click()
     page.wait_for_load_state("networkidle")
 
@@ -206,7 +206,7 @@ def test_admin_deactivates_mentor_from_list_view(
 
     # Back at the list with a success flash; the row no longer appears under
     # the default "Solo activos" filter.
-    expect(page.locator(".alert-success")).to_contain_text("desactivado")
+    expect(page.get_by_role("status").filter(has_text="desactivado")).to_be_visible()
     # Positively assert the empty-state copy AND scope the row check to tbody
     # so future markup additions on this page don't silently weaken the test.
     expect(page.get_by_text("Sin mentores registrados")).to_be_visible()
