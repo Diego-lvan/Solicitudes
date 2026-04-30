@@ -17,6 +17,7 @@
 | 009 | Reports & Dashboard       | Not Started | 004           | 2026-04-25 | [plan](../planning/009-reports/plan.md)                    | `reportes`                                                         |
 | 010 | External Auth Provider    | Blocked     | 002 + OQ-002-1 | 2026-04-25 | [plan](../planning/010-external-auth-provider/plan.md)     | `usuarios`, `flows`                                                  |
 | 011 | Field Auto-fill from User | Not Started | 003 + 004     | 2026-04-25 | [plan](../planning/011-field-autofill/plan.md)             | `solicitudes/tipos`, `solicitudes/formularios`, `solicitudes/intake` |
+| 012 | Mentor Catalog Historicization | Not Started | 008           | 2026-04-25 | [plan](../planning/012-mentor-historicization/plan.md)     | `mentores` (model + repo + service + views), `mentores/migrations` |
 
 **Status values:** `Not Started` · `In Progress` · `Blocked` · `Done`
 
@@ -33,6 +34,7 @@
       │         ├── 009 Reports & Dashboard
       │         └── 011 Field Auto-fill from User Data   (extends 003 + intake)
       ├── 008 Mentors
+      │    └── 012 Mentor Catalog Historicization
       └── 010 External Auth Provider   (blocked on OQ-002-1)
 ```
 
@@ -41,6 +43,7 @@
 - After 004 lands, **005, 006, 007, 009 can run in parallel** — they share no critical-path files.
 - **008 (Mentors)** depends only on 002, so it can run in parallel with 003/004.
 - **010 (External Auth Provider)** swaps the DEBUG-only `/auth/dev-login` picker shipped in 002 for the real provider handshake; blocked on OQ-002-1. Can run any time after 002 once the provider contract is known.
+- **012 (Mentor Catalog Historicization)** rewrites the catalog from "current state only" (one row per matrícula) to a per-period model (`MentorPeriodo`). Hard-blocked on 008 — must merge to `main` first since 012 replaces 008's `Mentor` table.
 - Each initiative is sized for 1–3 implementation sessions. If a `plan.md` grows past that, decompose into sub-initiatives before starting `/implement`.
 
 ## Update protocol
