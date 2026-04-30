@@ -1,6 +1,6 @@
 services:
   nginx-dev:
-    image: nginx:alpine
+    image: nginx:1.30.0-alpine
     depends_on:
       - web
       - mailhog
@@ -39,7 +39,7 @@ services:
       - solicitudes-net
 
   db:
-    image: postgres:16
+    image: postgres:18.3
     environment:
       POSTGRES_DB: solicitudes
       POSTGRES_USER: solicitudes
@@ -47,7 +47,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - solicitudes_dev_data:/var/lib/postgresql/data
+      - solicitudes_dev_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U solicitudes -d solicitudes"]
       interval: 2s
@@ -57,7 +57,7 @@ services:
       - solicitudes-net
 
   mailhog:
-    image: mailhog/mailhog
+    image: mailhog/mailhog:v1.0.1
     networks:
       - solicitudes-net
 

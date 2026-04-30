@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 
 # ---- Stage 1: builder -------------------------------------------------------
-FROM python:3.12-slim-bookworm AS builder
+FROM python:3.13.13-slim-bookworm AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -29,7 +29,7 @@ COPY app/requirements.txt app/requirements-dev.txt /app/
 RUN pip install -r requirements.txt -r requirements-dev.txt
 
 # ---- Stage 2: runtime -------------------------------------------------------
-FROM python:3.12-slim-bookworm AS runtime
+FROM python:3.13.13-slim-bookworm AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
@@ -61,7 +61,7 @@ RUN case "${TARGETARCH}" in \
         "https://github.com/tailwindlabs/tailwindcss/releases/download/v${TAILWIND_VERSION}/tailwindcss-linux-${TW_ARCH}" \
     && chmod +x /usr/local/bin/tailwindcss
 
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 WORKDIR /app
