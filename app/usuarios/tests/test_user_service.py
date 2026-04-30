@@ -90,3 +90,15 @@ def test_hydrate_from_siga_raises_user_not_found_when_user_unknown() -> None:
     service, _, _ = _make_service()
     with pytest.raises(UserNotFound):
         service.hydrate_from_siga("NOPE")
+
+
+def test_list_by_role_delegates_to_repository() -> None:
+    from usuarios.schemas import CreateOrUpdateUserInput
+
+    service, repo, _ = _make_service()
+    repo.upsert(CreateOrUpdateUserInput(matricula="C1", email="c1@x.com", role=Role.CONTROL_ESCOLAR))
+    repo.upsert(CreateOrUpdateUserInput(matricula="A1", email="a1@x.com", role=Role.ALUMNO))
+
+    result = service.list_by_role(Role.CONTROL_ESCOLAR)
+
+    assert [u.matricula for u in result] == ["C1"]

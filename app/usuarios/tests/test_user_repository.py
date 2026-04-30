@@ -170,3 +170,33 @@ def test_orm_and_in_memory_repos_produce_same_ordering() -> None:
     assert [r.matricula for r in orm.list_all()] == [
         r.matricula for r in fake.list_all()
     ]
+
+
+@pytest.mark.django_db
+def test_list_by_role_returns_only_matching_role(repo: OrmUserRepository) -> None:
+    repo.upsert(CreateOrUpdateUserInput(matricula="A1", email="a1@x.com", role=Role.ALUMNO))
+    repo.upsert(CreateOrUpdateUserInput(matricula="C1", email="c1@x.com", role=Role.CONTROL_ESCOLAR))
+    repo.upsert(CreateOrUpdateUserInput(matricula="C2", email="c2@x.com", role=Role.CONTROL_ESCOLAR))
+
+    rows = repo.list_by_role(Role.CONTROL_ESCOLAR)
+
+    assert [r.matricula for r in rows] == ["C1", "C2"]
+    assert all(r.role is Role.CONTROL_ESCOLAR for r in rows)
+
+
+@pytest.mark.django_db
+def test_list_by_role_excludes_users_with_empty_email(repo: OrmUserRepository) -> None:
+    from usuarios.models import User
+
+    repo.upsert(CreateOrUpdateUserInput(matricula="C1", email="c1@x.com", role=Role.CONTROL_ESCOLAR))
+    User.objects.create(matricula="C2", email="", role=Role.CONTROL_ESCOLAR.value)
+
+    rows = repo.list_by_role(Role.CONTROL_ESCOLAR)
+
+    assert [r.matricula for r in rows] == ["C1"]
+
+
+@pytest.mark.django_db
+def test_list_by_role_returns_empty_when_no_matches(repo: OrmUserRepository) -> None:
+    repo.upsert(CreateOrUpdateUserInput(matricula="A1", email="a1@x.com", role=Role.ALUMNO))
+    assert repo.list_by_role(Role.CONTROL_ESCOLAR) == []
