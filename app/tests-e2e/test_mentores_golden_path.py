@@ -160,16 +160,20 @@ def test_admin_deactivates_mentor_from_list_view(
 
     _seed_admin()
 
-    # Seed an active mentor so the row appears in the list.
+    # Seed an open mentor period so the row appears in the list.
+    from django.utils import timezone
+
     from mentores.constants import MentorSource
-    from mentores.models import Mentor
+    from mentores.models import MentorPeriodo
     from usuarios.models import User
 
-    Mentor.objects.get_or_create(
+    MentorPeriodo.objects.get_or_create(
         matricula="80000001",
+        fecha_baja__isnull=True,
         defaults={
-            "activo": True,
             "fuente": MentorSource.MANUAL.value,
+            "nota": "",
+            "fecha_alta": timezone.now(),
             "creado_por": User.objects.get(matricula="ADMIN_TEST"),
         },
     )
@@ -180,18 +184,24 @@ def test_admin_deactivates_mentor_from_list_view(
     page.goto(f"{base}/mentores/")
     expect(page.locator("table")).to_contain_text("80000001")
 
-    # Click the row's "Desactivar" link.
-    row = page.locator("tr").filter(has_text="80000001")
-    row.get_by_role("link", name="Desactivar").click()
+    # Initiative 012 replaced the per-row "Desactivar" link with a bulk
+    # action: tick the row's checkbox, hit the toolbar's "Desactivar"
+    # button, confirm on the next page.
+    page.locator('input[name="matriculas"][value="80000001"]').check()
+    page.locator("#bulk-deactivate-form").get_by_role(
+        "button", name="Desactivar"
+    ).click()
     page.wait_for_load_state("networkidle")
 
-    expect(page.get_by_role("heading", name="Desactivar mentor")).to_be_visible()
-    expect(page.locator("strong.font-monospace")).to_contain_text("80000001")
+    expect(
+        page.get_by_role("heading", name="Confirmar desactivación")
+    ).to_be_visible()
+    expect(page.get_by_text("80000001")).to_be_visible()
     page.screenshot(
         path=str(SCREENSHOT_DIR / "mentores_confirm_desktop.png"), full_page=True
     )
 
-    page.get_by_role("button", name="Desactivar").click()
+    page.get_by_role("button", name="Sí, desactivar seleccionados").click()
     page.wait_for_load_state("networkidle")
 
     # Back at the list with a success flash; the row no longer appears under
