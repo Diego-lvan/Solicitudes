@@ -1,6 +1,6 @@
 # 008 — Mentors — Status
 
-**Status:** Implementation complete (pending user review)
+**Status:** Done
 **Last updated:** 2026-04-25
 
 ## Checklist
