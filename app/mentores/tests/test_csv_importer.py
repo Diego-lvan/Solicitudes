@@ -108,16 +108,18 @@ def test_inactive_row_is_reactivated(
     from datetime import UTC, datetime
 
     from mentores.constants import MentorSource
-    from mentores.schemas import MentorDTO
+    from mentores.schemas import MentorPeriodoDTO
 
     repo._seed(
-        MentorDTO(
+        MentorPeriodoDTO(
+            id=1,
             matricula="11111111",
-            activo=False,
             fuente=MentorSource.MANUAL,
             nota="",
             fecha_alta=datetime(2025, 1, 1, tzinfo=UTC),
             fecha_baja=datetime(2025, 6, 1, tzinfo=UTC),
+            creado_por_matricula="ADM1",
+            desactivado_por_matricula="ADM1",
         )
     )
     payload = _csv("matricula", "11111111")

@@ -16,9 +16,10 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 from django.test.utils import override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from mentores.constants import MentorSource
-from mentores.models import Mentor
+from mentores.models import MentorPeriodo
 from mentores.tests.factories import make_admin_user
 from solicitudes.lifecycle.constants import Estado
 from solicitudes.models import Solicitud
@@ -85,12 +86,13 @@ def _make_paid_mentor_exempt_tipo() -> tuple[object, str]:
 
 
 def _seed_mentor(matricula: str) -> None:
-    """Persist an active mentor row for ``matricula``."""
+    """Persist an active (open) ``MentorPeriodo`` for ``matricula``."""
     admin = make_admin_user()
-    Mentor.objects.create(
+    MentorPeriodo.objects.create(
         matricula=matricula,
-        activo=True,
         fuente=MentorSource.MANUAL.value,
+        nota="",
+        fecha_alta=timezone.now(),
         creado_por=admin,
     )
 
@@ -181,7 +183,9 @@ def test_mentor_deactivation_preserves_existing_solicitud_snapshot() -> None:
     # stamped at creation, never re-evaluated"), independent of how the row
     # gets flipped. The view-level path is covered by `test_views.py` and
     # `tests-e2e/test_mentores_golden_path.py`.
-    Mentor.objects.filter(pk="ALU1").update(activo=False)
+    MentorPeriodo.objects.filter(
+        matricula="ALU1", fecha_baja__isnull=True
+    ).update(fecha_baja=timezone.now())
 
     # Second create — now requires comprobante; without it, 400.
     response = alumno.post(
@@ -238,7 +242,12 @@ def test_csv_import_100_rows_counts_add_up() -> None:
     assert len(result.invalid_rows) == 15
     # Verify creado_por is the actor — sanity-checks that intake's actor flows
     # through the form → service → repo layers.
-    assert Mentor.objects.filter(creado_por=admin_user).count() == 80
+    assert (
+        MentorPeriodo.objects.filter(
+            creado_por=admin_user, fecha_baja__isnull=True
+        ).count()
+        == 80
+    )
 
 
 @pytest.mark.django_db
@@ -264,7 +273,9 @@ def test_manual_add_duplicate_returns_409_with_friendly_message() -> None:
 def test_csv_import_reactivates_deactivated_matricula() -> None:
     """A deactivated matricula reappearing in a CSV import counts as reactivated."""
     _seed_mentor("44444444")
-    Mentor.objects.filter(pk="44444444").update(activo=False)
+    MentorPeriodo.objects.filter(
+        matricula="44444444", fecha_baja__isnull=True
+    ).update(fecha_baja=timezone.now())
 
     _ = make_admin_user(matricula="ADMIN_E2E")
     admin = _client("ADMIN_E2E", Role.ADMIN)
@@ -279,4 +290,12 @@ def test_csv_import_reactivates_deactivated_matricula() -> None:
     result = response.context["result"]
     assert result.reactivated == 1
     assert result.inserted == 0
-    assert Mentor.objects.get(pk="44444444").activo is True
+    # Reactivation opens a new period — there are now two rows for this
+    # matrícula (one closed, one open). The new period is the active one.
+    assert MentorPeriodo.objects.filter(matricula="44444444").count() == 2
+    assert (
+        MentorPeriodo.objects.filter(
+            matricula="44444444", fecha_baja__isnull=True
+        ).count()
+        == 1
+    )
