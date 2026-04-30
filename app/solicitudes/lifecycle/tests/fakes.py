@@ -19,6 +19,9 @@ from solicitudes.lifecycle.repositories.solicitud.interface import (
     SolicitudRepository,
 )
 from solicitudes.lifecycle.schemas import (
+    AggregateByEstado,
+    AggregateByMonth,
+    AggregateByTipo,
     HistorialEntry,
     SolicitudDetail,
     SolicitudFilter,
@@ -175,6 +178,69 @@ class InMemorySolicitudRepository(SolicitudRepository):
     def exists_for_tipo(self, tipo_id: UUID) -> bool:
         return any(d.tipo.id == tipo_id for d in self._rows.values())
 
+    def _matches(self, d: SolicitudDetail, filters: SolicitudFilter) -> bool:
+        if filters.estado is not None and d.estado != filters.estado:
+            return False
+        if filters.tipo_id is not None and d.tipo.id != filters.tipo_id:
+            return False
+        if (
+            filters.responsible_role is not None
+            and d.tipo.responsible_role != filters.responsible_role
+        ):
+            return False
+        if (
+            filters.created_from is not None
+            and d.created_at.date() < filters.created_from
+        ):
+            return False
+        return not (
+            filters.created_to is not None
+            and d.created_at.date() > filters.created_to
+        )
+
+    def iter_for_admin(self, *, filters: SolicitudFilter, chunk_size: int = 500):
+        for d in self._rows.values():
+            if self._matches(d, filters):
+                yield self._row(d)
+
+    def aggregate_by_estado(
+        self, *, filters: SolicitudFilter
+    ) -> list[AggregateByEstado]:
+        counts: dict[Estado, int] = {}
+        for d in self._rows.values():
+            if self._matches(d, filters):
+                counts[d.estado] = counts.get(d.estado, 0) + 1
+        return [
+            AggregateByEstado(estado=e, count=c)
+            for e, c in sorted(counts.items(), key=lambda kv: kv[0].value)
+        ]
+
+    def aggregate_by_tipo(
+        self, *, filters: SolicitudFilter
+    ) -> list[AggregateByTipo]:
+        counts: dict[tuple[UUID, str], int] = {}
+        for d in self._rows.values():
+            if self._matches(d, filters):
+                key = (d.tipo.id, d.tipo.nombre)
+                counts[key] = counts.get(key, 0) + 1
+        return [
+            AggregateByTipo(tipo_id=k[0], tipo_nombre=k[1], count=v)
+            for k, v in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0][1]))
+        ]
+
+    def aggregate_by_month(
+        self, *, filters: SolicitudFilter
+    ) -> list[AggregateByMonth]:
+        counts: dict[tuple[int, int], int] = {}
+        for d in self._rows.values():
+            if self._matches(d, filters):
+                key = (d.created_at.year, d.created_at.month)
+                counts[key] = counts.get(key, 0) + 1
+        return [
+            AggregateByMonth(year=y, month=m, count=c)
+            for (y, m), c in sorted(counts.items())
+        ]
+
     @staticmethod
     def _row(d: SolicitudDetail) -> SolicitudRow:
         return SolicitudRow(
@@ -185,6 +251,7 @@ class InMemorySolicitudRepository(SolicitudRepository):
             solicitante_nombre=d.solicitante.full_name or d.solicitante.matricula,
             estado=d.estado,
             requiere_pago=d.requiere_pago,
+            pago_exento=d.pago_exento,
             created_at=d.created_at,
             updated_at=d.updated_at,
         )

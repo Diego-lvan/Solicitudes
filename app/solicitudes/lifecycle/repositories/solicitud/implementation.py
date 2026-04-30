@@ -1,10 +1,12 @@
 """ORM-backed implementation of SolicitudRepository."""
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import Any
 from uuid import UUID
 
-from django.db.models import Q, QuerySet
+from django.db.models import Count, Q, QuerySet
+from django.db.models.functions import TruncMonth
 
 from _shared.pagination import Page, PageRequest
 from solicitudes.formularios.schemas import FormSnapshot
@@ -17,6 +19,9 @@ from solicitudes.lifecycle.repositories.solicitud.interface import (
     SolicitudRepository,
 )
 from solicitudes.lifecycle.schemas import (
+    AggregateByEstado,
+    AggregateByMonth,
+    AggregateByTipo,
     SolicitudDetail,
     SolicitudFilter,
     SolicitudRow,
@@ -145,7 +150,74 @@ class OrmSolicitudRepository(SolicitudRepository):
             qs = qs.filter(created_at__date__gte=filters.created_from)
         if filters.created_to is not None:
             qs = qs.filter(created_at__date__lte=filters.created_to)
+        if filters.responsible_role is not None:
+            qs = qs.filter(tipo__responsible_role=filters.responsible_role.value)
         return qs
+
+    # ---- aggregations ----
+
+    def aggregate_by_estado(
+        self, *, filters: SolicitudFilter
+    ) -> list[AggregateByEstado]:
+        qs = self._apply_filters(Solicitud.objects.all(), filters)
+        rows = (
+            qs.values("estado")
+            .annotate(count=Count("folio"))
+            .order_by("estado")
+        )
+        return [
+            AggregateByEstado(estado=Estado(r["estado"]), count=r["count"])
+            for r in rows
+        ]
+
+    def aggregate_by_tipo(
+        self, *, filters: SolicitudFilter
+    ) -> list[AggregateByTipo]:
+        qs = self._apply_filters(Solicitud.objects.all(), filters)
+        rows = (
+            qs.values("tipo_id", "tipo__nombre")
+            .annotate(count=Count("folio"))
+            .order_by("-count", "tipo__nombre")
+        )
+        return [
+            AggregateByTipo(
+                tipo_id=r["tipo_id"],
+                tipo_nombre=r["tipo__nombre"],
+                count=r["count"],
+            )
+            for r in rows
+        ]
+
+    def iter_for_admin(
+        self, *, filters: SolicitudFilter, chunk_size: int = 500
+    ) -> Iterator[SolicitudRow]:
+        # On PostgreSQL (prod) `.iterator(chunk_size=...)` opens a server-side
+        # cursor and streams. On SQLite (dev) the chunk hint is silently
+        # ignored and the full result set is materialised in memory; that's
+        # acceptable for dev volumes but worth knowing if you debug a memory
+        # spike during a dev-stack export.
+        qs = self._apply_filters(self._base_queryset(), filters)
+        for row in qs.iterator(chunk_size=chunk_size):
+            yield self._to_row(row)
+
+    def aggregate_by_month(
+        self, *, filters: SolicitudFilter
+    ) -> list[AggregateByMonth]:
+        qs = self._apply_filters(Solicitud.objects.all(), filters)
+        rows = (
+            qs.annotate(month=TruncMonth("created_at"))
+            .values("month")
+            .annotate(count=Count("folio"))
+            .order_by("month")
+        )
+        return [
+            AggregateByMonth(
+                year=r["month"].year,
+                month=r["month"].month,
+                count=r["count"],
+            )
+            for r in rows
+        ]
 
     def _paginate(
         self, qs: QuerySet[Solicitud], page: PageRequest
@@ -169,6 +241,7 @@ class OrmSolicitudRepository(SolicitudRepository):
             solicitante_nombre=row.solicitante.full_name or row.solicitante_id,
             estado=Estado(row.estado),
             requiere_pago=row.requiere_pago,
+            pago_exento=row.pago_exento,
             created_at=row.created_at,
             updated_at=row.updated_at,
         )

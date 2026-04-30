@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 
 from django.db import transaction
 
@@ -24,6 +25,9 @@ from solicitudes.lifecycle.repositories.solicitud.interface import (
     SolicitudRepository,
 )
 from solicitudes.lifecycle.schemas import (
+    AggregateByEstado,
+    AggregateByMonth,
+    AggregateByTipo,
     SolicitudDetail,
     SolicitudFilter,
     SolicitudRow,
@@ -81,6 +85,38 @@ class DefaultLifecycleService(LifecycleService):
         return self._solicitudes.list_for_responsible_role(
             role.value, page=page, filters=filters
         )
+
+    # ---- aggregations ----
+
+    def list_for_admin(
+        self,
+        *,
+        page: PageRequest,
+        filters: SolicitudFilter,
+    ) -> Page[SolicitudRow]:
+        return self._solicitudes.list_all(page=page, filters=filters)
+
+    def iter_for_admin(
+        self, *, filters: SolicitudFilter, chunk_size: int = 500
+    ) -> Iterator[SolicitudRow]:
+        return self._solicitudes.iter_for_admin(
+            filters=filters, chunk_size=chunk_size
+        )
+
+    def aggregate_by_estado(
+        self, *, filters: SolicitudFilter
+    ) -> list[AggregateByEstado]:
+        return self._solicitudes.aggregate_by_estado(filters=filters)
+
+    def aggregate_by_tipo(
+        self, *, filters: SolicitudFilter
+    ) -> list[AggregateByTipo]:
+        return self._solicitudes.aggregate_by_tipo(filters=filters)
+
+    def aggregate_by_month(
+        self, *, filters: SolicitudFilter
+    ) -> list[AggregateByMonth]:
+        return self._solicitudes.aggregate_by_month(filters=filters)
 
     # ---- transitions ----
 

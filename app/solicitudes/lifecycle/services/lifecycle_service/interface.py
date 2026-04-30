@@ -2,9 +2,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 
 from _shared.pagination import Page, PageRequest
 from solicitudes.lifecycle.schemas import (
+    AggregateByEstado,
+    AggregateByMonth,
+    AggregateByTipo,
     SolicitudDetail,
     SolicitudFilter,
     SolicitudRow,
@@ -37,6 +41,36 @@ class LifecycleService(ABC):
         page: PageRequest,
         filters: SolicitudFilter,
     ) -> Page[SolicitudRow]: ...
+
+    # ---- aggregations (admin scope; used by reportes) ----
+
+    @abstractmethod
+    def list_for_admin(
+        self,
+        *,
+        page: PageRequest,
+        filters: SolicitudFilter,
+    ) -> Page[SolicitudRow]: ...
+
+    @abstractmethod
+    def iter_for_admin(
+        self, *, filters: SolicitudFilter, chunk_size: int = 500
+    ) -> Iterator[SolicitudRow]: ...
+
+    @abstractmethod
+    def aggregate_by_estado(
+        self, *, filters: SolicitudFilter
+    ) -> list[AggregateByEstado]: ...
+
+    @abstractmethod
+    def aggregate_by_tipo(
+        self, *, filters: SolicitudFilter
+    ) -> list[AggregateByTipo]: ...
+
+    @abstractmethod
+    def aggregate_by_month(
+        self, *, filters: SolicitudFilter
+    ) -> list[AggregateByMonth]: ...
 
     @abstractmethod
     def transition(
