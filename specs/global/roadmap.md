@@ -14,7 +14,7 @@
 | 006 | PDF Generation            | Done        | 004           | 2026-04-25 | [plan](../planning/006-pdf-generation/plan.md)             | `solicitudes/pdf`, `_shared/pdf`                              |
 | 007 | Notifications             | Not Started | 004           | 2026-04-25 | [plan](../planning/007-notifications/plan.md)              | `notificaciones`, `flows`                                          |
 | 008 | Mentors                   | Done        | 002           | 2026-04-25 | [plan](../planning/008-mentors/plan.md)                    | `mentores`                                                         |
-| 009 | Reports & Dashboard       | Not Started | 004           | 2026-04-25 | [plan](../planning/009-reports/plan.md)                    | `reportes`                                                         |
+| 009 | Reports & Dashboard       | Done        | 004           | 2026-04-25 | [plan](../planning/009-reports/plan.md)                    | `reportes`                                                         |
 | 010 | External Auth Provider    | Blocked     | 002 + OQ-002-1 | 2026-04-25 | [plan](../planning/010-external-auth-provider/plan.md)     | `usuarios`, `flows`                                                  |
 | 011 | Field Auto-fill from User | Not Started | 003 + 004     | 2026-04-25 | [plan](../planning/011-field-autofill/plan.md)             | `solicitudes/tipos`, `solicitudes/formularios`, `solicitudes/intake` |
 | 012 | Mentor Catalog Historicization | Not Started | 008           | 2026-04-25 | [plan](../planning/012-mentor-historicization/plan.md)     | `mentores` (model + repo + service + views), `mentores/migrations` |
