@@ -12,7 +12,7 @@
 | 004 | Solicitud Lifecycle       | Done        | 003           | 2026-04-25 | [plan](../planning/004-solicitud-lifecycle/plan.md)        | `solicitudes/intake`, `solicitudes/revision`, `solicitudes/lifecycle`, `flows` |
 | 005 | File Management           | Done        | 004           | 2026-04-25 | [plan](../planning/005-file-management/plan.md)            | `solicitudes/archivos`, `_shared` (storage)                   |
 | 006 | PDF Generation            | Done        | 004           | 2026-04-25 | [plan](../planning/006-pdf-generation/plan.md)             | `solicitudes/pdf`, `_shared/pdf`                              |
-| 007 | Notifications             | Not Started | 004           | 2026-04-25 | [plan](../planning/007-notifications/plan.md)              | `notificaciones`, `flows`                                          |
+| 007 | Notifications             | Done        | 004           | 2026-04-25 | [plan](../planning/007-notifications/plan.md)              | `notificaciones`, `flows`                                          |
 | 008 | Mentors                   | Done        | 002           | 2026-04-25 | [plan](../planning/008-mentors/plan.md)                    | `mentores`                                                         |
 | 009 | Reports & Dashboard       | Done        | 004           | 2026-04-25 | [plan](../planning/009-reports/plan.md)                    | `reportes`                                                         |
 | 010 | External Auth Provider    | Blocked     | 002 + OQ-002-1 | 2026-04-25 | [plan](../planning/010-external-auth-provider/plan.md)     | `usuarios`, `flows`                                                  |

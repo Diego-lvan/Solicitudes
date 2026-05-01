@@ -42,7 +42,7 @@ Creada → En proceso → Finalizada. Creada → Cancelada. En proceso → Cance
 Solicitudes se dirigen automáticamente al rol responsable definido en el tipo. Personal solo ve sus asignadas. Admin ve todo.
 
 ### RF-07: Notificaciones por correo
-Correo al responsable al crear solicitud. Correo al solicitante al cambiar estado. Si SMTP falla, la operación no se afecta.
+Al crear solicitud: correo al responsable (todos los usuarios del rol responsable del tipo) y acuse de recibo al solicitante. Al cambiar estado: correo al solicitante. Si SMTP falla, la operación no se afecta.
 
 ### RF-08: Consulta y seguimiento
 Solicitante: lista con folio/tipo/fecha/estado + filtros. Personal: lista asignadas con filtros. Ambos: historial de seguimiento.
