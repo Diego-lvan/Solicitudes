@@ -99,6 +99,152 @@ docker compose -f docker-compose.dev.yml exec -T web pytest -m e2e --headed --sl
 | `https://localhost/solicitudes/admin/tipos/nuevo/` | Create a new tipo |
 | `http://localhost:8025/` | Mailhog (captured outbound email) |
 
+## Manual de usuario (capturas)
+
+Capturas tomadas contra el stack local con datos sembrados (`make up && make seed`). Se reproducen recargando el sistema y entrando con los usuarios de `/auth/dev-login`.
+
+### 1. Acceso
+
+#### 1.1 Login de desarrollo
+
+Selector de usuarios disponible solo con `DEBUG=True`. Permite entrar con un rol predefinido (columna izquierda) o como un usuario ya existente (columna derecha).
+
+![Login de desarrollo](docs/screenshots/01-dev-login.png)
+
+#### 1.2 Mi perfil
+
+Vista que muestra los datos provenientes del proveedor de identidad (matrícula, correo, rol, programa, semestre). Es de solo lectura: cualquier corrección se hace en SIGA.
+
+![Mi perfil](docs/screenshots/02-alumno-perfil.png)
+
+### 2. Flujo del alumno
+
+#### 2.1 Catálogo — Crear solicitud
+
+Lista los tipos de solicitud que el alumno puede iniciar. Cada tarjeta indica si el trámite requiere pago.
+
+![Crear solicitud — catálogo](docs/screenshots/03-alumno-crear-solicitud.png)
+
+#### 2.2 Mis solicitudes
+
+Histórico personal del alumno con folio, tipo, fecha y estado. Se puede filtrar por folio, estado o rango de fechas.
+
+![Mis solicitudes](docs/screenshots/04-alumno-mis-solicitudes.png)
+
+#### 2.3 Formulario dinámico
+
+Cada tipo de solicitud renderiza un formulario distinto, definido por el administrador. Soporta texto, selección y archivos adjuntos.
+
+![Formulario dinámico de solicitud](docs/screenshots/05-alumno-formulario-dinamico.png)
+
+#### 2.4 Detalle de la solicitud
+
+Muestra los datos enviados, los archivos adjuntos y el historial completo de cambios de estado. Cuando la solicitud está finalizada y el tipo tiene plantilla, aparece el botón **Descargar PDF**.
+
+![Detalle de solicitud](docs/screenshots/06-alumno-detalle-solicitud.png)
+
+### 3. Flujo de Control Escolar / Responsable de Programa
+
+#### 3.1 Cola de revisión
+
+Lista de solicitudes pendientes para el rol responsable. Filtros por folio, solicitante y estado.
+
+![Cola de revisión](docs/screenshots/07-ce-cola-revision.png)
+
+#### 3.2 Detalle de revisión
+
+Vista del personal con datos del solicitante, archivos, historial y acciones para *atender*, *finalizar* o *cancelar* la solicitud. Permite generar el PDF al finalizar.
+
+![Detalle de revisión](docs/screenshots/08-ce-detalle-revision.png)
+
+### 4. Administración del catálogo
+
+#### 4.1 Tipos de solicitud
+
+CRUD del catálogo. Cada tipo define el rol que la atiende, qué roles pueden crearla, si requiere pago, y la plantilla de PDF asociada.
+
+![Tipos de solicitud](docs/screenshots/09-admin-tipos-list.png)
+
+#### 4.2 Nuevo tipo de solicitud
+
+Editor con vista previa en vivo del formulario que verá el solicitante. Los campos se agregan dinámicamente.
+
+![Nuevo tipo de solicitud](docs/screenshots/10-admin-tipos-nuevo.png)
+
+#### 4.3 Plantillas de PDF
+
+Plantillas HTML/CSS que WeasyPrint usa para producir el PDF final. Se versionan y pueden activarse o desactivarse.
+
+![Plantillas de PDF — listado](docs/screenshots/11-admin-plantillas-list.png)
+
+#### 4.4 Nueva plantilla
+
+Formulario para capturar HTML, CSS y descripción. La sección inferior lista las variables disponibles (`{{ solicitante.nombre }}`, `{{ solicitud.folio }}`, etc.).
+
+![Nueva plantilla de PDF](docs/screenshots/12-admin-plantilla-nueva.png)
+
+### 5. Mentores
+
+#### 5.1 Catálogo de mentores
+
+Listado con filtro por estado activo. Permite seleccionar varios y desactivarlos en lote.
+
+![Catálogo de mentores](docs/screenshots/13-admin-mentores-list.png)
+
+#### 5.2 Agregar mentor
+
+Alta manual de un mentor por matrícula.
+
+![Agregar mentor](docs/screenshots/14-admin-mentor-agregar.png)
+
+#### 5.3 Importar CSV
+
+Importación masiva con encabezado `matricula`. El sistema reporta filas insertadas, reactivadas, omitidas y rechazadas.
+
+![Importar mentores (CSV)](docs/screenshots/15-admin-mentores-importar.png)
+
+### 6. Directorio de usuarios
+
+#### 6.1 Listado
+
+Vista de solo lectura del directorio (los datos los administra SIGA / el proveedor de identidad). Filtros por rol y búsqueda libre.
+
+![Directorio de usuarios](docs/screenshots/16-admin-usuarios-directorio.png)
+
+#### 6.2 Detalle de usuario
+
+Información de identidad, datos académicos, situación de mentoría y auditoría.
+
+![Detalle de usuario](docs/screenshots/17-admin-usuario-detalle.png)
+
+### 7. Reportes
+
+#### 7.1 Dashboard
+
+Métricas agregadas con filtros por estado, tipo, responsable y rango de fechas. Botones para exportar a CSV o PDF.
+
+![Reportes — Dashboard](docs/screenshots/18-admin-reportes-dashboard.png)
+
+#### 7.2 Lista detallada
+
+Vista tabular de las solicitudes que pasan los filtros del dashboard, exportable a CSV.
+
+![Reportes — Lista](docs/screenshots/19-admin-reportes-lista.png)
+
+### 8. Notificaciones (Mailhog)
+
+Mailhog captura todos los correos salientes en desarrollo. Útil para inspeccionar las notificaciones que el sistema dispara al crear/transitar solicitudes.
+
+#### 8.1 Bandeja de Mailhog
+
+![Bandeja de Mailhog](docs/screenshots/20-mailhog-bandeja.png)
+
+#### 8.2 Detalle de un correo
+
+![Correo de confirmación](docs/screenshots/21-mailhog-correo-detalle.png)
+
+---
+
 ### Adding seed data for a new app
 
 Drop a `seeders.py` at the app root with a `run(*, fresh: bool) -> None` function:
