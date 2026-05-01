@@ -342,6 +342,95 @@ The **behavioral** assertions (`pago_exento==True`, `comprobante` required when 
 - [ ] Tier 2 e2e (`tests-e2e/test_mentores_golden_path.py`) re-runs without modification AND a new file `tests-e2e/test_mentor_history_browser.py` exercises the two new flows.
 - [ ] Quality gates: `ruff`, `mypy`, full `pytest` all green at the end.
 
+## Bulk deactivation (added mid-implementation 2026-04-26)
+
+The single-row deactivate flow shipped in 008 doesn't scale for end-of-semester catalog cleanup. Admins want to:
+1. Tick a few matrículas in the list and close them in one action (**selected**).
+2. Close every currently-open period in one action (**all active**).
+
+Both follow a **best-effort** semantic — already-closed rows are skipped silently and surfaced as a count, never as an error. Matches the CSV importer's partial-success pattern.
+
+### Schema — `BulkDeactivateResult`
+
+```python
+class BulkDeactivateResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    total_attempted: int        # rows the admin asked to close
+    closed: int                 # rows actually closed (fecha_baja set in this call)
+    already_inactive: int       # rows that were already closed (selected variant only)
+```
+
+For the "all active" variant, `total_attempted == closed` and `already_inactive == 0` (the query targets only open rows by definition).
+
+### Repository contract — two new methods
+
+```python
+def deactivate_many(
+    self, matriculas: list[str], *, actor_matricula: str
+) -> int:
+    """Close every currently-open period whose matrícula is in ``matriculas``.
+
+    Returns the number of periods actually closed. A single
+    ``UPDATE ... WHERE matricula IN (...) AND fecha_baja IS NULL`` —
+    one round trip; matches the partial-uniqueness invariant trivially
+    (we only touch open periods). Empty input → 0.
+    """
+
+def deactivate_all_active(self, *, actor_matricula: str) -> int:
+    """Close every currently-open period in the catalog. One UPDATE.
+
+    Returns the number of periods closed. Use with care; admin-only.
+    """
+```
+
+Both stamp `fecha_baja=now()` and `desactivado_por_id=actor_matricula` on every affected row. No `select_for_update`, no per-row Python loop — Postgres' UPDATE is atomic at row level and the partial unique index can't be violated since we're only ever transitioning open→closed.
+
+### Service — pure passthroughs
+
+```python
+def bulk_deactivate(
+    self, matriculas: list[str], actor: UserDTO
+) -> BulkDeactivateResult:
+    closed = self._repo.deactivate_many(matriculas, actor_matricula=actor.matricula)
+    return BulkDeactivateResult(
+        total_attempted=len(matriculas),
+        closed=closed,
+        already_inactive=len(matriculas) - closed,
+    )
+
+def deactivate_all_active(self, actor: UserDTO) -> BulkDeactivateResult:
+    closed = self._repo.deactivate_all_active(actor_matricula=actor.matricula)
+    return BulkDeactivateResult(
+        total_attempted=closed, closed=closed, already_inactive=0
+    )
+```
+
+### View — `POST /mentores/desactivar-bulk/` (two-step confirm)
+
+`BulkDeactivateMentorsView` (admin-only). POST-only.
+
+- **Step 1** — first POST from the list-page form: `action=selected` + `matriculas[]=A1&...` *or* `action=all`. View renders `confirm_bulk_deactivate.html` showing the list of targets, with hidden inputs and a `confirmed=1` button. No DB writes yet.
+- **Step 2** — second POST with `confirmed=1`: view dispatches to `service.bulk_deactivate(...)` or `service.deactivate_all_active(...)`, attaches a Django messages success line ("N mentores desactivados, M ya estaban inactivos"), redirects to `mentores:list`.
+
+`urls.py` adds `path("desactivar-bulk/", BulkDeactivateMentorsView.as_view(), name="deactivate_bulk")`.
+
+### Templates
+
+- **`list.html`** — wrap the table body + toolbar in a single `<form method="post" action="{% url 'mentores:deactivate_bulk' %}" id="bulk-deactivate-form">`. Per-row `<input type="checkbox" name="matriculas" value="{{ m.matricula }}">` rendered only on currently-open periods (closed rows show no checkbox; selection is meaningful only for open periods). Above the table:
+  - **`Seleccionar todos`** — `type="button"` (outline-secondary). A real `<button>` so it's keyboard-reachable and screen-reader-announced. A small inline `<script>` toggles every `input[type="checkbox"][name="matriculas"]` in the form on click; a second click un-checks them all (toggle behavior).
+  - **`Desactivar`** — `type="submit"` (outline-danger), posts `action=selected`. Selection is implicit — admin must tick at least one checkbox first; submitting an empty selection routes back to the list with a "Selecciona al menos un mentor" warning flash.
+  - The **`Acciones` column is removed entirely**: the per-row "Desactivar" link and its `<th>` header are gone. One fewer column improves mobile reflow at 320px (the table now shows only `Matrícula` + `Estado` on small screens).
+  - **`ACTION_ALL` is intentionally retained server-side but not UI-exposed.** The view still accepts `action=all` and applies via `service.deactivate_all_active`, kept for a future "advanced admin" panel and because the test coverage already exists. Today the only way to reach it is a direct POST.
+  - The functional inline JS for the toggle is the **only** scripting on the page; everything else is a real form submission. Wrapped in an IIFE; no globals.
+- **`confirm_bulk_deactivate.html`** — NEW. Renders a single hidden `token` field (signed payload from `django.core.signing.dumps({action, matriculas}, salt="mentores.bulk_deactivate")`, 5-min `max_age`); does NOT carry per-matrícula hidden inputs (the token is the only authoritative carrier — a tampered second POST cannot expand the target set). Shows the matrículas as a list, summarizes "N mentores se desactivarán", with a Confirm (`btn-danger`) and Cancel (`btn-outline-secondary` linking back to list). For `action=all`, shows a stronger warning copy ("Vas a desactivar **todos los mentores actualmente activos**…") instead of the matrícula list.
+
+### Tier 1 tests
+
+- Repo: `deactivate_many` closes matching open periods only; skips closed; skips unknown matrículas; returns count. Empty list → 0.
+- Repo: `deactivate_all_active` closes every open period; preserves closed periods untouched.
+- Service: counts assemble correctly for both variants; **input is de-duplicated before counting** so duplicates do not inflate `already_inactive`.
+- View: admin-only; first POST renders confirm template + emits a signed token in context; second POST requires a valid signed token (rejects tampered + expired + unknown-action tokens with no DB writes).
+
 ## Open Questions
 
 - **OQ-012-1** — `desactivado_por` for legacy rows (migrated from `Mentor`): we set `NULL` because the prior schema did not capture the deactivator. Acceptable as long as the audit story is "from migration date forward". If the institution requires retroactive attribution, that's not solvable without external data and is out of scope.
