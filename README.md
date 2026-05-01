@@ -4,6 +4,45 @@ Sistema de Solicitudes for the Universidad Autónoma de Zacatecas. Monolithic Dj
 
 For architectural rules and the SDD workflow this project follows, see [`CLAUDE.md`](./CLAUDE.md).
 
+## Índice
+
+- [Local development](#local-development)
+  - [Prerequisites](#prerequisites)
+  - [One-time setup](#one-time-setup)
+  - [Daily commands](#daily-commands)
+  - [Seeded dev users](#seeded-dev-users)
+  - [Browser E2E (Playwright)](#browser-e2e-playwright)
+  - [URLs](#urls-after-make-up--make-seed)
+- [Manual de usuario (capturas)](#manual-de-usuario-capturas)
+  - [1. Acceso](#1-acceso)
+    - [1.1 Login de desarrollo](#11-login-de-desarrollo)
+    - [1.2 Mi perfil](#12-mi-perfil)
+  - [2. Flujo del alumno](#2-flujo-del-alumno)
+    - [2.1 Catálogo — Crear solicitud](#21-catálogo--crear-solicitud)
+    - [2.2 Mis solicitudes](#22-mis-solicitudes)
+    - [2.3 Formulario dinámico](#23-formulario-dinámico)
+    - [2.4 Detalle de la solicitud](#24-detalle-de-la-solicitud)
+  - [3. Flujo de Control Escolar / Responsable de Programa](#3-flujo-de-control-escolar--responsable-de-programa)
+    - [3.1 Cola de revisión](#31-cola-de-revisión)
+    - [3.2 Detalle de revisión](#32-detalle-de-revisión)
+  - [4. Administración del catálogo](#4-administración-del-catálogo)
+    - [4.1 Tipos de solicitud](#41-tipos-de-solicitud)
+    - [4.2 Nuevo tipo de solicitud](#42-nuevo-tipo-de-solicitud)
+    - [4.3 Plantillas de PDF](#43-plantillas-de-pdf)
+    - [4.4 Nueva plantilla](#44-nueva-plantilla)
+  - [5. Mentores](#5-mentores)
+    - [5.1 Catálogo de mentores](#51-catálogo-de-mentores)
+    - [5.2 Agregar mentor](#52-agregar-mentor)
+    - [5.3 Importar CSV](#53-importar-csv)
+  - [6. Directorio de usuarios](#6-directorio-de-usuarios)
+    - [6.1 Listado](#61-listado)
+    - [6.2 Detalle de usuario](#62-detalle-de-usuario)
+  - [7. Reportes](#7-reportes)
+    - [7.1 Dashboard](#71-dashboard)
+    - [7.2 Lista detallada](#72-lista-detallada)
+  - [8. Notificaciones (Mailhog)](#8-notificaciones-mailhog)
+- [Adding seed data for a new app](#adding-seed-data-for-a-new-app)
+
 ## Local development
 
 The dev stack runs entirely in Docker — `nginx` (TLS termination on `:443`), `web` (Django), `db` (Postgres 16), and `mailhog` (SMTP capture on `:8025`).
