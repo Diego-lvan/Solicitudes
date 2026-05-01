@@ -69,6 +69,7 @@ Interface in `repositories/user/interface.py`, ORM impl in `repositories/user/im
 | `get_by_matricula(matricula)` | Returns `UserDTO`; raises `UserNotFound`. |
 | `upsert(input_dto)` | `update_or_create` inside `transaction.atomic`. **Empty strings / `None` mean "no information"** and never overwrite cached values — this is the contract that protects SIGA-cached fields on JWT-only re-logins. |
 | `update_last_login(matricula, when=...)` | `.filter().update()`; raises `UserNotFound` if 0 rows updated. |
+| `list_by_role(role)` | Returns every user with `role` and a non-empty `email`, ordered by `matricula`. **Production path**: used by `notificaciones.RecipientResolver` to fan out creation emails to staff. Empty-email filtering is owned by the repository so callers cannot accidentally re-implement the rule. |
 | `list_all()` | Returns every persisted user as a list of DTOs, ordered by role then matricula. **DEBUG-only**: used by the dev-login picker. Production code paths should not enumerate users. |
 
 ## Services
@@ -90,11 +91,12 @@ ABC with one method `fetch_profile(matricula) -> SigaProfile`.
 
 ### `UserService` (`services/user_service/`)
 
-ABC with three methods:
+ABC with four methods:
 
 - `get_or_create_from_claims(claims) -> UserDTO` — resolves role → upsert → stamps `last_login_at`. Called by middleware on every authenticated request.
 - `get_by_matricula(matricula) -> UserDTO` — read-through; raises `UserNotFound`.
 - `hydrate_from_siga(matricula) -> UserDTO` — best-effort enrichment. Swallows `SigaUnavailable`. Never overwrites the auth-provider email.
+- `list_by_role(role) -> list[UserDTO]` — returns deliverable recipients for `role` (delegates to `UserRepository.list_by_role`). Sole consumer in v1 is `notificaciones.RecipientResolver`.
 
 ## Middleware — `JwtAuthenticationMiddleware`
 

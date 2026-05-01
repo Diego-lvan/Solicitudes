@@ -1,57 +1,57 @@
 # 007 — Notifications — Status
 
-**Status:** Not Started
-**Last updated:** 2026-04-25
+**Status:** Done
+**Last updated:** 2026-04-26
 
 ## Checklist
 
 ### App skeleton
-- [ ] Create `notificaciones/` package + `apps.py`
-- [ ] Register in `INSTALLED_APPS`
+- [x] Create `notificaciones/` package + `apps.py`
+- [x] Register in `INSTALLED_APPS`
 
 ### Schemas, exceptions
-- [ ] [P] `notificaciones/schemas.py`
-- [ ] [P] `notificaciones/exceptions.py` (`EmailDeliveryError`)
+- [x] [P] `notificaciones/schemas.py` (dropped — no DTO needed; service passes primitives)
+- [x] [P] `notificaciones/exceptions.py` (`EmailDeliveryError`)
 
 ### Interfaces & implementations
-- [ ] `services/email_sender/{interface,smtp_implementation}.py` + tests (locmem outbox)
-- [ ] `services/recipient_resolver/{interface,implementation}.py` + tests
-- [ ] `services/notification_service/{interface,implementation}.py` + tests
-- [ ] `dependencies.py`
+- [x] `services/email_sender/{interface,smtp_implementation}.py` + tests (locmem outbox)
+- [x] `services/recipient_resolver/{interface,implementation}.py` + tests
+- [x] `services/notification_service/{interface,implementation}.py` + tests
+- [x] `dependencies.py` (real wiring lives in `solicitudes/lifecycle/dependencies.py` to break the read-side cycle)
 
 ### Extend `UserService`
-- [ ] Add `list_by_role(role) -> list[UserDTO]` to interface + impl + tests
+- [x] Add `list_by_role(role) -> list[UserDTO]` to interface + impl + tests
 
 ### Templates
-- [ ] [P] `templates/notificaciones/email/_base.html`
-- [ ] [P] `templates/notificaciones/email/nueva_solicitud.html` + `.txt`
-- [ ] [P] `templates/notificaciones/email/estado_cambiado.html` + `.txt`
+- [x] [P] `templates/notificaciones/email/_base.html`
+- [x] [P] `templates/notificaciones/email/nueva_solicitud.html` + `.txt`
+- [x] [P] `templates/notificaciones/email/estado_cambiado.html` + `.txt`
 
 ### Replace NoOp wiring (in 004's dependencies)
-- [ ] [P] `solicitudes/intake/dependencies.py`
-- [ ] [P] `solicitudes/revision/dependencies.py`
-- [ ] [P] `solicitudes/lifecycle/dependencies.py`
+- [x] [P] `solicitudes/intake/dependencies.py` (no edit needed — already imports `get_notification_service` from lifecycle; auto-picks up real impl)
+- [x] [P] `solicitudes/revision/dependencies.py` (no edit needed — same)
+- [x] [P] `solicitudes/lifecycle/dependencies.py` (real `DefaultNotificationService`, with read-only lifecycle for the notifier to break the wiring cycle)
 
 ### Settings
-- [ ] Verify env vars in `.env.example`: `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`, `DEFAULT_FROM_EMAIL`, `SITE_BASE_URL`
-- [ ] `prod.py` fails fast if missing
+- [x] Verify env vars in `.env.example`: `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`, `EMAIL_TIMEOUT`, `DEFAULT_FROM_EMAIL`, `SITE_BASE_URL`
+- [x] `prod.py` fails fast if missing (`EMAIL_HOST`, `DEFAULT_FROM_EMAIL`, `SITE_BASE_URL` now `_required(...)`; `EMAIL_TIMEOUT` defaults to 10s)
 
 ### End-to-end smoke
-- [ ] Alumno creates → `mail.outbox` length = N (number of active CONTROL_ESCOLAR users)
-- [ ] Personal finalizes → `mail.outbox` has one email to solicitante
-- [ ] Patch SMTP to raise → transition still succeeds; outbox empty; log line with `event=email_delivery_error`
+- [x] Alumno creates → `mail.outbox` length = N (one per CONTROL_ESCOLAR user)
+- [x] Personal finalizes → `mail.outbox` has one email to solicitante
+- [x] Patch SMTP to raise → transition still succeeds; outbox empty; log line with `event=email_delivery_error`
 
 ### Quality gates
-- [ ] `ruff` + `mypy` clean
-- [ ] `pytest` green; coverage ≥ 95% for service
+- [x] `ruff` + `mypy` clean
+- [x] `pytest` green; coverage 100% for `notification_service` (overall notificaciones 100% post-removal of unused `schemas.py`)
 
 
 ### E2E
-- [ ] Tier 1 (Client multi-step): Cross-feature: state transition triggers an email; `mail.outbox` receives one message with the correct recipient and subject. Idempotency: two transitions in a row do not duplicate.
+- [x] Tier 1: cross-feature state transition emits one email to solicitante; two transitions produce two distinct emails; SMTP failure does not block transition.
 
 ## Blockers
 
-None (depends on 002 + 004).
+None. Closed out — see `/review` notes in `changelog.md`.
 
 ## Legend
 

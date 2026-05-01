@@ -129,9 +129,20 @@ class NotificationService(ABC):
                              observaciones: str = "") -> None: ...
 ```
 
-Lifecycle owns this ABC per the cross-feature dependency rule (the consumer defines the interface). Until 007 ships the email-dispatching adapter, `lifecycle/dependencies.py:get_notification_service()` returns `NoOpNotificationService`. Replacing the binding is a one-line swap.
+Lifecycle owns this ABC per the cross-feature dependency rule (the consumer defines the interface). The concrete `DefaultNotificationService` lives in `notificaciones/` (initiative 007) and is wired by `lifecycle/dependencies.py:get_lifecycle_service()`. `NoOpNotificationService` remains in `notification_port.py` and is used by tests and by the read-only lifecycle described below.
 
 `notify_creation` is fired by `IntakeService.create`; `notify_state_change` is fired by `LifecycleService.transition`. Both are called *after* the transaction commits.
+
+#### Construction-cycle break
+
+The lifecycle service depends on the notifier (to fire on transitions); the notifier depends on `LifecycleService.get_detail` (to load `SolicitudDetail` for templating). `lifecycle/dependencies.py` resolves the cycle at construction time without introducing a new narrow port:
+
+1. Build the shared `historial` and `solicitudes` repositories.
+2. Build a *read-only* `DefaultLifecycleService` wired with `NoOpNotificationService`. The notifier never calls `transition` on this instance.
+3. Build `DefaultNotificationService` taking the read-only lifecycle, plus the recipient resolver and SMTP sender.
+4. Build the *production* `DefaultLifecycleService` taking the same shared repos and the real notifier.
+
+Both lifecycle instances share the same repository objects, so reads from the notifier and writes from the production service cannot diverge if a future change starts caching state on a repo.
 
 ### Audit log (`_shared/audit.py`)
 

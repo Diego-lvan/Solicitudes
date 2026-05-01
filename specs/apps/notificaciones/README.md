@@ -18,4 +18,4 @@ Folders are created here when `/brainstorm` produces a `requirements.md` for a f
 
 ## Currently planned features
 
-_None yet — specs will appear as initiatives are brainstormed and planned._
+- [`notification_dispatch/`](./notification_dispatch/) — email-on-creation + email-on-state-change. Shipped by initiative 007.
