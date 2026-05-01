@@ -149,7 +149,22 @@ Lifecycle owns this ABC per the cross-feature dependency rule (the consumer defi
 - `update_estado(folio, new_estado)` — raises `SolicitudNotFound`.
 - `exists_for_tipo(tipo_id) -> bool` — used by the tipos service to gate hard-delete.
 
+**Aggregations (added in 009 for the `reportes` consumer):**
+
+- `aggregate_by_estado(filters) -> list[AggregateByEstado]` — `{estado, count}` per estado.
+- `aggregate_by_tipo(filters) -> list[AggregateByTipo]` — `{tipo_id, tipo_nombre, count}` per tipo, ordered by `-count, tipo_nombre`.
+- `aggregate_by_month(filters) -> list[AggregateByMonth]` — `{year, month, count}` grouped by `TruncMonth("created_at")` in the project's `TIME_ZONE` (`America/Mexico_City`). Caller is responsible for the date window in `filters`; the repo does not synthesize a default.
+- `iter_for_admin(filters, chunk_size=500) -> Iterator[SolicitudRow]` — server-side cursor (`.iterator(chunk_size=...)`) for exporters that need to walk every matching row without paying the per-page `count()` round trip baked into the paginated path.
+
+Each `aggregate_by_*` is **single SQL** (`.values(...).annotate(Count("folio"))`). Asserted per-method by `django_assert_num_queries(1)` in `test_solicitud_repository_aggregates.py`. The full dashboard render through `DefaultReportService.dashboard()` is bounded by `django_assert_max_num_queries(12)` in the view test (3 aggregates + 1 filter-dropdown + ~8 auth/savepoint overhead) — this is the canonical N+1 regression catch.
+
+`SolicitudFilter` carries an additive `responsible_role: Role | None` field (added in 009); when set, `_apply_filters` joins via `tipo__responsible_role=...` (the existing `(activo, responsible_role)` index covers the lookup, no schema change).
+
+`SolicitudRow` carries an additive `pago_exento: bool = False` field (added in 009) so list-and-export consumers don't need to re-hydrate a `SolicitudDetail` per row.
+
 List queries cap at **3 SQL queries** (one count, one rows, plus pagination overhead) via `select_related("tipo", "solicitante")`. Asserted by `test_list_uses_at_most_three_queries`.
+
+`iter_for_admin` is **streaming on PostgreSQL** (server-side cursor) and **materialising on SQLite** (Django's iterator silently fetches all rows on SQLite); the call site documents this so dev exports of huge datasets don't surprise.
 
 `HistorialRepository.append(...)` is append-only by contract; there is no update or delete method. `list_for_folio(folio)` returns entries ordered by `created_at` ascending (oldest first) so timelines render naturally.
 
@@ -168,6 +183,8 @@ All inherit from `_shared.exceptions` so the global error middleware maps them t
 - `test_historial_repository.py` — append, `list_for_folio` chronological order.
 - `test_folio_service.py` — string formatting + zero-padding (in-memory fake).
 - `test_lifecycle_service.py` — full transition matrix with in-memory fakes; `cancelar` authorization truth table; hypothesis property test that exhaustively walks `(Estado, action)` pairs and asserts the matrix is consistent.
+- `test_solicitud_repository_aggregates.py` — repo-level aggregate methods, single-query bound (`django_assert_num_queries(1)` per method), `responsible_role` filter, TZ-aware month grouping.
+- `test_lifecycle_service_aggregates.py` — service-level pass-through assertions for `aggregate_*`, `list_for_admin`, `iter_for_admin` (using a recording-stub repo so the contract is enforced even if the repo grows a different shape).
 
 `InMemoryFolioRepository`, `InMemorySolicitudRepository`, `InMemoryHistorialRepository`, and `RecordingNotificationService` live in `lifecycle/tests/fakes.py` — reused by the intake service tests.
 
@@ -179,3 +196,4 @@ All inherit from `_shared.exceptions` so the global error middleware maps them t
 - [tipos/design.md](../tipos/design.md) — provides `TipoService.snapshot()` and `TipoService.get_for_admin()`.
 - [formularios/design.md](../formularios/design.md) — `FormSnapshot` shape stored in `Solicitud.form_snapshot`.
 - [flows/solicitud-lifecycle.md](../../../flows/solicitud-lifecycle.md) — end-to-end intake→revision→finalize sequence diagram.
+- [reportes/dashboard/design.md](../../reportes/dashboard/design.md) — consumer of `LifecycleService.{aggregate_*, iter_for_admin, list_for_admin}` and the `responsible_role` filter (added in 009).
