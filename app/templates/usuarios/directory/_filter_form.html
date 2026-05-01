@@ -1,0 +1,24 @@
+<form method="get" class="row g-2 align-items-end mb-4" role="search" aria-label="Filtros de directorio">
+  <div class="col-12 col-md-4">
+    <label class="form-label" for="filter_role">Rol</label>
+    <select class="form-select" name="role" id="filter_role">
+      {% for value, label in form.role.field.choices %}
+        <option value="{{ value }}" {% if filters.role.value == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-12 col-md-5">
+    <label class="form-label" for="filter_q">Buscar (matrícula, nombre o correo)</label>
+    <input type="search" class="form-control" name="q" id="filter_q"
+           value="{{ filters.q }}" maxlength="200"
+           placeholder="Ej. 12345678 o María" />
+  </div>
+
+  <div class="col-12 col-md-auto">
+    <button type="submit" class="btn btn-primary">
+      <i class="bi bi-funnel me-1" aria-hidden="true"></i> Buscar
+    </button>
+    <a href="{% url 'usuarios:directory:list' %}" class="btn btn-outline-secondary">Limpiar</a>
+  </div>
+</form>
