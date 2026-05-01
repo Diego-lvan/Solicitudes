@@ -1,6 +1,6 @@
 # 012 — Mentor Catalog Historicization — Status
 
-**Status:** Implementation Complete (awaiting review)
+**Status:** Done
 **Last updated:** 2026-04-26
 
 ## Checklist
