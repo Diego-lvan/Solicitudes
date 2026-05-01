@@ -25,20 +25,28 @@ Replace the single-row-per-matrícula model with a **per-period model**: each `(
 
 ### Acceptance criteria
 
-- [ ] `MentorPeriodo` exists; each row is a single `(matricula, fecha_alta, fecha_baja)` triple. `fecha_baja IS NULL` denotes "currently active".
-- [ ] At most **one active period per matrícula** at any time (database-enforced).
-- [ ] **Reactivation** (manual add of an inactive matrícula, or CSV import including one) inserts a **new** `MentorPeriodo` row. Older periods stay intact.
-- [ ] **Deactivation** updates only the currently-active period (sets `fecha_baja = now()` and records `desactivado_por`).
-- [ ] `is_mentor(matricula)` returns the same boolean it does today (currently-active check). No behavior change for downstream consumers (intake, `pago_exento`).
-- [ ] **New** read API on the service layer:
+- [x] `MentorPeriodo` exists; each row is a single `(matricula, fecha_alta, fecha_baja)` triple. `fecha_baja IS NULL` denotes "currently active".
+- [x] At most **one active period per matrícula** at any time (database-enforced).
+- [x] **Reactivation** (manual add of an inactive matrícula, or CSV import including one) inserts a **new** `MentorPeriodo` row. Older periods stay intact.
+- [x] **Deactivation** updates only the currently-active period (sets `fecha_baja = now()` and records `desactivado_por`).
+- [x] `is_mentor(matricula)` returns the same boolean it does today (currently-active check). No behavior change for downstream consumers (intake, `pago_exento`).
+- [x] **New** read API on the service layer:
   - `get_history(matricula)` returns the full timeline, newest-first.
   - `was_mentor_at(matricula, when)` returns whether the matrícula was active at `when`.
-- [ ] **New detail view** `/mentores/<matricula>/` renders the timeline (read-only).
-- [ ] **List view** continues to show currently-active mentors as default; the existing `filtered=1` sentinel pattern is preserved.
-- [ ] **CSV import counts** (`inserted`, `reactivated`, `skipped_duplicates`, `invalid_rows`) keep the same external semantics.
-- [ ] **Existing data is migrated** without loss: each pre-existing `Mentor` row becomes one `MentorPeriodo` row carrying the original `fecha_alta`, `fecha_baja`, `fuente`, `nota`, `creado_por` (with `desactivado_por = NULL` since legacy data didn't capture it).
-- [ ] After the migration, the `Mentor` table is dropped. Repository, service, importer, views, and tests reference only `MentorPeriodo`.
-- [ ] **Cross-feature regression tests pass**: the 008 snapshot-integrity scenario (deactivate a mentor → existing solicitudes keep `pago_exento=True`) continues to pass against the new schema.
+- [x] **New detail view** `/mentores/<matricula>/` renders the timeline (read-only).
+- [x] **List view** continues to show currently-active mentors as default; the existing `filtered=1` sentinel pattern is preserved.
+- [x] **CSV import counts** (`inserted`, `reactivated`, `skipped_duplicates`, `invalid_rows`) keep the same external semantics.
+- [x] **Existing data is migrated** without loss: each pre-existing `Mentor` row becomes one `MentorPeriodo` row carrying the original `fecha_alta`, `fecha_baja`, `fuente`, `nota`, `creado_por` (with `desactivado_por = NULL` since legacy data didn't capture it).
+- [x] After the migration, the `Mentor` table is dropped. Repository, service, importer, views, and tests reference only `MentorPeriodo`.
+- [x] **Cross-feature regression tests pass**: the 008 snapshot-integrity scenario (deactivate a mentor → existing solicitudes keep `pago_exento=True`) continues to pass against the new schema.
+
+### Bulk deactivation (added during 012 implementation)
+
+- [x] **As an admin**, on the list view I can tick checkboxes on currently-active mentors and click a single "Desactivar" button to close all selected periods in one action.
+- [x] **As an admin**, a "Seleccionar todos" master button toggles every checkbox on the current page (and toggles them all off on a second click).
+- [x] **As an admin**, the bulk deactivation requires a server-side confirmation step that I cannot bypass: the second POST is rejected unless it carries a fresh signed token emitted by the confirmation page.
+- [x] **Per-row "Desactivar" link removed**; the only deactivation paths are the bulk flow and the still-routable `/mentores/<matricula>/desactivar/` URL (no UI exposure today).
+- [x] Outcome counts (`closed`, `already_inactive`) honestly report what happened. Duplicates in the input do not inflate `already_inactive`. Already-closed and unknown matrículas are lumped into `already_inactive` because the catalog cannot distinguish them post-hoc.
 
 ### Out of scope
 
