@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from django.conf import settings
-from django.urls import path
+from django.urls import include, path
 
 from usuarios.views.callback import CallbackView
 from usuarios.views.logout import LogoutView
@@ -14,6 +14,7 @@ urlpatterns = [
     path("auth/callback", CallbackView.as_view(), name="callback"),
     path("auth/logout", LogoutView.as_view(), name="logout"),
     path("auth/me", MeView.as_view(), name="me"),
+    path("usuarios/", include("usuarios.directory.urls")),
 ]
 
 # Dev-only URL: stand-in for the external auth provider while OQ-002-1 is open.

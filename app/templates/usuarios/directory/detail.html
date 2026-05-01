@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Usuario {{ user_detail.matricula }} · {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="h3 mb-1">Detalle de usuario</h1>
+    <p class="text-muted mb-0">Matrícula <code>{{ user_detail.matricula }}</code></p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ back_url }}">
+    <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Volver
+  </a>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-6">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Identidad</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-4 text-muted fw-normal">Matrícula</dt>
+          <dd class="col-sm-8">{{ user_detail.matricula }}</dd>
+
+          <dt class="col-sm-4 text-muted fw-normal">Nombre completo</dt>
+          <dd class="col-sm-8">{{ user_detail.full_name|default:"—" }}</dd>
+
+          <dt class="col-sm-4 text-muted fw-normal">Correo</dt>
+          <dd class="col-sm-8">{{ user_detail.email }}</dd>
+
+          <dt class="col-sm-4 text-muted fw-normal">Género</dt>
+          <dd class="col-sm-8">
+            {% if user_detail.gender == 'H' %}Hombre
+            {% elif user_detail.gender == 'M' %}Mujer
+            {% else %}—{% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Académico</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-4 text-muted fw-normal">Rol</dt>
+          <dd class="col-sm-8">
+            <span class="badge text-bg-secondary">{{ user_detail.role.value|title }}</span>
+          </dd>
+
+          <dt class="col-sm-4 text-muted fw-normal">Programa</dt>
+          <dd class="col-sm-8">{{ user_detail.programa|default:"—" }}</dd>
+
+          <dt class="col-sm-4 text-muted fw-normal">Semestre</dt>
+          <dd class="col-sm-8">
+            {% if user_detail.semestre is not None %}{{ user_detail.semestre }}{% else %}—{% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Mentor</h2>
+        <p class="mb-0">
+          {% if user_detail.is_mentor is True %}
+            <span class="badge text-bg-success">
+              <i class="bi bi-check-circle me-1" aria-hidden="true"></i>Sí
+            </span>
+            <span class="text-muted ms-2">Está activo en el catálogo de mentores.</span>
+          {% elif user_detail.is_mentor is False %}
+            <span class="badge text-bg-secondary">No</span>
+            <span class="text-muted ms-2">No figura en el catálogo de mentores.</span>
+          {% else %}
+            <span class="badge text-bg-warning">
+              <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>Desconocido
+            </span>
+            <span class="text-muted ms-2">No fue posible consultar el catálogo de mentores.</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Auditoría</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-4 text-muted fw-normal">Último acceso</dt>
+          <dd class="col-sm-8">
+            {% if user_detail.last_login_at %}
+              {{ user_detail.last_login_at|date:"d/m/Y H:i" }}
+            {% else %}
+              Nunca
+            {% endif %}
+          </dd>
+
+          <dt class="col-sm-4 text-muted fw-normal">Creado</dt>
+          <dd class="col-sm-8">{{ user_detail.created_at|date:"d/m/Y H:i" }}</dd>
+
+          <dt class="col-sm-4 text-muted fw-normal">Actualizado</dt>
+          <dd class="col-sm-8">{{ user_detail.updated_at|date:"d/m/Y H:i" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

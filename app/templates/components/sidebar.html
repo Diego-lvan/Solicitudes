@@ -61,6 +61,15 @@ instance so screen-reader rotors don't show two identically-labelled landmarks.
 
       <div class="text-muted text-uppercase small fw-semibold mt-3 mb-1 px-2"
            style="letter-spacing:.08em;">
+        Directorio
+      </div>
+      <a class="nav-link app-sidebar-link {% if '/usuarios/' in request.path and not '/auth/' in request.path %}active{% endif %}"
+         href="{% url 'usuarios:directory:list' %}">
+        <i class="bi bi-person-lines-fill me-2" aria-hidden="true"></i>Usuarios
+      </a>
+
+      <div class="text-muted text-uppercase small fw-semibold mt-3 mb-1 px-2"
+           style="letter-spacing:.08em;">
         Reportes
       </div>
       <a class="nav-link app-sidebar-link {% if '/reportes' in request.path %}active{% endif %}"
