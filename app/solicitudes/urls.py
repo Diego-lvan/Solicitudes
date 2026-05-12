@@ -1,8 +1,4 @@
-"""URL routes for the solicitudes app.
-
-Future initiatives mount additional feature URL modules here:
-- 005 — archivos/
-"""
+"""URL routes for the solicitudes app."""
 from __future__ import annotations
 
 from django.urls import include, path, re_path
@@ -17,6 +13,7 @@ urlpatterns = [
         "admin/plantillas/",
         include(("solicitudes.pdf.urls", "plantillas")),
     ),
+    path("archivos/", include(("solicitudes.archivos.urls", "archivos"))),
     path("revision/", include(("solicitudes.revision.urls", "revision"))),
     # PDF download lives at "<folio>/pdf/" sharing the folio prefix used by
     # intake detail. Constrained to the actual folio shape (SOL-YYYY-NNNNN)

@@ -20,7 +20,10 @@ COMPROBANTE_FIELD = "comprobante"
 # Comprobante always allows the same payment-receipt extensions; we keep this
 # narrow and centralized so legal updates land in one place.
 COMPROBANTE_EXTENSIONS = (".pdf", ".jpg", ".jpeg", ".png")
-COMPROBANTE_MAX_SIZE_MB = 5
+# Aligned with RT-07: same global 10 MB ceiling as any uploaded file. The
+# archivo service enforces this server-side; the constant here drives the
+# help-text rendered on the form.
+COMPROBANTE_MAX_SIZE_MB = 10
 
 
 def build_intake_form(

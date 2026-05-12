@@ -40,6 +40,13 @@
       </div>
     </div>
 
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h5 card-title">Archivos</h2>
+        {% include "solicitudes/_partials/_archivos.html" with archivos=archivos %}
+      </div>
+    </div>
+
     {% if can_atender or can_finalizar or can_cancelar %}
     <div class="card">
       <div class="card-body">

@@ -7,6 +7,7 @@ from django.views import View
 
 from _shared.exceptions import Unauthorized
 from _shared.request_actor import actor_from_request
+from solicitudes.archivos.dependencies import get_archivo_service
 from solicitudes.lifecycle.dependencies import get_lifecycle_service
 from usuarios.constants import Role
 from usuarios.permissions import LoginRequiredMixin
@@ -26,6 +27,8 @@ class SolicitudDetailView(LoginRequiredMixin, View):
         if not (is_owner or is_responsible or is_admin):
             raise Unauthorized("No puedes ver esta solicitud.")
 
+        archivos = get_archivo_service().list_for_solicitud(folio)
+
         return render(
             request,
             self.template_name,
@@ -33,5 +36,6 @@ class SolicitudDetailView(LoginRequiredMixin, View):
                 "detail": detail,
                 "is_owner": is_owner,
                 "can_act": is_responsible or is_admin,
+                "archivos": archivos,
             },
         )
