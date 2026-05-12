@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}{{ detail.folio }} · {{ block.super }}{% endblock %}
+
+{% block content %}
+<nav aria-label="Ruta" class="mb-3">
+  <ol class="breadcrumb small mb-0">
+    <li class="breadcrumb-item">
+      <a href="{% url 'solicitudes:intake:mis_solicitudes' %}">Mis solicitudes</a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">{{ detail.folio }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-2 mb-4">
+  <div>
+    <h1 class="h3 mb-1">{{ detail.folio }}</h1>
+    <div class="text-muted small">
+      {{ detail.tipo.nombre }} · {{ detail.created_at|date:"d/m/Y H:i" }}
+    </div>
+  </div>
+  <div>
+    {% include "solicitudes/_partials/_estado_badge.html" with estado=detail.estado %}
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-8">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h5 card-title">Datos de la solicitud</h2>
+        {% include "solicitudes/_partials/_valores_render.html" with snapshot=detail.form_snapshot valores=detail.valores %}
+      </div>
+    </div>
+
+    {% if is_owner and detail.estado.value == "CREADA" %}
+    <form method="post" action="{% url 'solicitudes:intake:cancel' folio=detail.folio %}"
+          class="d-inline-block"
+          onsubmit="return confirm('¿Cancelar esta solicitud? Esta acción no se puede deshacer.');">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-danger">
+        <i class="bi bi-x-circle me-1" aria-hidden="true"></i> Cancelar solicitud
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="col-12 col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5 card-title">Historial</h2>
+        {% include "solicitudes/_partials/_historial.html" with historial=detail.historial %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

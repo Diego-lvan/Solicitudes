@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Mis solicitudes · {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">Mis solicitudes</h1>
+  <a class="btn btn-primary" href="{% url 'solicitudes:intake:catalog' %}">
+    <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Nueva solicitud
+  </a>
+</div>
+
+<form method="get" class="row g-2 align-items-end mb-4">
+  <div class="col-12 col-md-3">
+    <label for="folio" class="form-label">Folio</label>
+    <input type="text" name="folio" id="folio" class="form-control"
+           value="{{ filters.folio_contains|default:'' }}" placeholder="SOL-2026-…" />
+  </div>
+  <div class="col-6 col-md-2">
+    <label for="estado" class="form-label">Estado</label>
+    <select name="estado" id="estado" class="form-select">
+      <option value="">Todos</option>
+      {% for e in estados %}
+        <option value="{{ e.value }}" {% if filters.estado == e %}selected{% endif %}>
+          {{ e.display_name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-6 col-md-2">
+    <label for="desde" class="form-label">Desde</label>
+    <input type="date" name="desde" id="desde" class="form-control"
+           value="{{ filters.created_from|default:'' }}" />
+  </div>
+  <div class="col-6 col-md-2">
+    <label for="hasta" class="form-label">Hasta</label>
+    <input type="date" name="hasta" id="hasta" class="form-control"
+           value="{{ filters.created_to|default:'' }}" />
+  </div>
+  <div class="col-6 col-md-auto">
+    <button type="submit" class="btn btn-outline-secondary w-100">Filtrar</button>
+  </div>
+</form>
+
+{% if page.items %}
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead>
+      <tr>
+        <th scope="col">Folio</th>
+        <th scope="col">Tipo</th>
+        <th scope="col" class="d-none d-lg-table-cell">Solicitante</th>
+        <th scope="col" class="d-none d-md-table-cell">Fecha</th>
+        <th scope="col">Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in page.items %}
+        {% include "solicitudes/_partials/_solicitud_row.html" with row=row %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "components/pagination.html" with page=page %}
+{% else %}
+<div class="text-center py-5">
+  <i class="bi bi-inbox fs-1 text-muted" aria-hidden="true"></i>
+  <p class="mt-3 mb-2">No tienes solicitudes registradas.</p>
+  <a class="btn btn-primary btn-sm" href="{% url 'solicitudes:intake:catalog' %}">Crear la primera</a>
+</div>
+{% endif %}
+{% endblock %}
