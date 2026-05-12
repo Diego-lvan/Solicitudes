@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Revisión · {{ detail.folio }} · {{ block.super }}{% endblock %}
+
+{% block content %}
+<nav aria-label="Ruta" class="mb-3">
+  <ol class="breadcrumb small mb-0">
+    <li class="breadcrumb-item">
+      <a href="{% url 'solicitudes:revision:queue' %}">Cola de revisión</a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">{{ detail.folio }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-2 mb-4">
+  <div>
+    <h1 class="h3 mb-1">{{ detail.folio }}</h1>
+    <div class="text-muted small">
+      {{ detail.tipo.nombre }} · Solicitante: {{ detail.solicitante.full_name|default:detail.solicitante.matricula }}
+    </div>
+  </div>
+  <div>
+    {% include "solicitudes/_partials/_estado_badge.html" with estado=detail.estado %}
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-8">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h5 card-title">Datos de la solicitud</h2>
+        {% include "solicitudes/_partials/_valores_render.html" with snapshot=detail.form_snapshot valores=detail.valores %}
+      </div>
+    </div>
+
+    {% if can_atender or can_finalizar or can_cancelar %}
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5 card-title">Acciones</h2>
+
+        <div class="mb-3">
+          <label for="id_observaciones" class="form-label">Observaciones (opcional)</label>
+          <textarea id="id_observaciones" class="form-control"
+                    rows="3" maxlength="2000"
+                    form="form-action"
+                    name="observaciones"
+                    placeholder="Notas para el solicitante o el historial."></textarea>
+          <div class="form-text">Se incluyen en el historial.</div>
+        </div>
+
+        <div class="d-flex flex-column flex-md-row gap-2">
+          {% if can_atender %}
+          <form id="form-action" method="post"
+                action="{% url 'solicitudes:revision:take' folio=detail.folio %}"
+                class="d-grid d-md-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-play-fill me-1" aria-hidden="true"></i> Atender
+            </button>
+          </form>
+          {% endif %}
+
+          {% if can_finalizar %}
+          <form method="post"
+                action="{% url 'solicitudes:revision:finalize' folio=detail.folio %}"
+                class="d-grid d-md-inline"
+                onsubmit="this.querySelector('[name=observaciones]').value = document.getElementById('id_observaciones').value;">
+            {% csrf_token %}
+            <input type="hidden" name="observaciones" value="" />
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-check2 me-1" aria-hidden="true"></i> Finalizar
+            </button>
+          </form>
+          {% endif %}
+
+          {% if can_cancelar %}
+          <form method="post"
+                action="{% url 'solicitudes:revision:cancel' folio=detail.folio %}"
+                class="d-grid d-md-inline ms-md-auto"
+                onsubmit="if (!confirm('¿Cancelar esta solicitud?')) return false; this.querySelector('[name=observaciones]').value = document.getElementById('id_observaciones').value;">
+            {% csrf_token %}
+            <input type="hidden" name="observaciones" value="" />
+            <button type="submit" class="btn btn-outline-danger">
+              <i class="bi bi-x-circle me-1" aria-hidden="true"></i> Cancelar
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-12 col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5 card-title">Historial</h2>
+        {% include "solicitudes/_partials/_historial.html" with historial=detail.historial %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
