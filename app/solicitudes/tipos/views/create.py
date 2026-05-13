@@ -9,10 +9,16 @@ from django.views import View
 from pydantic import ValidationError as PydValidationError
 
 from _shared.exceptions import AppError
+from solicitudes.pdf.dependencies import get_plantilla_service
 from solicitudes.tipos.dependencies import get_tipo_service
 from solicitudes.tipos.forms import FieldFormSet, TipoForm
 from solicitudes.tipos.views._helpers import build_create_input
 from usuarios.permissions import AdminRequiredMixin
+
+
+def _plantilla_choices() -> list[tuple[str, str]]:
+    rows = get_plantilla_service().list(only_active=True)
+    return [(str(r.id), r.nombre) for r in rows]
 
 
 class TipoCreateView(AdminRequiredMixin, View):
@@ -23,7 +29,7 @@ class TipoCreateView(AdminRequiredMixin, View):
             request,
             self.template_name,
             {
-                "tipo_form": TipoForm(),
+                "tipo_form": TipoForm(plantilla_choices=_plantilla_choices()),
                 "field_formset": FieldFormSet(prefix="fields"),
                 "form_title": "Nuevo tipo de solicitud",
                 "submit_label": "Crear tipo",
@@ -31,7 +37,7 @@ class TipoCreateView(AdminRequiredMixin, View):
         )
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        tipo_form = TipoForm(request.POST)
+        tipo_form = TipoForm(request.POST, plantilla_choices=_plantilla_choices())
         field_formset = FieldFormSet(request.POST, prefix="fields")
 
         if not (tipo_form.is_valid() and field_formset.is_valid()):

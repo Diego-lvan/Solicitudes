@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}{{ form_title }} · {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">{{ form_title }}</h1>
+  <a class="btn btn-link" href="{% url 'solicitudes:plantillas:list' %}">Volver al listado</a>
+</div>
+
+{% if form.non_field_errors %}
+  <div class="alert alert-danger">
+    {{ form.non_field_errors }}
+  </div>
+{% endif %}
+
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  <div class="row g-3">
+    <div class="col-md-8">
+      <label for="{{ form.nombre.id_for_label }}" class="form-label">
+        {{ form.nombre.label }}
+        <span class="text-danger" aria-hidden="true">*</span>
+      </label>
+      {{ form.nombre }}
+      {% if form.nombre.errors %}
+        <div class="invalid-feedback d-block" role="alert">{{ form.nombre.errors.0 }}</div>
+      {% endif %}
+    </div>
+    <div class="col-md-4">
+      <div class="form-check mt-4">
+        {{ form.activo }}
+        <label class="form-check-label" for="{{ form.activo.id_for_label }}">{{ form.activo.label }}</label>
+      </div>
+    </div>
+    <div class="col-12">
+      <label for="{{ form.descripcion.id_for_label }}" class="form-label">{{ form.descripcion.label }}</label>
+      {{ form.descripcion }}
+      {% if form.descripcion.errors %}
+        <div class="invalid-feedback d-block" role="alert">{{ form.descripcion.errors.0 }}</div>
+      {% endif %}
+    </div>
+    <div class="col-12">
+      <label for="{{ form.html.id_for_label }}" class="form-label">
+        {{ form.html.label }}
+        <span class="text-danger" aria-hidden="true">*</span>
+        <span class="text-muted small">(usa <code>{% verbatim %}{{ var }}{% endverbatim %}</code> para insertar variables)</span>
+      </label>
+      {{ form.html }}
+      {% if form.html.errors %}
+        <div class="invalid-feedback d-block" role="alert">{{ form.html.errors.0 }}</div>
+      {% endif %}
+    </div>
+    <div class="col-12">
+      <label for="{{ form.css.id_for_label }}" class="form-label">{{ form.css.label }}</label>
+      {{ form.css }}
+      {% if form.css.errors %}
+        <div class="invalid-feedback d-block" role="alert">{{ form.css.errors.0 }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 mt-4 justify-content-end">
+    <a href="{% url 'solicitudes:plantillas:list' %}" class="btn btn-outline-secondary">Cancelar</a>
+    <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
+  </div>
+</form>
+
+<div class="card mt-5">
+  <div class="card-header">Variables disponibles</div>
+  <div class="card-body small">
+    <ul class="mb-0">
+      <li><code>{% verbatim %}{{ solicitante.matricula }}{% endverbatim %}</code>, <code>{% verbatim %}{{ solicitante.nombre }}{% endverbatim %}</code>, <code>{% verbatim %}{{ solicitante.email }}{% endverbatim %}</code>, <code>{% verbatim %}{{ solicitante.programa }}{% endverbatim %}</code>, <code>{% verbatim %}{{ solicitante.semestre }}{% endverbatim %}</code></li>
+      <li><code>{% verbatim %}{{ solicitud.folio }}{% endverbatim %}</code>, <code>{% verbatim %}{{ solicitud.estado }}{% endverbatim %}</code>, <code>{% verbatim %}{{ solicitud.tipo_nombre }}{% endverbatim %}</code>, <code>{% verbatim %}{{ solicitud.created_at }}{% endverbatim %}</code></li>
+      <li><code>{% verbatim %}{{ valores.&lt;slug-de-campo&gt; }}{% endverbatim %}</code> (los slugs se derivan automáticamente del label del campo)</li>
+      <li><code>{% verbatim %}{{ now }}{% endverbatim %}</code>, <code>{% verbatim %}{{ firma_lugar_fecha }}{% endverbatim %}</code></li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

@@ -1,6 +1,9 @@
 """Form for the tipo metadata (header section of create/edit)."""
 from __future__ import annotations
 
+from typing import Any, cast
+from uuid import UUID
+
 from django import forms
 
 from solicitudes.tipos.constants import (
@@ -45,6 +48,26 @@ class TipoForm(forms.Form):
         widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
         help_text="Solo aplica cuando el tipo requiere pago.",
     )
+    plantilla_id = forms.ChoiceField(
+        label="Plantilla de PDF",
+        required=False,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        help_text="Opcional. Sin plantilla no se puede generar PDF.",
+    )
+
+    def __init__(
+        self,
+        *args: Any,
+        plantilla_choices: list[tuple[str, str]] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        # Plantilla choices are loaded by the view from PlantillaService so
+        # this form stays free of cross-feature service references.
+        choices: list[tuple[str, str]] = [("", "Sin plantilla")]
+        if plantilla_choices:
+            choices.extend(plantilla_choices)
+        cast(forms.ChoiceField, self.fields["plantilla_id"]).choices = choices
 
     def clean_nombre(self) -> str:
         value: str = self.cleaned_data["nombre"]
@@ -53,3 +76,12 @@ class TipoForm(forms.Form):
     def clean_descripcion(self) -> str:
         value: str = self.cleaned_data.get("descripcion", "")
         return value.strip()
+
+    def clean_plantilla_id(self) -> UUID | None:
+        raw = self.cleaned_data.get("plantilla_id") or ""
+        if not raw:
+            return None
+        try:
+            return UUID(raw)
+        except (TypeError, ValueError) as exc:
+            raise forms.ValidationError("Plantilla inválida.") from exc

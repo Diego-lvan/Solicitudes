@@ -29,10 +29,13 @@ class TipoSolicitud(models.Model):
     # Only meaningful when requires_payment=True; the service auto-clears it
     # whenever requires_payment flips back to False.
     mentor_exempt = models.BooleanField(default=False)
-    # FK target lives in 006; nullable until then. We keep it as a UUIDField
-    # (not JSONField) so 006 can convert it to a real ForeignKey via migration
-    # without rewriting stored data.
-    plantilla_id = models.UUIDField(null=True, blank=True)
+    plantilla = models.ForeignKey(
+        "solicitudes.PlantillaSolicitud",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="tipos",
+    )
     activo = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

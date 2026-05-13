@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Desactivar plantilla · {{ block.super }}{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-3">Desactivar «{{ plantilla.nombre }}»</h1>
+<p>La plantilla quedará inactiva y no aparecerá en el selector de tipos.</p>
+
+<form method="post" class="d-flex gap-2 justify-content-end">
+  {% csrf_token %}
+  <a class="btn btn-outline-secondary"
+     href="{% url 'solicitudes:plantillas:detail' plantilla_id=plantilla.id %}">Cancelar</a>
+  <button type="submit" class="btn btn-danger">Desactivar</button>
+</form>
+{% endblock %}

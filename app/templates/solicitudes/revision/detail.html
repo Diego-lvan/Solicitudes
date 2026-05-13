@@ -19,8 +19,15 @@
       {{ detail.tipo.nombre }} · Solicitante: {{ detail.solicitante.full_name|default:detail.solicitante.matricula }}
     </div>
   </div>
-  <div>
+  <div class="d-flex align-items-center gap-2">
     {% include "solicitudes/_partials/_estado_badge.html" with estado=detail.estado %}
+    {% if detail.tipo.plantilla_id %}
+      <a class="btn btn-outline-secondary btn-sm"
+         href="{% url 'solicitudes:pdf_download' folio=detail.folio %}"
+         target="_blank" rel="noopener">
+        <i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i> Generar PDF
+      </a>
+    {% endif %}
   </div>
 </div>
 

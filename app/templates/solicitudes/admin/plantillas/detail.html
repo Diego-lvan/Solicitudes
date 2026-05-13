@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}{{ plantilla.nombre }} · Plantillas · {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-1">{{ plantilla.nombre }}</h1>
+    {% if plantilla.activo %}
+      <span class="badge text-bg-success">Activa</span>
+    {% else %}
+      <span class="badge text-bg-secondary">Inactiva</span>
+    {% endif %}
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary"
+       href="{% url 'solicitudes:plantillas:list' %}">Volver</a>
+    <a class="btn btn-primary"
+       href="{% url 'solicitudes:plantillas:edit' plantilla_id=plantilla.id %}">Editar</a>
+    {% if plantilla.activo %}
+    <form method="post"
+          action="{% url 'solicitudes:plantillas:deactivate' plantilla_id=plantilla.id %}"
+          onsubmit="return confirm('¿Desactivar esta plantilla?');">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-danger">Desactivar</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if plantilla.descripcion %}
+<p class="text-muted">{{ plantilla.descripcion }}</p>
+{% endif %}
+
+<h2 class="h5 mt-4">Vista previa</h2>
+<p class="form-text mb-2">
+  Renderizada con datos de ejemplo (matrícula 99999, valores genéricos).
+  <a href="{% url 'solicitudes:plantillas:preview' plantilla_id=plantilla.id %}"
+     target="_blank" rel="noopener">Abrir en pestaña nueva</a>.
+</p>
+<iframe
+  src="{% url 'solicitudes:plantillas:preview' plantilla_id=plantilla.id %}"
+  title="Vista previa de la plantilla"
+  class="border rounded w-100"
+  style="height: 60vh; min-height: 480px;"
+></iframe>
+
+<h2 class="h5 mt-4">HTML</h2>
+<pre class="border rounded p-3 bg-light small"><code>{{ plantilla.html }}</code></pre>
+
+{% if plantilla.css %}
+<h2 class="h5 mt-4">CSS</h2>
+<pre class="border rounded p-3 bg-light small"><code>{{ plantilla.css }}</code></pre>
+{% endif %}
+{% endblock %}

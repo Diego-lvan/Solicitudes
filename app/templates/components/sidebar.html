@@ -50,6 +50,10 @@ instance so screen-reader rotors don't show two identically-labelled landmarks.
          href="{% url 'solicitudes:tipos:list' %}">
         <i class="bi bi-collection me-2" aria-hidden="true"></i>Tipos de solicitud
       </a>
+      <a class="nav-link app-sidebar-link {% if '/solicitudes/admin/plantillas' in request.path %}active{% endif %}"
+         href="{% url 'solicitudes:plantillas:list' %}">
+        <i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>Plantillas de PDF
+      </a>
       <a class="nav-link app-sidebar-link {% if '/mentores' in request.path %}active{% endif %}"
          href="{% url 'mentores:list' %}">
         <i class="bi bi-people me-2" aria-hidden="true"></i>Mentores

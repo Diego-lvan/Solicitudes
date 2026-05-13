@@ -189,6 +189,7 @@ class OrmSolicitudRepository(SolicitudRepository):
                 creator_roles={Role(r) for r in tipo.creator_roles},
                 requires_payment=tipo.requires_payment,
                 activo=tipo.activo,
+                plantilla_id=tipo.plantilla_id,
             ),
             solicitante=UserDTO(
                 matricula=solicitante.matricula,
