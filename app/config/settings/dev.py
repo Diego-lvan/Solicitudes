@@ -16,6 +16,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-change-me-not-for-prod")
 # bounces straight back to it so the developer can pick another role; this
 # matches what the real provider's logout endpoint will do in initiative 010.
 AUTH_PROVIDER_LOGOUT_URL = os.environ.get("AUTH_PROVIDER_LOGOUT_URL", "/auth/dev-login")
+LOGIN_URL = os.environ.get("AUTH_PROVIDER_LOGIN_URL", "/auth/dev-login")
 
 LOGGING = build_logging_config(json_format=False, level=os.environ.get("LOG_LEVEL", "DEBUG"))
 
