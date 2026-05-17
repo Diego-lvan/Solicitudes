@@ -134,7 +134,10 @@ def test_admin_edit_updates_plantilla(admin_client: Client) -> None:
 
 
 @pytest.mark.django_db
-def test_owner_downloads_pdf_when_finalizada() -> None:
+def test_owner_finalizada_now_gets_403() -> None:
+    """Initiative 016: solicitante (owner) loses access to the auto-rendered
+    PDF in any estado. They receive the handler's uploaded response files
+    instead, via ``solicitudes.respuesta``."""
     tipo = make_tipo()
     plantilla = make_plantilla()
     tipo.plantilla = plantilla
@@ -143,15 +146,11 @@ def test_owner_downloads_pdf_when_finalizada() -> None:
 
     c = _client_for(sol.solicitante.matricula, Role.ALUMNO)
     resp = c.get(reverse("solicitudes:pdf_download", kwargs={"folio": sol.folio}))
-
-    assert resp.status_code == 200
-    assert resp["Content-Type"] == "application/pdf"
-    assert resp.content.startswith(b"%PDF")
-    assert sol.folio in resp["Content-Disposition"]
+    assert resp.status_code == 403
 
 
 @pytest.mark.django_db
-def test_owner_pre_finalizada_gets_403() -> None:
+def test_owner_creada_gets_403() -> None:
     tipo = make_tipo()
     plantilla = make_plantilla()
     tipo.plantilla = plantilla
@@ -164,10 +163,13 @@ def test_owner_pre_finalizada_gets_403() -> None:
 
 
 @pytest.mark.django_db
-def test_no_plantilla_returns_409() -> None:
-    tipo = make_tipo()  # tipo.plantilla = None
+def test_no_plantilla_returns_409_for_personal() -> None:
+    tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)  # tipo.plantilla = None
     sol = make_solicitud(tipo=tipo, estado=Estado.FINALIZADA)
-    c = _client_for(sol.solicitante.matricula, Role.ALUMNO)
+    make_user(
+        matricula="P-NOP", email="p-nop@uaz.edu.mx", role=Role.CONTROL_ESCOLAR.value
+    )
+    c = _client_for("P-NOP", Role.CONTROL_ESCOLAR)
     resp = c.get(reverse("solicitudes:pdf_download", kwargs={"folio": sol.folio}))
     assert resp.status_code == 409
 
@@ -213,7 +215,7 @@ def test_alumno_cannot_preview_plantilla(alumno_client: Client) -> None:
 
 @pytest.mark.django_db
 def test_anonymous_redirected_or_401() -> None:
-    tipo = make_tipo()
+    tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)
     plantilla = make_plantilla()
     tipo.plantilla = plantilla
     tipo.save()

@@ -23,6 +23,10 @@ urlpatterns = [
         RenderSolicitudPdfView.as_view(),
         name="pdf_download",
     ),
+    # Respuesta routes carry the same <folio> prefix; mounted before intake so
+    # the more specific suffixes ("/respuestas/...") win against the intake
+    # catch-all.
+    path("", include(("solicitudes.respuesta.urls", "respuesta"))),
     # Intake routes ("", "mis/", "crear/<slug>/", "<folio>/") are mounted last
     # so the more specific prefixes above match first.
     path("", include(("solicitudes.intake.urls", "intake"))),

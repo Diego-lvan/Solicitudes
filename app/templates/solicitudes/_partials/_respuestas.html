@@ -1,0 +1,49 @@
+{% comment %}
+Respuestas partial — lists handler-uploaded batches (initiative 016).
+Expected context:
+  - respuestas: list[RespuestaDTO]   (oldest first)
+{% endcomment %}
+{% load lucide %}
+{% if respuestas %}
+  <ul class="divide-y divide-zinc-200">
+    {% for r in respuestas %}
+      <li class="py-4">
+        <div class="flex items-center justify-between gap-3">
+          <p class="text-sm text-zinc-900">
+            <span class="font-medium">{{ r.actor_nombre|default:r.actor_matricula }}</span>
+            <span class="text-zinc-500">· {{ r.created_at|date:"d/m/Y H:i" }}</span>
+          </p>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200">
+            {{ r.actor_role|title }}
+          </span>
+        </div>
+        {% if r.comentario %}
+          <p class="mt-2 text-sm text-zinc-700 whitespace-pre-line">{{ r.comentario }}</p>
+        {% endif %}
+        {% if r.archivos %}
+          <ul class="mt-2 divide-y divide-zinc-100 border-t border-zinc-100">
+            {% for a in r.archivos %}
+              <li class="flex items-center justify-between gap-3 py-2">
+                <div class="flex items-center gap-2 min-w-0 flex-1">
+                  {% lucide "paperclip" class="size-4 text-zinc-500 shrink-0" %}
+                  <span class="text-sm text-zinc-900 truncate">{{ a.nombre_original }}</span>
+                </div>
+                <div class="flex items-center gap-3 text-xs text-zinc-500">
+                  <span>{{ a.size_bytes|filesizeformat }}</span>
+                  <a href="{% url 'solicitudes:respuesta:download' folio=r.folio respuesta_id=r.id archivo_id=a.id %}"
+                     class="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
+                            hover:bg-zinc-50
+                            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+                    {% lucide "download" class="size-3.5" %}<span>Descargar</span>
+                  </a>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="text-sm text-zinc-500">Aún no hay respuestas.</p>
+{% endif %}

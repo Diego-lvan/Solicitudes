@@ -138,14 +138,18 @@ class DefaultPdfService(PdfService):
         detail_solicitante_matricula: str,
         requester: UserDTO,
     ) -> None:
-        is_owner = requester.matricula == detail_solicitante_matricula
-        is_admin = requester.role is Role.ADMIN
-        is_personal = requester.role in {
+        # The plantilla PDF is a draft for personal/admin only (initiative 016).
+        # The solicitante never downloads it — they receive the handler's
+        # uploaded response files instead. ``detail_estado`` and
+        # ``detail_solicitante_matricula`` remain in the signature so callers
+        # still pass the same arguments and so a future tightening (e.g.
+        # restricting personal to non-terminal estados) is a one-line change.
+        del detail_estado, detail_solicitante_matricula
+        if requester.role is Role.ADMIN:
+            return
+        if requester.role in {
             Role.CONTROL_ESCOLAR,
             Role.RESPONSABLE_PROGRAMA,
-        }
-        if is_admin or is_personal:
-            return
-        if is_owner and detail_estado is Estado.FINALIZADA:
+        }:
             return
         raise Unauthorized("No puedes generar el PDF de esta solicitud.")

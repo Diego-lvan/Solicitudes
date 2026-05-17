@@ -21,6 +21,7 @@
 | 013 | User Directory (admin read-only) | Done        | 002 + 008     | 2026-04-26 | [plan](../planning/013-user-directory/plan.md)             | `usuarios/directory` (new feature), `usuarios/urls`, `templates/usuarios/directory`, `templates/components/sidebar.html` |
 | 014 | Revision Handler Display  | Done        | 004 + 002     | 2026-04-26 | [plan](../planning/014-revision-handler-display/plan.md)   | `solicitudes/lifecycle` (DTOs + repo annotation), `solicitudes/revision` (templates), `templates/solicitudes/revision/{queue,detail}.html` |
 | 015 | Tailwind v4 Frontend Migration | Done        | 001 (+ all shipped initiatives' templates) | 2026-04-26 | [plan](../planning/015-tailwind-migration/plan.md) | All `app/templates/**`, `app/static/{css,js,vendor,fonts}/**`, `Dockerfile`, `docker-compose.dev.yml`, `Makefile`, `.gitignore`, `.claude/skills/frontend-design`, `.claude/skills/django-patterns/{forms,platform}.md`, `.claude/rules/django.md`, `CLAUDE.md`, `specs/global/{architecture,requirements}.md` |
+| 016 | Response Files & Comments | Done        | 004 + 005 + 006 + 014 | 2026-05-15 | [plan](../planning/016-respuesta/plan.md) | `solicitudes/respuesta` (new), `solicitudes/models` (`respuesta_solicitud`, `archivo_respuesta`), `solicitudes/migrations`, `solicitudes/pdf` (authz amend), `templates/solicitudes/{intake,revision}/detail.html` |
 
 **Status values:** `Not Started` · `In Progress` · `Blocked` · `Done`
 
@@ -44,6 +45,8 @@
       └── 010 External Auth Provider   (blocked on OQ-002-1)
 
 015 Tailwind v4 Frontend Migration   (cross-cutting infra; touches every shipped initiative's templates; blocks 013/014 template work while in progress)
+
+016 Response Files & Comments   (additive on 004/005/006/014; new respuesta feature + pdf authz amendment)
 ```
 
 ## Notes

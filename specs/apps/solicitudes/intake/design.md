@@ -130,7 +130,9 @@ The view calls `MentorService.is_mentor(actor.matricula)` exactly twice on the c
 - `templates/solicitudes/intake/catalog.html` — card grid of available tipos for the actor's role; empty state directs back to `home`.
 - `templates/solicitudes/intake/create.html` — bound dynamic form with comprobante field (when applicable), breadcrumb, primary "Enviar solicitud" + secondary "Cancelar" buttons.
 - `templates/solicitudes/intake/mis_solicitudes.html` — filterable, paginated table of own solicitudes. Filters: folio (substring), estado (select), date range. `tipo_id` filter is intentionally not surfaced — alumno volume doesn't justify the extra control yet.
-- `templates/solicitudes/intake/detail.html` — snapshot field values + historial timeline + owner-only "Cancelar solicitud" button (only when estado=CREADA).
+- `templates/solicitudes/intake/detail.html` — snapshot field values + historial timeline + owner-only "Cancelar solicitud" button (only when estado=CREADA). **From 016:** the layout splits the left column into two visually distinct groups with eyebrows + a hairline top divider:
+  - **"Tu petición"** — Datos de la solicitud + "Tus archivos adjuntos".
+  - **"Respuesta de la institución"** — "Documentos de respuesta" card, rendered only when `detail.estado.value == "FINALIZADA"` AND the solicitud has any batches. The view populates `respuestas = respuesta_service.list_for_solicitud(folio, requester=actor)` and the template re-uses the `_partials/_respuestas.html` partial shared with revision. The pre-016 "Descargar PDF" button is gone — the solicitante no longer has access to the auto-rendered template; the deliverable is the handler-uploaded files served by `solicitudes.respuesta`.
 - `templates/solicitudes/_partials/{_estado_badge,_solicitud_row,_historial,_valores_render}.html` — shared with revision.
 
 `_valores_render.html` uses the `get_valor` filter (`solicitudes/templatetags/solicitudes_tags.py`) to look up snapshot field values by stringified UUID — Django templates can't index dicts with dynamic keys natively.
@@ -187,3 +189,5 @@ The view's GET handler reads `bundle.auto_fill` and:
 - [tipos/design.md](../tipos/design.md) — `TipoService.get_for_creator` / `snapshot` consumed by intake.
 - [formularios/design.md](../formularios/design.md) — `build_django_form` and `FormSnapshot` consumed by `build_intake_form`.
 - [flows/solicitud-lifecycle.md](../../../flows/solicitud-lifecycle.md) — end-to-end sequence.
+- [Initiative 016 plan](../../../planning/016-respuesta/plan.md) — added the "Respuesta de la institución" group + "Documentos de respuesta" card on detail; removed the alumno-side PDF download.
+- [respuesta/design.md](../respuesta/design.md) — owner of `RespuestaService`; consumed by the intake detail view to list batches once the solicitud is `FINALIZADA`.

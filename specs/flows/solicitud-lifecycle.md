@@ -131,10 +131,16 @@ Both are caught at the view boundary and translated to a `messages.error(...)` f
 ## Cross-app integration points (future)
 
 - **005 (archivos)** — *shipped.* `CreateSolicitudView.post` calls `archivo_service.store_for_solicitud(folio, ...)` for each FORM file and the comprobante inside the same outer `transaction.atomic()` as the row insert. Detail and revision views render the archivos partial. See `apps/solicitudes/archivos/design.md`.
-- **006 (pdf)** — adds a "Descargar PDF" button on `intake/detail.html` and `revision/detail.html` when estado is FINALIZADA and the tipo has a plantilla. PDF rendering reads `Solicitud.form_snapshot` + `Solicitud.valores` and feeds them into the WeasyPrint pipeline.
+- **006 (pdf)** — shipped. PDF rendering reads `Solicitud.form_snapshot` + `Solicitud.valores` and feeds them into the WeasyPrint pipeline. **Initiative 016 reframed the affordance:** the alumno-side button on `intake/detail.html` was removed; the revision-side button on `revision/detail.html` was relabelled "Descargar borrador". The auto-rendered template is now a *draft for personal/admin only* — see the `016 (respuesta)` row below.
 - **007 (notificaciones)** — shipped. `lifecycle/dependencies.py` now wires `DefaultNotificationService` (in `notificaciones/`) with a read-only sibling `LifecycleService` to break the construction cycle. `notify_creation` fans out to staff *and* sends an acuse to the solicitante; `notify_state_change` emails the solicitante. Failures are logged and absorbed. The `NotificationService` ABC in `lifecycle/notification_port.py` did not change.
 - **008 (mentores)** — *shipped.* Replaced the `FalseMentorService` binding in `intake/dependencies.py` with the real catalog lookup via `mentores.adapters.intake_adapter.MentoresIntakeAdapter` (producer-side adapter). The port interface (`MentorService` ABC in `intake/mentor_port.py`) is unchanged; intake's runtime code imports zero from `mentores.*` — only `intake/dependencies.py` does, at boot. See `specs/apps/mentores/catalog/design.md` for the catalog contract.
 - **009 (reportes)** — reads from the same `Solicitud` and `HistorialEstado` tables; no schema or service changes here. The audit log lines provide the secondary timeline.
+- **016 (respuesta)** — *shipped.* Inserts a personal-side delivery step between `atender` and `finalizar`:
+  - While estado is `EN_PROCESO`, the personal POSTs `solicitudes/<folio>/respuestas/nueva/` (multipart) one or more times. Each request creates one `RespuestaSolicitud` batch (actor + actor_role + optional ≤2000-char comentario) and 0..10 `ArchivoRespuesta` rows (≤10 MB each, allow-listed extensions). At least one of `(comentario, archivos)` must be non-empty.
+  - The batch + file rows insert inside one `transaction.atomic()`; `FileStorage.save` queues `.partial` writes that are renamed on commit. A storage failure mid-batch leaves zero DB rows and `cleanup_pending()` removes the orphaned `.partial`s in the service's `try/finally`.
+  - **No notification is emitted** by an upload batch. The existing `EN_PROCESO → FINALIZADA` email (RF-07, 007) remains the single signal to the solicitante that the deliverable is ready.
+  - Visibility: admin and personal in `tipo.responsible_role` see batches at any estado; the solicitante sees batches **only after `FINALIZADA`**. Append-only at the app layer — Django admin is the escape hatch.
+  - The `pdf` feature was reframed: alumno PDF download removed; revision-side button relabelled "Descargar borrador". See `apps/solicitudes/respuesta/design.md` and `apps/solicitudes/pdf/design.md` for the amended authz matrix.
 
 ## Related Specs
 
@@ -144,5 +150,7 @@ Both are caught at the view boundary and translated to a `messages.error(...)` f
 - [tipos/design.md](../apps/solicitudes/tipos/design.md)
 - [formularios/design.md](../apps/solicitudes/formularios/design.md)
 - [Initiative 004 plan](../planning/004-solicitud-lifecycle/plan.md)
+- [Initiative 016 plan](../planning/016-respuesta/plan.md) — response upload step + pdf authz amendment
+- [respuesta/design.md](../apps/solicitudes/respuesta/design.md)
 - [`_shared/audit.md`](../shared/infrastructure/audit.md)
 - [`_shared/request_actor.md`](../shared/infrastructure/request_actor.md)

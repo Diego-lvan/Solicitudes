@@ -108,15 +108,15 @@ All frozen Pydantic v2 models.
 
 ### Authorisation matrix (`render_for_solicitud`)
 
+After initiative **016** the auto-rendered template is a **draft for personal/admin only** — the solicitante never downloads it; they receive the handler's uploaded files via `solicitudes.respuesta` instead.
+
 | Requester role                          | Same matrícula as solicitante? | Estado | Outcome |
 | ---                                     | ---                            | ---    | ---     |
 | ADMIN                                   | any                            | any    | allowed |
 | CONTROL_ESCOLAR / RESPONSABLE_PROGRAMA  | any                            | any    | allowed |
-| ALUMNO / DOCENTE / MENTOR (non-personal)| yes (owner)                    | FINALIZADA | allowed |
-| ALUMNO / DOCENTE / MENTOR (non-personal)| yes (owner)                    | not FINALIZADA | `Unauthorized` |
-| ALUMNO / DOCENTE / MENTOR (non-personal)| no                             | any    | `Unauthorized` |
+| ALUMNO / DOCENTE / MENTOR (non-personal)| any                            | any    | `Unauthorized` |
 
-Pinned by the test suite: owner/finalizada (allowed), owner/CREADA (denied), other-alumno/finalizada (denied), DOCENTE non-owner/finalizada (denied), personal/CREADA (allowed), admin/EN_PROCESO (allowed). A future refactor that broadens the personal set must update those tests.
+`_authorise` keeps `detail_estado` and `detail_solicitante_matricula` in its signature so callers stay source-stable and a future tightening (e.g. restricting personal to non-terminal estados) is a one-line change. Pinned by the test suite: owner gets 403 in any estado; personal/CREADA (allowed), admin/EN_PROCESO (allowed), DOCENTE non-owner/finalizada (denied), other-alumno/finalizada (denied).
 
 ## Repository (`pdf/repositories/plantilla/`)
 
@@ -163,7 +163,7 @@ The download URL is constrained with `re_path(r"^(?P<folio>[A-Z]+-\d{4}-\d{4,})/
 
 The sidebar (`templates/components/sidebar.html`) shows "Plantillas de PDF" under **Catálogo** for `request.user.role == 'ADMIN'`, between "Tipos de solicitud" and "Mentores".
 
-`templates/solicitudes/revision/detail.html` and `templates/solicitudes/intake/detail.html` show contextual "Generar PDF" / "Descargar PDF" buttons, gated on `detail.tipo.plantilla_id` (and `is_owner and detail.estado == FINALIZADA` on the alumno's intake view).
+`templates/solicitudes/revision/detail.html` shows a "Descargar borrador" button (relabelled from "Generar PDF" in initiative 016) gated on `detail.tipo.plantilla_id`. The alumno-facing `templates/solicitudes/intake/detail.html` no longer surfaces a PDF download — that affordance was removed in 016 along with the owner-FINALIZADA authz branch.
 
 ## Tests
 
@@ -182,6 +182,7 @@ The sidebar (`templates/components/sidebar.html`) shows "Plantillas de PDF" unde
 - `solicitudes.tipos` — `TipoForm.plantilla_id` ChoiceField is populated from `PlantillaService.list(only_active=True)`. Listed plantillas are **frozen at the moment of the form GET** — if the admin opens an edit form and the plantilla is deactivated before they POST, the FK still resolves (or remains None) without error because `on_delete=SET_NULL` is in place. Listed plantillas are also exposed on `TipoSolicitudRow.plantilla_id`.
 - `solicitudes.lifecycle` — `OrmSolicitudRepository._to_detail` populates `SolicitudDetail.tipo.plantilla_id` so consumers (intake/revision templates, `PdfService`) can decide whether a PDF is renderable without re-fetching the tipo.
 - `usuarios` — `PdfService` calls `UserService.get_by_matricula(...)` to hydrate solicitante fields for the render context.
+- `solicitudes.respuesta` — initiative 016 reframed the PDF as a **draft for personal/admin only**; the deliverable to the solicitante is the personal-uploaded files served by `respuesta`. The authz matrix above dropped the owner-FINALIZADA branch as part of that initiative.
 
 ## Related Specs
 

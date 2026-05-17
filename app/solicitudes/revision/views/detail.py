@@ -8,6 +8,8 @@ from django.views import View
 from _shared.request_actor import actor_from_request
 from solicitudes.archivos.dependencies import get_archivo_service
 from solicitudes.lifecycle.constants import Estado
+from solicitudes.respuesta.dependencies import get_respuesta_service
+from solicitudes.respuesta.forms.respuesta_upload_form import RespuestaUploadForm
 from solicitudes.revision.dependencies import get_review_service
 from solicitudes.revision.forms.transition_form import TransitionForm
 from solicitudes.revision.permissions import ReviewerRequiredMixin
@@ -20,15 +22,20 @@ class RevisionDetailView(ReviewerRequiredMixin, View):
         actor = actor_from_request(request)
         detail = get_review_service().get_detail_for_personal(folio, actor.role)
         archivos = get_archivo_service().list_for_solicitud(folio)
+        respuestas = get_respuesta_service().list_for_solicitud(
+            folio, requester=actor
+        )
         return render(
             request,
             self.template_name,
             {
                 "detail": detail,
                 "form": TransitionForm(),
+                "upload_form": RespuestaUploadForm(),
                 "can_atender": detail.estado is Estado.CREADA,
                 "can_finalizar": detail.estado is Estado.EN_PROCESO,
                 "can_cancelar": detail.estado in (Estado.CREADA, Estado.EN_PROCESO),
                 "archivos": archivos,
+                "respuestas": respuestas,
             },
         )

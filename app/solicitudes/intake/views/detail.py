@@ -9,6 +9,7 @@ from _shared.exceptions import Unauthorized
 from _shared.request_actor import actor_from_request
 from solicitudes.archivos.dependencies import get_archivo_service
 from solicitudes.lifecycle.dependencies import get_lifecycle_service
+from solicitudes.respuesta.dependencies import get_respuesta_service
 from usuarios.constants import Role
 from usuarios.permissions import LoginRequiredMixin
 
@@ -28,6 +29,9 @@ class SolicitudDetailView(LoginRequiredMixin, View):
             raise Unauthorized("No puedes ver esta solicitud.")
 
         archivos = get_archivo_service().list_for_solicitud(folio)
+        respuestas = get_respuesta_service().list_for_solicitud(
+            folio, requester=actor
+        )
 
         return render(
             request,
@@ -37,5 +41,6 @@ class SolicitudDetailView(LoginRequiredMixin, View):
                 "is_owner": is_owner,
                 "can_act": is_responsible or is_admin,
                 "archivos": archivos,
+                "respuestas": respuestas,
             },
         )

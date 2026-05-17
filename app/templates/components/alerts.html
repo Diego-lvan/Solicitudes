@@ -3,9 +3,11 @@ Django messages framework renderer. Each message becomes a dismissible alert.
 Tags map to alert variants; default is 'info'.
 {% endcomment %}
 {% if messages %}
-  {# Each inner alert already carries role="status" / role="alert"; the wrapper
-     is presentation-only. Adding role="status" here would create a strict-mode
-     duplicate the test selectors trip on. #}
+  {% comment %}
+    Each inner alert already carries role="status" / role="alert"; the wrapper
+    is presentation-only. Adding role="status" here would create a strict-mode
+    duplicate the test selectors trip on.
+  {% endcomment %}
   <div class="space-y-2 mb-4">
     {% for message in messages %}
       {% include "components/alert.html" with variant=message.tags|default:"info" message=message dismissible=True %}

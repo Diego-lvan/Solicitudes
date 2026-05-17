@@ -47,11 +47,23 @@ def _attach_plantilla(tipo: TipoSolicitud, **plantilla_kwargs: Any) -> TipoSolic
 
 
 @pytest.mark.django_db
-def test_render_returns_pdf_bytes_for_finalized_solicitud_owner() -> None:
-    tipo = make_tipo(nombre="Constancia de Estudios")
+def test_render_returns_pdf_bytes_for_personal() -> None:
+    """Replaces the pre-016 owner-FINALIZADA happy path.
+
+    From initiative 016 onwards the PDF is a draft for personal/admin only;
+    the solicitante never downloads it (they receive the handler's uploaded
+    response files via ``solicitudes.respuesta`` instead).
+    """
+    tipo = make_tipo(
+        nombre="Constancia de Estudios",
+        responsible_role=Role.CONTROL_ESCOLAR.value,
+    )
     _attach_plantilla(tipo)
     sol = make_solicitud(tipo=tipo, estado=Estado.FINALIZADA)
-    requester = _user_dto(sol.solicitante, Role.ALUMNO)
+    personal = make_user(
+        matricula="P-PDF", email="p-pdf@uaz.edu.mx", role=Role.CONTROL_ESCOLAR.value
+    )
+    requester = _user_dto(personal, Role.CONTROL_ESCOLAR)
 
     result = get_pdf_service().render_for_solicitud(sol.folio, requester)
 
@@ -59,6 +71,18 @@ def test_render_returns_pdf_bytes_for_finalized_solicitud_owner() -> None:
     assert len(result.bytes_) > 1000
     assert result.suggested_filename.endswith(".pdf")
     assert sol.folio in result.suggested_filename
+
+
+@pytest.mark.django_db
+def test_owner_can_no_longer_render_pdf_after_initiative_016() -> None:
+    """The solicitante (owner) loses access to the auto-rendered PDF in any
+    estado. Pins the post-016 authorisation matrix."""
+    tipo = make_tipo()
+    _attach_plantilla(tipo)
+    sol = make_solicitud(tipo=tipo, estado=Estado.FINALIZADA)
+    requester = _user_dto(sol.solicitante, Role.ALUMNO)
+    with pytest.raises(Unauthorized):
+        get_pdf_service().render_for_solicitud(sol.folio, requester)
 
 
 @pytest.mark.django_db
@@ -131,9 +155,12 @@ def test_other_alumno_cannot_render() -> None:
 
 @pytest.mark.django_db
 def test_no_plantilla_raises_tipo_has_no_plantilla() -> None:
-    tipo = make_tipo()
+    tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)
     sol = make_solicitud(tipo=tipo, estado=Estado.FINALIZADA)
-    requester = _user_dto(sol.solicitante, Role.ALUMNO)
+    personal = make_user(
+        matricula="P-NOPL", email="p-nopl@uaz.edu.mx", role=Role.CONTROL_ESCOLAR.value
+    )
+    requester = _user_dto(personal, Role.CONTROL_ESCOLAR)
     with pytest.raises(TipoHasNoPlantilla):
         get_pdf_service().render_for_solicitud(sol.folio, requester)
 
@@ -143,10 +170,15 @@ def test_no_plantilla_raises_tipo_has_no_plantilla() -> None:
 
 @pytest.mark.django_db
 def test_two_renders_under_frozen_clock_are_byte_identical() -> None:
-    tipo = make_tipo(nombre="Constancia")
+    tipo = make_tipo(
+        nombre="Constancia", responsible_role=Role.CONTROL_ESCOLAR.value
+    )
     _attach_plantilla(tipo)
     sol = make_solicitud(tipo=tipo, estado=Estado.FINALIZADA)
-    requester = _user_dto(sol.solicitante, Role.ALUMNO)
+    personal = make_user(
+        matricula="P-DET", email="p-det@uaz.edu.mx", role=Role.CONTROL_ESCOLAR.value
+    )
+    requester = _user_dto(personal, Role.CONTROL_ESCOLAR)
 
     with freeze_time("2026-04-25T12:00:00+00:00"):
         first = get_pdf_service().render_for_solicitud(sol.folio, requester)

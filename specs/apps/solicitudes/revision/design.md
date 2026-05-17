@@ -73,6 +73,9 @@ The plan specified `/revision/` at the project root. The implementation mounts r
   - The header subtitle shows `tipo.nombre` only (the inline "Solicitante:" prefix was removed; that information now lives in a dedicated card).
   - When `detail.atendida_por` is set, an additional muted line under the heading reads `Atendida por **{full_name}** ({matricula}) · {taken_at|date:"d/m/Y H:i"}`. Hidden otherwise.
   - The right column carries a **Solicitante** card *above* Historial: a `text-muted text-uppercase small` eyebrow, the alumno's `full_name` (`fw-semibold`, falling back to matrícula), `Matrícula: {matricula}` muted, and the email rendered as a `mailto:` link. The card is unconditional — it always renders, since `solicitante` is always present on `SolicitudDetail`.
+  - **From 016:** the header's PDF affordance is relabelled "Descargar borrador" (it stays gated on `detail.tipo.plantilla_id`). The left column is split into two visually distinct groups with eyebrows + a hairline top divider between them:
+    - **"Petición del solicitante"** — Datos de la solicitud + "Archivos del solicitante".
+    - **"Respuesta del personal"** — "Adjuntar respuesta" card (visible only when `estado == EN_PROCESO`) hosting `RespuestaUploadForm` (multipart POST to `solicitudes:respuesta:create`), followed by "Respuestas entregadas" (visible whenever the solicitud has any batch). Both cards render the shared `_partials/_respuestas.html` partial. The view populates `respuestas = respuesta_service.list_for_solicitud(folio, requester=actor)` and `upload_form = RespuestaUploadForm()` into the context.
 
 The action buttons are rendered conditionally:
 
@@ -94,6 +97,8 @@ The Tier-1 multi-step e2e in `intake/tests/test_e2e_tier1.py::test_alumno_create
 
 - [Initiative 004 plan](../../../planning/004-solicitud-lifecycle/plan.md)
 - [Initiative 014 plan](../../../planning/014-revision-handler-display/plan.md) — surfaced "Atendida por" on the queue + detail, dropped the Acción column, added the Solicitante card on detail.
+- [Initiative 016 plan](../../../planning/016-respuesta/plan.md) — added the "Adjuntar respuesta" + "Respuestas entregadas" cards under the "Respuesta del personal" eyebrow, relabelled the PDF button to "Descargar borrador".
+- [respuesta/design.md](../respuesta/design.md) — owner of `RespuestaService` + the upload/download surface this detail view hosts.
 - [lifecycle/design.md](../lifecycle/design.md) — `LifecycleService.transition` is the service this feature wraps.
 - [intake/design.md](../intake/design.md) — solicitante-side mirror.
 - [tipos/design.md](../tipos/design.md) — `responsible_role` on `TipoSolicitud` drives queue scoping.
