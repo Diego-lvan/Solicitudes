@@ -1,6 +1,6 @@
 # Sistema de Solicitudes — UAZ
 
-Sistema de Solicitudes for the Universidad Autónoma de Zacatecas. Monolithic Django application with server-side templates (Bootstrap 5, no DRF).
+Sistema de Solicitudes for the Universidad Autónoma de Zacatecas. Monolithic Django application with server-side templates (Tailwind CSS v4 + Alpine.js, no DRF).
 
 For architectural rules and the SDD workflow this project follows, see [`CLAUDE.md`](./CLAUDE.md).
 
@@ -29,7 +29,8 @@ For architectural rules and the SDD workflow this project follows, see [`CLAUDE.
     - [4.1 Tipos de solicitud](#41-tipos-de-solicitud)
     - [4.2 Nuevo tipo de solicitud](#42-nuevo-tipo-de-solicitud)
     - [4.3 Plantillas de PDF](#43-plantillas-de-pdf)
-    - [4.4 Nueva plantilla](#44-nueva-plantilla)
+    - [4.4 Editor de plantillas con preview en vivo](#44-editor-de-plantillas-con-preview-en-vivo)
+    - [4.5 Biblioteca de imágenes](#45-biblioteca-de-imágenes)
   - [5. Mentores](#5-mentores)
     - [5.1 Catálogo de mentores](#51-catálogo-de-mentores)
     - [5.2 Agregar mentor](#52-agregar-mentor)
@@ -132,10 +133,12 @@ docker compose -f docker-compose.dev.yml exec -T web pytest -m e2e --headed --sl
 
 | URL | What |
 |---|---|
-| `https://localhost/auth/dev-login` | Dev login picker (DEBUG-only, removed by initiative 010) |
+| `https://localhost/auth/dev-login` | Dev login picker (DEBUG-only; será reemplazado por el SSO institucional cuando se desbloquee la initiative 010) |
 | `https://localhost/auth/me` | Current user profile |
 | `https://localhost/solicitudes/admin/tipos/` | Catalog of solicitud types (admin only) |
 | `https://localhost/solicitudes/admin/tipos/nuevo/` | Create a new tipo |
+| `https://localhost/solicitudes/admin/plantillas/` | Catálogo de plantillas de PDF (initiative 017) |
+| `https://localhost/solicitudes/admin/plantilla-assets/` | Biblioteca de imágenes para plantillas (initiative 017) |
 | `http://localhost:8025/` | Mailhog (captured outbound email) |
 
 ## Manual de usuario (capturas)
@@ -178,7 +181,7 @@ Cada tipo de solicitud renderiza un formulario distinto, definido por el adminis
 
 #### 2.4 Detalle de la solicitud
 
-Muestra los datos enviados, los archivos adjuntos y el historial completo de cambios de estado. Cuando la solicitud está finalizada y el tipo tiene plantilla, aparece el botón **Descargar PDF**.
+Muestra los datos enviados, los archivos adjuntos y el historial completo de cambios de estado. Cuando la solicitud queda **finalizada**, aparece la sección **«Respuesta de la institución»** con los comentarios y archivos que entregó el personal — la respuesta solo es visible para el alumno una vez que el trámite cierra (initiative 016).
 
 ![Detalle de solicitud](docs/screenshots/06-alumno-detalle-solicitud.png)
 
@@ -192,7 +195,12 @@ Lista de solicitudes pendientes para el rol responsable. Filtros por folio, soli
 
 #### 3.2 Detalle de revisión
 
-Vista del personal con datos del solicitante, archivos, historial y acciones para *atender*, *finalizar* o *cancelar* la solicitud. Permite generar el PDF al finalizar.
+Vista del personal con datos del solicitante, archivos del solicitante, historial y acciones para *atender*, *finalizar* o *cancelar*. Mientras la solicitud está **en proceso**, aparecen dos tarjetas nuevas (initiative 016):
+
+- **Adjuntar respuesta** — un comentario opcional y hasta 10 archivos (máx. 10 MB cada uno) en cada envío. Es *append-only*: cada envío se registra como un lote y no puede editarse desde la app.
+- **Respuestas entregadas** — listado cronológico de lo que ya se subió, con autor, fecha, comentario y descarga por archivo.
+
+El botón **«Descargar borrador»** (antes «Generar PDF») reemplaza a la descarga final: el alumno ya no descarga el PDF generado, sino la respuesta entregada por el personal.
 
 ![Detalle de revisión](docs/screenshots/08-ce-detalle-revision.png)
 
@@ -216,11 +224,28 @@ Plantillas HTML/CSS que WeasyPrint usa para producir el PDF final. Se versionan 
 
 ![Plantillas de PDF — listado](docs/screenshots/11-admin-plantillas-list.png)
 
-#### 4.4 Nueva plantilla
+#### 4.4 Editor de plantillas con preview en vivo
 
-Formulario para capturar HTML, CSS y descripción. La sección inferior lista las variables disponibles (`{{ solicitante.nombre }}`, `{{ solicitud.folio }}`, etc.).
+El editor (initiative 017) usa una distribución de tres columnas:
 
-![Nueva plantilla de PDF](docs/screenshots/12-admin-plantilla-nueva.png)
+- **Panel izquierdo** — pestañas *Variables*, *Campos* (poblada con `?tipo_id=`) e *Imágenes*. Hacer clic en cualquier chip inserta el snippet en la posición del cursor.
+- **Editor central** — `nombre`, `descripción`, `HTML` y `CSS` con validación inline. Soporta plantillas Django (`{% raw %}{{ solicitante.nombre }}{% endraw %}`, `{% raw %}{% if ... %}{% endraw %}`, etc.).
+- **Preview derecho** — iframe con render HTML refrescado en vivo (`debounce` 500 ms). El botón **«Ver PDF real»** abre el PDF renderizado por WeasyPrint en una pestaña nueva para verificar saltos de página y márgenes.
+
+Las imágenes de la biblioteca se insertan con `{% raw %}{{ assets.<slug> }}{% endraw %}` y se incrustan como `data:` URI al renderizar, así el PDF queda autocontenido y reproducible.
+
+![Editor de plantillas](docs/screenshots/12-admin-plantilla-editor.png)
+
+#### 4.5 Biblioteca de imágenes
+
+Catálogo de activos institucionales reutilizables (logos, sellos, firmas). Cada imagen tiene un *slug* y un *scope*:
+
+- **Global** — disponible para todas las plantillas (`{% raw %}{{ assets.logo_uaz }}{% endraw %}`).
+- **Por plantilla** — sube imágenes que solo sirven a una plantilla concreta desde el modal del editor sin salir de la página.
+
+Formatos aceptados: PNG, JPG o WEBP, máximo 2 MB.
+
+![Biblioteca de imágenes](docs/screenshots/22-admin-plantilla-assets.png)
 
 ### 5. Mentores
 
