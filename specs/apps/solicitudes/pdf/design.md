@@ -34,10 +34,11 @@ PdfService (services/pdf_service/interface.py)
         ├── LifecycleService           ← cross-feature, via interface
         ├── PlantillaRepository        ← intra-feature
         ├── UserService                ← cross-feature, via interface
+        ├── AssetService               ← cross-feature, via interface (initiative 017)
         └── render_pdf(_shared/pdf.py) ← WeasyPrint wrapper
 ```
 
-`pdf/dependencies.py` wires `OrmPlantillaRepository → DefaultPlantillaService` and `DefaultPdfService` (which composes `get_lifecycle_service()` and `get_user_service()`). `STATIC_ROOT` is passed as WeasyPrint's `base_url` so plantillas may reference `/static/...` paths if they want, but plantillas requiring byte-stability across deployments should embed assets as `data:` URIs.
+`pdf/dependencies.py` wires `OrmPlantillaRepository → DefaultPlantillaService` and `DefaultPdfService` (which composes `get_lifecycle_service()`, `get_user_service()`, and `get_asset_service()`). `STATIC_ROOT` is passed as WeasyPrint's `base_url` so plantillas may reference `/static/...` paths if they want; for cross-deployment byte-stability, plantillas should embed images via `{{ assets.<slug> }}` (resolved by `AssetService` into `data:` URIs at render time — see initiative 017).
 
 ## Data shapes
 
@@ -184,6 +185,27 @@ The sidebar (`templates/components/sidebar.html`) shows "Plantillas de PDF" unde
 - `usuarios` — `PdfService` calls `UserService.get_by_matricula(...)` to hydrate solicitante fields for the render context.
 - `solicitudes.respuesta` — initiative 016 reframed the PDF as a **draft for personal/admin only**; the deliverable to the solicitante is the personal-uploaded files served by `respuesta`. The authz matrix above dropped the owner-FINALIZADA branch as part of that initiative.
 
+## Plantilla editor surface (initiative 017)
+
+Two preview endpoints render admin-controlled HTML+CSS against a synthetic context, used by the redesigned plantilla editor (3-column layout: variables panel / textarea / live iframe preview):
+
+- `POST /admin/plantillas/preview/` (`PlantillaPreviewDraftView`) — accepts JSON `{html, css, plantilla_id?}`, renders against `build_synthetic_context(assets=...)`, returns `text/html` for an iframe `srcdoc`. `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; img-src data: https: 'self'; font-src data:` + `X-Frame-Options: SAMEORIGIN`. Template syntax errors return 200 with an inline red banner so the iframe can render the message (instead of a generic 500). With `?persist=1`, the body is also stored in `request.session["plantilla_draft"]` (last-write-wins).
+- `GET /admin/plantillas/preview/pdf/` (`PlantillaPreviewDraftPdfView`) — reads the session draft, renders via WeasyPrint, returns `application/pdf` inline. Missing draft → 422 `DomainValidationError`.
+
+Both endpoints are admin-only (`AdminRequiredMixin`). Errors and infrastructure failures bubble to `AppErrorMiddleware`.
+
+**Trusted-admin template surface**: the preview endpoint passes admin-supplied HTML directly through `django.template.Template(...)`, so the full Django template-tag surface is available (`{% include %}`, `{% load %}`, `{% debug %}`). Admins are trusted operators, but this widens the attack surface relative to "just interpolate `{{ vars }}`". Accepted as-is for v1 since (a) the iframe is sandboxed without `allow-scripts`, (b) the endpoint requires admin role, and (c) the real per-solicitud render in `render_for_solicitud` already evaluates admin-saved plantilla HTML the same way. A future hardening pass could wrap the engine in a restricted environment or strip dangerous tags pre-render.
+
+### Asset resolution
+
+`DefaultPdfService` (constructor) takes `asset_service: AssetService`. Both `render_for_solicitud` and `render_sample` call `asset_service.list_for_render(plantilla_id)` and pass the resulting `dict[slug, data_uri]` to `build_render_context` / `build_synthetic_context` under the `"assets"` key. The data-URI helper `asset_to_data_uri(dto)` (module-public in `pdf/services/pdf_service/implementation.py`) reads `MEDIA_ROOT / dto.file_path`, base64-encodes, returns `data:<mime>;base64,...`. Missing files return `""` so a deleted asset renders as `<img src="">` rather than crashing. The preview endpoints import the same helper directly.
+
+`build_render_context` and `build_synthetic_context` both gained an `assets: dict[str, str] | None = None` parameter (default `None` keeps legacy callers working).
+
+### Tipos `fields.json` endpoint
+
+`GET /admin/tipos/<uuid:tipo_id>/fields.json` (in `tipos/views/fields_json.py`, name `solicitudes:tipos:fields_json`) returns `{"fields": [{"slug","label","type"},...]}` for the editor's "Campos" tab when `?tipo_id=<uuid>` is present in the editor URL. Slug derivation matches `pdf/context.py::slug_for_label` (`slugify(label).replace("-","_")`), so the snippets produced (`{{ valores.<slug> }}`) align with what the render context exposes.
+
 ## Related Specs
 
 - [Initiative 006 plan](../../../planning/006-pdf-generation/plan.md) — the implementation blueprint this design promotes from.
@@ -191,3 +213,5 @@ The sidebar (`templates/components/sidebar.html`) shows "Plantillas de PDF" unde
 - [lifecycle/design.md](../lifecycle/design.md) — provides `LifecycleService.get_detail` and the `SolicitudDetail` shape.
 - [flows/pdf-generation.md](../../../flows/pdf-generation.md) — end-to-end sequence: alumno opens detail page after FINALIZADA → clicks "Descargar PDF" → service composes lifecycle + plantilla + user → WeasyPrint → response.
 - [shared/infrastructure](../../../shared/infrastructure/) — `_shared/pdf.py` lives here.
+- [plantilla_assets/design.md](../plantilla_assets/design.md) — provides `AssetService.list_for_render` and the `asset_to_data_uri` helper consumed at render time (initiative 017).
+- [planning/017-plantilla-editor](../../../planning/017-plantilla-editor/plan.md) — editor redesign + preview endpoints + assets resolver.
