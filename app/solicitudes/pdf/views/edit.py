@@ -13,6 +13,7 @@ from _shared.exceptions import AppError, DomainValidationError
 from solicitudes.pdf.dependencies import get_plantilla_service
 from solicitudes.pdf.forms import PlantillaForm
 from solicitudes.pdf.schemas import UpdatePlantillaInput
+from solicitudes.pdf.views._editor_context import panel_variables
 from usuarios.permissions import AdminRequiredMixin
 
 
@@ -38,6 +39,8 @@ class PlantillaEditView(AdminRequiredMixin, View):
                 "plantilla": plantilla,
                 "form_title": f"Editar «{plantilla.nombre}»",
                 "submit_label": "Guardar cambios",
+                "tipo_id": request.GET.get("tipo_id") or "",
+                **panel_variables(),
             },
         )
 
@@ -60,6 +63,8 @@ class PlantillaEditView(AdminRequiredMixin, View):
                     "plantilla": plantilla,
                     "form_title": f"Editar «{plantilla.nombre}»",
                     "submit_label": "Guardar cambios",
+                    "tipo_id": request.GET.get("tipo_id") or "",
+                    **panel_variables(),
                 },
                 status=400,
             )
@@ -86,6 +91,8 @@ class PlantillaEditView(AdminRequiredMixin, View):
                     "plantilla": plantilla,
                     "form_title": f"Editar «{plantilla.nombre}»",
                     "submit_label": "Guardar cambios",
+                    "tipo_id": request.GET.get("tipo_id") or "",
+                    **panel_variables(),
                 },
                 status=exc.http_status,
             )
@@ -99,6 +106,8 @@ class PlantillaEditView(AdminRequiredMixin, View):
                     "plantilla": plantilla,
                     "form_title": f"Editar «{plantilla.nombre}»",
                     "submit_label": "Guardar cambios",
+                    "tipo_id": request.GET.get("tipo_id") or "",
+                    **panel_variables(),
                 },
                 status=exc.http_status,
             )

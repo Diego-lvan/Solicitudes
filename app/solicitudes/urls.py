@@ -13,6 +13,12 @@ urlpatterns = [
         "admin/plantillas/",
         include(("solicitudes.pdf.urls", "plantillas")),
     ),
+    path(
+        "admin/plantilla-assets/",
+        include(
+            ("solicitudes.plantilla_assets.urls", "plantilla_assets"),
+        ),
+    ),
     path("archivos/", include(("solicitudes.archivos.urls", "archivos"))),
     path("revision/", include(("solicitudes.revision.urls", "revision"))),
     # PDF download lives at "<folio>/pdf/" sharing the folio prefix used by

@@ -11,35 +11,33 @@ from _shared.exceptions import AppError, DomainValidationError
 from solicitudes.pdf.dependencies import get_plantilla_service
 from solicitudes.pdf.forms import PlantillaForm
 from solicitudes.pdf.schemas import CreatePlantillaInput
+from solicitudes.pdf.views._editor_context import panel_variables
 from usuarios.permissions import AdminRequiredMixin
 
 
 class PlantillaCreateView(AdminRequiredMixin, View):
     template_name = "solicitudes/admin/plantillas/form.html"
 
+    def _ctx(self, **extra: object) -> dict[str, object]:
+        ctx: dict[str, object] = {
+            "form_title": "Nueva plantilla",
+            "submit_label": "Crear plantilla",
+            "tipo_id": self.request.GET.get("tipo_id") or "",  # type: ignore[attr-defined]
+        }
+        ctx.update(panel_variables())
+        ctx.update(extra)
+        return ctx
+
     def get(self, request: HttpRequest) -> HttpResponse:
-        return render(
-            request,
-            self.template_name,
-            {
-                "form": PlantillaForm(),
-                "form_title": "Nueva plantilla",
-                "submit_label": "Crear plantilla",
-            },
-        )
+        self.request = request  # type: ignore[attr-defined]
+        return render(request, self.template_name, self._ctx(form=PlantillaForm()))
 
     def post(self, request: HttpRequest) -> HttpResponse:
         form = PlantillaForm(request.POST)
         if not form.is_valid():
+            self.request = request  # type: ignore[attr-defined]
             return render(
-                request,
-                self.template_name,
-                {
-                    "form": form,
-                    "form_title": "Nueva plantilla",
-                    "submit_label": "Crear plantilla",
-                },
-                status=400,
+                request, self.template_name, self._ctx(form=form), status=400
             )
 
         input_dto = CreatePlantillaInput(
@@ -56,26 +54,20 @@ class PlantillaCreateView(AdminRequiredMixin, View):
             for field, errs in exc.field_errors.items():
                 for e in errs:
                     form.add_error(field if field in form.fields else None, e)
+            self.request = request  # type: ignore[attr-defined]
             return render(
                 request,
                 self.template_name,
-                {
-                    "form": form,
-                    "form_title": "Nueva plantilla",
-                    "submit_label": "Crear plantilla",
-                },
+                self._ctx(form=form),
                 status=exc.http_status,
             )
         except AppError as exc:
             form.add_error(None, exc.user_message)
+            self.request = request  # type: ignore[attr-defined]
             return render(
                 request,
                 self.template_name,
-                {
-                    "form": form,
-                    "form_title": "Nueva plantilla",
-                    "submit_label": "Crear plantilla",
-                },
+                self._ctx(form=form),
                 status=exc.http_status,
             )
 

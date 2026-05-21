@@ -399,6 +399,50 @@ def test_create_post_persists_three_fields_after_renumber(admin_client: Client) 
     assert labels == ["Primero", "Tercero"], labels
 
 
+# ---- fields_json ----
+
+
+@pytest.mark.django_db
+def test_fields_json_returns_slug_label_type(admin_client: Client) -> None:
+    tipo = make_tipo()
+    make_field(tipo, order=0, label="Nombre completo", field_type=FieldType.TEXT.value)
+    make_field(tipo, order=1, label="Semestre", field_type=FieldType.NUMBER.value)
+
+    resp = admin_client.get(
+        reverse("solicitudes:tipos:fields_json", kwargs={"tipo_id": tipo.id})
+    )
+    assert resp.status_code == 200
+    import json
+
+    payload = json.loads(resp.content)
+    assert "fields" in payload
+    items = payload["fields"]
+    assert len(items) == 2
+    slugs = {item["slug"] for item in items}
+    assert slugs == {"nombre_completo", "semestre"}
+    for item in items:
+        assert set(item.keys()) == {"slug", "label", "type"}
+
+
+@pytest.mark.django_db
+def test_fields_json_rejects_non_admin(alumno_client: Client) -> None:
+    tipo = make_tipo()
+    resp = alumno_client.get(
+        reverse("solicitudes:tipos:fields_json", kwargs={"tipo_id": tipo.id})
+    )
+    assert resp.status_code in (302, 403)
+
+
+@pytest.mark.django_db
+def test_fields_json_missing_tipo_returns_404(admin_client: Client) -> None:
+    from uuid import uuid4
+
+    resp = admin_client.get(
+        reverse("solicitudes:tipos:fields_json", kwargs={"tipo_id": uuid4()})
+    )
+    assert resp.status_code == 404
+
+
 @pytest.mark.django_db
 def test_create_post_with_soft_deleted_row_compacts_orders(
     admin_client: Client,

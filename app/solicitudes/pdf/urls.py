@@ -9,12 +9,24 @@ from solicitudes.pdf.views.detail import PlantillaDetailView
 from solicitudes.pdf.views.edit import PlantillaEditView
 from solicitudes.pdf.views.list import PlantillaListView
 from solicitudes.pdf.views.preview import PlantillaPreviewView
+from solicitudes.pdf.views.preview_draft import PlantillaPreviewDraftView
+from solicitudes.pdf.views.preview_draft_pdf import PlantillaPreviewDraftPdfView
 
 app_name = "plantillas"
 
 urlpatterns = [
     path("", PlantillaListView.as_view(), name="list"),
     path("nueva/", PlantillaCreateView.as_view(), name="create"),
+    path(
+        "preview/",
+        PlantillaPreviewDraftView.as_view(),
+        name="preview_draft",
+    ),
+    path(
+        "preview/pdf/",
+        PlantillaPreviewDraftPdfView.as_view(),
+        name="preview_draft_pdf",
+    ),
     path("<uuid:plantilla_id>/", PlantillaDetailView.as_view(), name="detail"),
     path(
         "<uuid:plantilla_id>/preview.pdf",

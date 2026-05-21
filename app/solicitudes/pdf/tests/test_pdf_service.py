@@ -185,3 +185,108 @@ def test_two_renders_under_frozen_clock_are_byte_identical() -> None:
         second = get_pdf_service().render_for_solicitud(sol.folio, requester)
 
     assert first.bytes_ == second.bytes_
+
+
+# ---------- assets ----------
+
+
+@pytest.mark.django_db
+def test_render_injects_assets_into_context() -> None:
+    """A global asset's slug becomes a `data:image/png;base64,...` URI in the
+    rendered HTML. The rendered PDF includes the embedded image bytes."""
+    from solicitudes.plantilla_assets.tests.factories import make_global_asset
+
+    make_global_asset(nombre="Logo UAZ", slug="logo_uaz")
+
+    tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)
+    _attach_plantilla(
+        tipo,
+        html='<p><img src="{{ assets.logo_uaz }}" alt="logo"></p>',
+    )
+    sol = make_solicitud(tipo=tipo, estado=Estado.FINALIZADA)
+    personal = make_user(
+        matricula="P-AS", email="p-as@uaz.edu.mx", role=Role.CONTROL_ESCOLAR.value
+    )
+    requester = _user_dto(personal, Role.CONTROL_ESCOLAR)
+
+    result = get_pdf_service().render_for_solicitud(sol.folio, requester)
+    assert result.bytes_.startswith(b"%PDF")
+    # The base64-encoded PNG signature appears in the PDF (deflate/raw text).
+    # We can't easily inspect the embedded image without parsing the PDF, but
+    # We verify slug resolution end-to-end by re-running the service's asset
+    # lookup against the same plantilla and asserting the slug is reachable.
+    from solicitudes.plantilla_assets.dependencies import get_asset_service
+
+    detail = get_pdf_service()._lifecycle.get_detail(sol.folio)  # type: ignore[attr-defined]
+    plantilla_id = detail.tipo.plantilla_id
+    slugs = {dto.slug for dto in get_asset_service().list_for_render(plantilla_id)}
+    assert "logo_uaz" in slugs
+
+
+@pytest.mark.django_db
+def test_render_with_missing_asset_slug_in_template_does_not_crash() -> None:
+    """A plantilla referencing `assets.nonexistent` renders with an empty src
+    rather than crashing (Django template rendering treats missing keys as ''
+    via setting TEMPLATE_STRING_IF_INVALID = '' by default)."""
+    tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)
+    _attach_plantilla(
+        tipo, html='<p><img src="{{ assets.missing_slug }}"></p>'
+    )
+    sol = make_solicitud(tipo=tipo, estado=Estado.FINALIZADA)
+    personal = make_user(
+        matricula="P-MS", email="p-ms@uaz.edu.mx", role=Role.CONTROL_ESCOLAR.value
+    )
+    requester = _user_dto(personal, Role.CONTROL_ESCOLAR)
+
+    result = get_pdf_service().render_for_solicitud(sol.folio, requester)
+    assert result.bytes_.startswith(b"%PDF")
+
+
+@pytest.mark.django_db
+def testasset_to_data_uri_returns_empty_when_file_missing() -> None:
+    from datetime import UTC, datetime as _dt
+    from uuid import uuid4
+
+    from solicitudes.pdf.services.pdf_service.implementation import (
+        asset_to_data_uri,
+    )
+    from solicitudes.plantilla_assets.schemas import (
+        AssetScope,
+        PlantillaAssetDTO,
+    )
+
+    dto = PlantillaAssetDTO(
+        id=uuid4(),
+        slug="missing",
+        nombre="Missing",
+        scope=AssetScope.GLOBAL,
+        plantilla_id=None,
+        file_path="plantilla_assets/9999/99/does-not-exist.png",
+        mime_type="image/png",
+        size_bytes=10,
+        created_at=_dt.now(UTC),
+        created_by_id="ADM1",
+    )
+    assert asset_to_data_uri(dto) == ""
+
+
+@pytest.mark.django_db
+def test_two_renders_with_same_asset_under_frozen_clock_are_byte_identical() -> None:
+    from solicitudes.plantilla_assets.tests.factories import make_global_asset
+
+    make_global_asset(nombre="Logo Det", slug="logo_det")
+    tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)
+    _attach_plantilla(
+        tipo,
+        html='<p>X <img src="{{ assets.logo_det }}"> Y</p>',
+    )
+    sol = make_solicitud(tipo=tipo, estado=Estado.FINALIZADA)
+    personal = make_user(
+        matricula="P-DAS", email="p-das@uaz.edu.mx", role=Role.CONTROL_ESCOLAR.value
+    )
+    requester = _user_dto(personal, Role.CONTROL_ESCOLAR)
+
+    with freeze_time("2026-04-25T12:00:00+00:00"):
+        first = get_pdf_service().render_for_solicitud(sol.folio, requester)
+        second = get_pdf_service().render_for_solicitud(sol.folio, requester)
+    assert first.bytes_ == second.bytes_

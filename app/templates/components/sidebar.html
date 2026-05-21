@@ -60,6 +60,12 @@ Args:
          {% if '/solicitudes/admin/plantillas' in request.path %}aria-current="page"{% endif %}>
         {% lucide "file-text" class="size-4" %}<span>Plantillas de PDF</span>
       </a>
+      <a href="{% url 'solicitudes:plantilla_assets:list' %}"
+         class="flex items-center gap-2 px-3 py-2 rounded-md text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900
+                {% if '/solicitudes/admin/plantilla-assets' in request.path %}bg-zinc-100 text-zinc-900 font-medium{% endif %}"
+         {% if '/solicitudes/admin/plantilla-assets' in request.path %}aria-current="page"{% endif %}>
+        {% lucide "image" class="size-4" %}<span>Imágenes de plantillas</span>
+      </a>
       <a href="{% url 'mentores:list' %}"
          class="flex items-center gap-2 px-3 py-2 rounded-md text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900
                 {% if '/mentores' in request.path %}bg-zinc-100 text-zinc-900 font-medium{% endif %}"

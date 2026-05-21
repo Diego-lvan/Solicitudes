@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load lucide %}
+
+{% block title %}Eliminar imagen · {{ block.super }}{% endblock %}
+
+{% block content %}
+<header class="mb-6">
+  <h1 class="text-2xl font-semibold text-zinc-900">Eliminar imagen</h1>
+</header>
+
+<article class="rounded-lg border border-zinc-200 bg-white p-5 max-w-xl">
+  <div class="flex gap-4 items-start">
+    <div class="size-24 rounded border border-zinc-200 bg-zinc-50 flex items-center justify-center overflow-hidden shrink-0">
+      <img src="/media/{{ asset.file_path }}" alt="{{ asset.nombre }}" class="max-w-full max-h-full object-contain" />
+    </div>
+    <div>
+      <p class="text-sm font-medium text-zinc-900">{{ asset.nombre }}</p>
+      <p class="text-xs text-zinc-500 font-mono">{% verbatim %}{{ assets.{% endverbatim %}{{ asset.slug }}{% verbatim %} }}{% endverbatim %}</p>
+    </div>
+  </div>
+
+  {% include "components/alert.html" with variant="warning" title="Atención" message="Si esta imagen está referenciada en alguna plantilla, dejará de aparecer en el PDF generado." %}
+
+  <form method="post" class="flex justify-end gap-2 mt-4">
+    {% csrf_token %}
+    <a href="{% url 'solicitudes:plantilla_assets:list' %}"
+       class="inline-flex items-center h-10 px-4 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900 hover:bg-zinc-50">
+      Cancelar
+    </a>
+    <button type="submit"
+            class="inline-flex items-center gap-1.5 h-10 px-4 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700
+                   focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700">
+      {% lucide "trash-2" class="size-4" %} Eliminar
+    </button>
+  </form>
+</article>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load lucide %}
+
+{% block title %}Imágenes de plantillas · {{ block.super }}{% endblock %}
+
+{% block content %}
+<header class="flex flex-wrap items-center justify-between gap-3 mb-6">
+  <div>
+    <h1 class="text-2xl font-semibold text-zinc-900">Imágenes de plantillas</h1>
+    <p class="text-sm text-zinc-600">Activos institucionales reutilizables (logo, sellos, firmas).</p>
+  </div>
+  <button type="button"
+          x-data
+          @click="document.getElementById('upload-modal').showModal()"
+          class="inline-flex items-center gap-1.5 h-10 px-4 rounded-md bg-zinc-900 text-white text-sm font-medium
+                 hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
+    {% lucide "plus" class="size-4" %} Subir imagen
+  </button>
+</header>
+
+{% if messages %}
+  {% for message in messages %}
+    {% include "components/alert.html" with variant=message.tags message=message %}
+  {% endfor %}
+{% endif %}
+
+{% if assets %}
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+    {% for a in assets %}
+      <article class="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+        <div class="aspect-square bg-zinc-50 flex items-center justify-center p-2">
+          <img src="{{ a.thumb_url }}" alt="{{ a.nombre }}" class="max-w-full max-h-full object-contain" />
+        </div>
+        <div class="px-3 py-2 border-t border-zinc-200">
+          <p class="text-sm font-medium text-zinc-900 truncate" title="{{ a.nombre }}">{{ a.nombre }}</p>
+          <p class="text-xs text-zinc-500 font-mono truncate">{% verbatim %}{{ assets.{% endverbatim %}{{ a.slug }}{% verbatim %} }}{% endverbatim %}</p>
+          <p class="text-[11px] text-zinc-400 mt-1">{{ a.created_at|date:"d/m/Y" }}</p>
+          <div class="mt-2 flex justify-end">
+            <a href="{% url 'solicitudes:plantilla_assets:delete' asset_id=a.id %}"
+               class="inline-flex items-center gap-1 text-xs text-red-700 hover:text-red-900 hover:underline">
+              {% lucide "trash-2" class="size-3.5" %} Eliminar
+            </a>
+          </div>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  {% include "components/empty_state.html" with icon="image" title="Sin imágenes" description="Sube tu primera imagen global para empezar a usarla en plantillas." %}
+{% endif %}
+
+<dialog id="upload-modal" class="rounded-lg p-0 backdrop:bg-zinc-950/40 w-full max-w-md">
+  <form method="post" enctype="multipart/form-data" action="{% url 'solicitudes:plantilla_assets:upload_global' %}"
+        class="p-5 space-y-4">
+    {% csrf_token %}
+    <h2 class="text-lg font-semibold text-zinc-900">Subir imagen global</h2>
+    <div class="space-y-1.5">
+      <label class="block text-sm font-medium text-zinc-900" for="id_nombre">
+        Nombre<span class="text-red-600 ml-0.5" aria-hidden="true">*</span>
+      </label>
+      {{ form.nombre }}
+      {% if form.nombre.errors %}<p class="text-xs text-red-600" role="alert">{{ form.nombre.errors.0 }}</p>{% endif %}
+    </div>
+    <div class="space-y-1.5">
+      <label class="block text-sm font-medium text-zinc-900" for="id_imagen">
+        Imagen<span class="text-red-600 ml-0.5" aria-hidden="true">*</span>
+      </label>
+      {{ form.imagen }}
+      <p class="text-xs text-zinc-500">PNG, JPG o WEBP. Máximo 2&nbsp;MB.</p>
+      {% if form.imagen.errors %}<p class="text-xs text-red-600" role="alert">{{ form.imagen.errors.0 }}</p>{% endif %}
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+      <button type="button" onclick="document.getElementById('upload-modal').close()"
+              class="inline-flex items-center h-10 px-4 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900 hover:bg-zinc-50">
+        Cancelar
+      </button>
+      <button type="submit"
+              class="inline-flex items-center h-10 px-4 rounded-md bg-zinc-900 text-white text-sm font-medium hover:bg-black">
+        Subir
+      </button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}

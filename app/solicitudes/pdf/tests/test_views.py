@@ -224,3 +224,79 @@ def test_anonymous_redirected_or_401() -> None:
     # AppErrorMiddleware turns AuthenticationRequired into a redirect to login,
     # not a 200. Either 302 (redirect) or 401 is acceptable.
     assert resp.status_code in (302, 401)
+
+
+# ---------- preview draft (HTML + PDF) ----------
+
+
+import json as _json
+
+
+@pytest.mark.django_db
+def test_preview_draft_anonymous_blocked() -> None:
+    resp = Client().post(
+        reverse("solicitudes:plantillas:preview_draft"),
+        data=_json.dumps({"html": "<p>x</p>", "css": ""}),
+        content_type="application/json",
+    )
+    assert resp.status_code in (302, 401)
+
+
+@pytest.mark.django_db
+def test_preview_draft_admin_valid_html_returns_200(admin_client: Client) -> None:
+    body = _json.dumps(
+        {"html": "<p>Hola {{ solicitante.nombre }}</p>", "css": "p { color: red; }"}
+    )
+    resp = admin_client.post(
+        reverse("solicitudes:plantillas:preview_draft"),
+        data=body,
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+    assert resp["Content-Type"].startswith("text/html")
+    assert b"Hola Nombre Apellido Apellido" in resp.content
+
+
+@pytest.mark.django_db
+def test_preview_draft_with_template_error_renders_banner(admin_client: Client) -> None:
+    body = _json.dumps({"html": "<p>{% if x %}</p>", "css": ""})
+    resp = admin_client.post(
+        reverse("solicitudes:plantillas:preview_draft"),
+        data=body,
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+    assert b"Error de plantilla" in resp.content
+
+
+@pytest.mark.django_db
+def test_preview_draft_persist_sets_session_key(admin_client: Client) -> None:
+    body = _json.dumps({"html": "<p>persisted</p>", "css": ""})
+    resp = admin_client.post(
+        reverse("solicitudes:plantillas:preview_draft") + "?persist=1",
+        data=body,
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+    assert "plantilla_draft" in admin_client.session
+
+
+@pytest.mark.django_db
+def test_preview_draft_pdf_without_session_returns_422(admin_client: Client) -> None:
+    resp = admin_client.get(reverse("solicitudes:plantillas:preview_draft_pdf"))
+    assert resp.status_code == 422
+
+
+@pytest.mark.django_db
+def test_preview_draft_then_pdf_returns_pdf(admin_client: Client) -> None:
+    body = _json.dumps({"html": "<p>hello</p>", "css": ""})
+    resp = admin_client.post(
+        reverse("solicitudes:plantillas:preview_draft") + "?persist=1",
+        data=body,
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+    resp_pdf = admin_client.get(reverse("solicitudes:plantillas:preview_draft_pdf"))
+    assert resp_pdf.status_code == 200
+    assert resp_pdf["Content-Type"] == "application/pdf"
+    assert resp_pdf.content.startswith(b"%PDF")

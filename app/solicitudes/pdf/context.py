@@ -54,6 +54,7 @@ def build_render_context(
     solicitud: SolicitudDetail,
     solicitante: UserDTO,
     now: datetime,
+    assets: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Build the mapping that the plantilla's HTML is rendered with.
 
@@ -90,6 +91,7 @@ def build_render_context(
             "updated_at": solicitud.updated_at,
         },
         "valores": valores,
+        "assets": dict(assets or {}),
         "now": now_local,
         "firma_lugar_fecha": _firma_lugar_fecha(now_local),
     }
@@ -113,7 +115,9 @@ def _firma_lugar_fecha(now_local: datetime) -> str:
     return f"Zacatecas, Zac., a {now_local.day} de {mes} de {now_local.year}"
 
 
-def build_synthetic_context(*, now: datetime) -> dict[str, object]:
+def build_synthetic_context(
+    *, now: datetime, assets: dict[str, str] | None = None
+) -> dict[str, object]:
     """Lorem-ipsum context for the admin's plantilla preview.
 
     Keys mirror :func:`build_render_context` so a plantilla that works for a
@@ -138,6 +142,7 @@ def build_synthetic_context(*, now: datetime) -> dict[str, object]:
             "updated_at": now_local,
         },
         "valores": {},
+        "assets": dict(assets or {}),
         "now": now_local,
         "firma_lugar_fecha": _firma_lugar_fecha(now_local),
     }

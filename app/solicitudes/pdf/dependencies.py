@@ -13,6 +13,7 @@ from solicitudes.pdf.services.plantilla_service import (
     DefaultPlantillaService,
     PlantillaService,
 )
+from solicitudes.plantilla_assets.dependencies import get_asset_service
 from usuarios.dependencies import get_user_service
 
 
@@ -29,5 +30,6 @@ def get_pdf_service() -> PdfService:
         lifecycle_service=get_lifecycle_service(),
         plantilla_repository=get_plantilla_repository(),
         user_service=get_user_service(),
+        asset_service=get_asset_service(),
         static_root=getattr(settings, "STATIC_ROOT", None) or None,
     )

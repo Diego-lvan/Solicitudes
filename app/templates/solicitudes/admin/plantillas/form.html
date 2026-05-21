@@ -1,83 +1,139 @@
 {% extends "base.html" %}
+{% load static lucide %}
 
 {% block title %}{{ form_title }} · {{ block.super }}{% endblock %}
 
 {% block content %}
-<header class="flex flex-wrap justify-between items-center gap-3 mb-6">
-  <h1 class="text-2xl font-semibold text-zinc-900">{{ form_title }}</h1>
-  <a href="{% url 'solicitudes:plantillas:list' %}" class="text-sm text-zinc-700 hover:text-zinc-900 hover:underline underline-offset-2">
-    Volver al listado
-  </a>
-</header>
+<div x-data="plantillaEditor({
+       previewUrl: '{% url 'solicitudes:plantillas:preview_draft' %}',
+       previewPdfUrl: '{% url 'solicitudes:plantillas:preview_draft_pdf' %}',
+       assetsJsonUrl: '{% url 'solicitudes:plantilla_assets:list_json' %}',
+       uploadGlobalUrl: '{% url 'solicitudes:plantilla_assets:upload_global' %}',
+       uploadPlantillaUrlTpl: '/solicitudes/admin/plantilla-assets/plantilla/__ID__/upload/',
+       plantillaId: '{{ plantilla.id|default:'' }}',
+       tipoId: '{{ tipo_id|default:'' }}',
+       csrfToken: '{{ csrf_token }}'
+     })" x-init="init()" class="space-y-4">
 
-{% if form.non_field_errors %}
-  {% include "components/alert.html" with variant="danger" message=form.non_field_errors %}
-{% endif %}
-
-<form method="post" novalidate>
-  {% csrf_token %}
-
-  <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-    <div class="md:col-span-8 space-y-1.5">
-      <label for="{{ form.nombre.id_for_label }}" class="block text-sm font-medium text-zinc-900">
-        {{ form.nombre.label }}<span class="text-red-600 ml-0.5" aria-hidden="true">*</span>
-      </label>
-      {{ form.nombre }}
-      {% if form.nombre.errors %}<p class="text-xs text-red-600" role="alert">{{ form.nombre.errors.0 }}</p>{% endif %}
+  <header class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-semibold text-zinc-900">{{ form_title }}</h1>
+      <p class="text-xs text-zinc-500">Edita el HTML/CSS y observa el preview en vivo a la derecha.</p>
     </div>
-    <div class="md:col-span-4 flex items-end">
-      <label class="inline-flex items-center gap-2 text-sm text-zinc-900 cursor-pointer">
-        {{ form.activo }}
-        <span>{{ form.activo.label }}</span>
-      </label>
-    </div>
-
-    <div class="md:col-span-12 space-y-1.5">
-      <label for="{{ form.descripcion.id_for_label }}" class="block text-sm font-medium text-zinc-900">{{ form.descripcion.label }}</label>
-      {{ form.descripcion }}
-      {% if form.descripcion.errors %}<p class="text-xs text-red-600" role="alert">{{ form.descripcion.errors.0 }}</p>{% endif %}
-    </div>
-
-    <div class="md:col-span-12 space-y-1.5">
-      <label for="{{ form.html.id_for_label }}" class="block text-sm font-medium text-zinc-900">
-        {{ form.html.label }}<span class="text-red-600 ml-0.5" aria-hidden="true">*</span>
-        <span class="ml-1 text-xs font-normal text-zinc-500">(usa <code class="font-mono text-zinc-900">{% verbatim %}{{ var }}{% endverbatim %}</code> para insertar variables)</span>
-      </label>
-      {{ form.html }}
-      {% if form.html.errors %}<p class="text-xs text-red-600" role="alert">{{ form.html.errors.0 }}</p>{% endif %}
-    </div>
-
-    <div class="md:col-span-12 space-y-1.5">
-      <label for="{{ form.css.id_for_label }}" class="block text-sm font-medium text-zinc-900">{{ form.css.label }}</label>
-      {{ form.css }}
-      {% if form.css.errors %}<p class="text-xs text-red-600" role="alert">{{ form.css.errors.0 }}</p>{% endif %}
-    </div>
-  </div>
-
-  <div class="flex justify-end gap-2 mt-6">
     <a href="{% url 'solicitudes:plantillas:list' %}"
-       class="inline-flex items-center h-10 px-4 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900
-              hover:bg-zinc-50
-              focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
-      Cancelar
+       class="text-sm text-zinc-700 hover:text-zinc-900 hover:underline underline-offset-2">
+      ← Volver al listado
     </a>
-    <button type="submit"
-            class="inline-flex items-center h-10 px-4 rounded-md bg-zinc-900 text-white text-sm font-medium
-                   hover:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">
-      {{ submit_label }}
-    </button>
-  </div>
-</form>
-
-<article class="rounded-lg border border-zinc-200 bg-white mt-10">
-  <header class="px-4 py-3 border-b border-zinc-200">
-    <h2 class="text-sm font-semibold text-zinc-900">Variables disponibles</h2>
   </header>
-  <ul class="px-4 py-3 text-xs text-zinc-700 space-y-1.5 list-disc list-inside">
-    <li><code class="font-mono text-zinc-900">{% verbatim %}{{ solicitante.matricula }}{% endverbatim %}</code>, <code class="font-mono text-zinc-900">{% verbatim %}{{ solicitante.nombre }}{% endverbatim %}</code>, <code class="font-mono text-zinc-900">{% verbatim %}{{ solicitante.email }}{% endverbatim %}</code>, <code class="font-mono text-zinc-900">{% verbatim %}{{ solicitante.programa }}{% endverbatim %}</code>, <code class="font-mono text-zinc-900">{% verbatim %}{{ solicitante.semestre }}{% endverbatim %}</code></li>
-    <li><code class="font-mono text-zinc-900">{% verbatim %}{{ solicitud.folio }}{% endverbatim %}</code>, <code class="font-mono text-zinc-900">{% verbatim %}{{ solicitud.estado }}{% endverbatim %}</code>, <code class="font-mono text-zinc-900">{% verbatim %}{{ solicitud.tipo_nombre }}{% endverbatim %}</code>, <code class="font-mono text-zinc-900">{% verbatim %}{{ solicitud.created_at }}{% endverbatim %}</code></li>
-    <li><code class="font-mono text-zinc-900">{% verbatim %}{{ valores.&lt;slug-de-campo&gt; }}{% endverbatim %}</code> (los slugs se derivan automáticamente del label del campo)</li>
-    <li><code class="font-mono text-zinc-900">{% verbatim %}{{ now }}{% endverbatim %}</code>, <code class="font-mono text-zinc-900">{% verbatim %}{{ firma_lugar_fecha }}{% endverbatim %}</code></li>
-  </ul>
-</article>
+
+  {% if form.non_field_errors %}
+    {% include "components/alert.html" with variant="danger" message=form.non_field_errors %}
+  {% endif %}
+
+  <form method="post" novalidate id="plantilla-form" class="grid grid-cols-12 gap-4">
+    {% csrf_token %}
+
+    {# === Columna izquierda: panel === #}
+    <aside class="col-span-12 lg:col-span-3 order-2 lg:order-1">
+      {% include "solicitudes/admin/_partials/_assets_panel.html" %}
+    </aside>
+
+    {# === Columna central: editor === #}
+    <section class="col-span-12 lg:col-span-5 order-1 lg:order-2 space-y-3">
+      <div class="rounded-lg border border-zinc-200 bg-white p-4 space-y-3">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+          <div class="md:col-span-8 space-y-1.5">
+            <label for="{{ form.nombre.id_for_label }}" class="block text-sm font-medium text-zinc-900">
+              Nombre<span class="text-red-600 ml-0.5" aria-hidden="true">*</span>
+            </label>
+            {{ form.nombre }}
+            {% if form.nombre.errors %}<p class="text-xs text-red-600" role="alert">{{ form.nombre.errors.0 }}</p>{% endif %}
+          </div>
+          <div class="md:col-span-4 flex items-end">
+            <label class="inline-flex items-center gap-2 text-sm text-zinc-900 cursor-pointer">
+              {{ form.activo }}
+              <span>Activa</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <label for="{{ form.descripcion.id_for_label }}" class="block text-sm font-medium text-zinc-900">Descripción</label>
+          {{ form.descripcion }}
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-zinc-200 bg-white p-4 space-y-2">
+        <div class="flex items-center justify-between">
+          <label for="{{ form.html.id_for_label }}" class="text-sm font-medium text-zinc-900">
+            HTML<span class="text-red-600 ml-0.5" aria-hidden="true">*</span>
+          </label>
+          <p class="text-xs text-zinc-500">Click en chips del panel para insertar.</p>
+        </div>
+        <textarea name="html" id="{{ form.html.id_for_label }}"
+                  x-ref="htmlTextarea"
+                  x-model="html"
+                  @input.debounce.500ms="refreshPreview()"
+                  spellcheck="false"
+                  class="block w-full min-h-[420px] max-h-[70vh] px-3 py-2 rounded-md border border-zinc-300 bg-white
+                         font-mono text-xs text-zinc-900 leading-relaxed
+                         focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900">{{ form.html.value|default:'' }}</textarea>
+        {% if form.html.errors %}<p class="text-xs text-red-600" role="alert">{{ form.html.errors.0 }}</p>{% endif %}
+      </div>
+
+      <details class="rounded-lg border border-zinc-200 bg-white">
+        <summary class="cursor-pointer px-4 py-2.5 text-sm font-medium text-zinc-900 select-none flex items-center gap-1.5">
+          {% lucide "chevron-right" class="size-4" %} CSS
+        </summary>
+        <div class="px-4 pb-4 space-y-1.5">
+          <textarea name="css" id="{{ form.css.id_for_label }}"
+                    x-model="css"
+                    @input.debounce.500ms="refreshPreview()"
+                    spellcheck="false"
+                    class="block w-full min-h-[180px] max-h-[40vh] px-3 py-2 rounded-md border border-zinc-300 bg-white
+                           font-mono text-xs text-zinc-900 leading-relaxed">{{ form.css.value|default:'' }}</textarea>
+        </div>
+      </details>
+
+      <div class="flex flex-col md:flex-row gap-2 md:justify-end pt-2">
+        <a href="{% url 'solicitudes:plantillas:list' %}"
+           class="inline-flex items-center justify-center h-10 px-4 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900 hover:bg-zinc-50 order-2 md:order-1">
+          Cancelar
+        </a>
+        <button type="submit"
+                class="inline-flex items-center justify-center h-10 px-4 rounded-md bg-zinc-900 text-white text-sm font-medium hover:bg-black
+                       focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 order-1 md:order-2">
+          {{ submit_label }}
+        </button>
+      </div>
+    </section>
+
+    {# === Columna derecha: preview === #}
+    <aside class="col-span-12 lg:col-span-4 order-3 lg:order-3 space-y-2">
+      <div class="rounded-lg border border-zinc-200 bg-white overflow-hidden lg:sticky lg:top-4">
+        <header class="px-4 py-2 border-b border-zinc-200 flex items-center justify-between bg-zinc-50/60">
+          <h2 class="text-sm font-semibold text-zinc-900 flex items-center gap-1.5">
+            {% lucide "eye" class="size-4" %} Preview
+          </h2>
+          <span x-show="previewLoading" class="text-xs text-zinc-500">cargando…</span>
+        </header>
+        <iframe x-ref="previewFrame"
+                title="Preview de la plantilla"
+                sandbox="allow-same-origin"
+                class="w-full h-[60vh] bg-white"
+                srcdoc=""></iframe>
+        <div class="p-2 border-t border-zinc-200 flex justify-end">
+          <button type="button" @click="openPdfPreview()" :disabled="previewLoading"
+                  class="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-zinc-300 bg-white text-xs text-zinc-900 hover:bg-zinc-50 disabled:opacity-50">
+            {% lucide "file-down" class="size-4" %} Ver PDF real
+          </button>
+        </div>
+      </div>
+    </aside>
+  </form>
+
+  {% include "solicitudes/admin/_partials/_asset_upload_modal.html" %}
+</div>
+
+<script src="{% static 'js/plantilla_editor.js' %}"></script>
 {% endblock %}
