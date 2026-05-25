@@ -63,57 +63,20 @@ class ArchivoServiceImpl(ArchivoService):
     ) -> ArchivoDTO:
         detail = self._lifecycle.get_detail(folio)
 
-        if kind is ArchivoKind.FORM:
-            self._guard_form_estado(detail)
-            field_snapshot = self._lookup_field_in_snapshot(detail, field_id)
-            allowed = tuple(
-                ext.lower() for ext in field_snapshot.get("accepted_extensions", [])
-            )
-            field_max_mb = int(field_snapshot.get("max_size_mb", 10))
-        else:
-            assert kind is ArchivoKind.COMPROBANTE
-            self._guard_comprobante_required(detail)
-            self._guard_comprobante_estado(detail)
-            allowed = tuple(ext.lower() for ext in COMPROBANTE_EXTENSIONS)
-            field_max_mb = 10
+        allowed, field_max_mb = self._resolve_constraints(detail, kind, field_id)
 
         original_name = uploaded_file.name or ""
         ext = os.path.splitext(original_name)[1].lower()
         size_bytes = uploaded_file.size or 0
-        # Smaller of {field/global cap} wins.
-        max_bytes = min(GLOBAL_MAX_SIZE_BYTES, field_max_mb * 1024 * 1024)
+        self._validate_upload(
+            allowed=allowed,
+            field_max_mb=field_max_mb,
+            ext=ext,
+            size_bytes=size_bytes,
+            field_id=field_id,
+        )
 
-        if allowed and ext not in allowed:
-            raise FileExtensionNotAllowed(
-                extension=ext or "(none)",
-                allowed=allowed,
-                field=str(field_id) if field_id else "comprobante",
-            )
-        if size_bytes > max_bytes:
-            raise FileTooLarge(
-                size_bytes=size_bytes,
-                max_bytes=max_bytes,
-                field=str(field_id) if field_id else "comprobante",
-            )
-
-        # Replace-on-reupload: delete the prior row now (transactional) and
-        # schedule the prior bytes' removal for after-commit. Doing the file
-        # delete synchronously here would leak the file on rollback (the row
-        # restore would then point at a deleted file).
-        prior: ArchivoRecord | None
-        if kind is ArchivoKind.FORM:
-            assert field_id is not None
-            prior = self._repo.find_form_archivo(folio=folio, field_id=field_id)
-        else:
-            prior = self._repo.find_comprobante(folio=folio)
-        if prior is not None:
-            old_path = self._repo.delete(prior.id)
-            storage = self._storage
-
-            def _delete_prior() -> None:
-                storage.delete(old_path)
-
-            transaction.on_commit(_delete_prior)
+        self._replace_prior(folio=folio, kind=kind, field_id=field_id)
 
         # Stream-hash and persist. (See Important-4 in the review log: the
         # FileStorage.save signature accepts bytes today; the global 10 MB cap
@@ -173,6 +136,69 @@ class ArchivoServiceImpl(ArchivoService):
         self._authorise_read(detail, requester)
         stream = self._storage.open(record.stored_path)
         return record.to_dto(), stream
+
+    # -- upload helpers -------------------------------------------------
+
+    def _resolve_constraints(
+        self,
+        detail: SolicitudDetail,
+        kind: ArchivoKind,
+        field_id: UUID | None,
+    ) -> tuple[tuple[str, ...], int]:
+        """Guard the estado and return (allowed_extensions, max_size_mb)."""
+        if kind is ArchivoKind.FORM:
+            self._guard_form_estado(detail)
+            field_snapshot = self._lookup_field_in_snapshot(detail, field_id)
+            allowed = tuple(
+                ext.lower() for ext in field_snapshot.get("accepted_extensions", [])
+            )
+            return allowed, int(field_snapshot.get("max_size_mb", 10))
+        assert kind is ArchivoKind.COMPROBANTE
+        self._guard_comprobante_required(detail)
+        self._guard_comprobante_estado(detail)
+        return tuple(ext.lower() for ext in COMPROBANTE_EXTENSIONS), 10
+
+    @staticmethod
+    def _validate_upload(
+        *,
+        allowed: tuple[str, ...],
+        field_max_mb: int,
+        ext: str,
+        size_bytes: int,
+        field_id: UUID | None,
+    ) -> None:
+        # Smaller of {field/global cap} wins.
+        max_bytes = min(GLOBAL_MAX_SIZE_BYTES, field_max_mb * 1024 * 1024)
+        field = str(field_id) if field_id else "comprobante"
+        if allowed and ext not in allowed:
+            raise FileExtensionNotAllowed(
+                extension=ext or "(none)", allowed=allowed, field=field
+            )
+        if size_bytes > max_bytes:
+            raise FileTooLarge(size_bytes=size_bytes, max_bytes=max_bytes, field=field)
+
+    def _replace_prior(
+        self, *, folio: str, kind: ArchivoKind, field_id: UUID | None
+    ) -> None:
+        # Replace-on-reupload: delete the prior row now (transactional) and
+        # schedule the prior bytes' removal for after-commit. A synchronous file
+        # delete would leak the file on rollback (the restored row would then
+        # point at a deleted file).
+        prior: ArchivoRecord | None
+        if kind is ArchivoKind.FORM:
+            assert field_id is not None
+            prior = self._repo.find_form_archivo(folio=folio, field_id=field_id)
+        else:
+            prior = self._repo.find_comprobante(folio=folio)
+        if prior is None:
+            return
+        old_path = self._repo.delete(prior.id)
+        storage = self._storage
+
+        def _delete_prior() -> None:
+            storage.delete(old_path)
+
+        transaction.on_commit(_delete_prior)
 
     # -- guards ---------------------------------------------------------
 
