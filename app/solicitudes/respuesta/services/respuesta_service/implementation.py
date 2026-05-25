@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from hashlib import sha256
 from typing import BinaryIO
 from uuid import UUID, uuid4
@@ -62,14 +62,7 @@ class DefaultRespuestaService(RespuestaService):
     # -- writes --------------------------------------------------------
 
     def create_batch(self, input_dto: CreateRespuestaInput) -> RespuestaDTO:
-        # Re-assert payload invariants in case the caller bypassed the DTO
-        # validator (defensive: the DTO validator already enforces these).
-        if not input_dto.archivos and not input_dto.comentario.strip():
-            raise EmptyRespuestaBatch()
-        if len(input_dto.archivos) > MAX_FILES_PER_BATCH:
-            raise TooManyFilesInBatch(
-                count=len(input_dto.archivos), max_count=MAX_FILES_PER_BATCH
-            )
+        self._assert_payload_invariants(input_dto)
 
         detail = self._lifecycle.get_detail(input_dto.folio)
 
@@ -85,17 +78,7 @@ class DefaultRespuestaService(RespuestaService):
         # of the service exercise authz directly.
         self._authorise_create(detail, input_dto.actor_role)
 
-        # Per-file validation.
-        for uf in input_dto.archivos:
-            ext = os.path.splitext(uf.nombre_original)[1].lower()
-            if ext not in ALLOWED_EXTENSIONS:
-                raise ResponseFileExtensionNotAllowed(
-                    extension=ext or "(none)", allowed=ALLOWED_EXTENSIONS
-                )
-            if uf.size_bytes > GLOBAL_MAX_SIZE_BYTES:
-                raise ResponseFileTooLarge(
-                    size_bytes=uf.size_bytes, max_bytes=GLOBAL_MAX_SIZE_BYTES
-                )
+        self._validate_files(input_dto)
 
         # Persist transactionally. On any exception inside the block, the DB
         # is rolled back and the storage layer's on_commit rename hooks do
@@ -149,6 +132,30 @@ class DefaultRespuestaService(RespuestaService):
         )
         return dto
 
+    @staticmethod
+    def _assert_payload_invariants(input_dto: CreateRespuestaInput) -> None:
+        # Re-assert payload invariants in case the caller bypassed the DTO
+        # validator (defensive: the DTO validator already enforces these).
+        if not input_dto.archivos and not input_dto.comentario.strip():
+            raise EmptyRespuestaBatch()
+        if len(input_dto.archivos) > MAX_FILES_PER_BATCH:
+            raise TooManyFilesInBatch(
+                count=len(input_dto.archivos), max_count=MAX_FILES_PER_BATCH
+            )
+
+    @staticmethod
+    def _validate_files(input_dto: CreateRespuestaInput) -> None:
+        for uf in input_dto.archivos:
+            ext = os.path.splitext(uf.nombre_original)[1].lower()
+            if ext not in ALLOWED_EXTENSIONS:
+                raise ResponseFileExtensionNotAllowed(
+                    extension=ext or "(none)", allowed=ALLOWED_EXTENSIONS
+                )
+            if uf.size_bytes > GLOBAL_MAX_SIZE_BYTES:
+                raise ResponseFileTooLarge(
+                    size_bytes=uf.size_bytes, max_bytes=GLOBAL_MAX_SIZE_BYTES
+                )
+
     # -- reads ---------------------------------------------------------
 
     def list_for_solicitud(
@@ -187,13 +194,11 @@ class DefaultRespuestaService(RespuestaService):
             return True
         if requester.role == detail.tipo.responsible_role:
             return True
-        if (
+        return (
             requester.matricula == detail.solicitante.matricula
             and detail.estado is Estado.FINALIZADA
-        ):
-            return True
-        return False
+        )
 
 
 def _aware_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)

@@ -30,71 +30,87 @@ def field_attr_name(field_id: Any) -> str:
     return f"field_{str(field_id).replace('-', '')}"
 
 
+def _build_text(snap: FieldSnapshot, common: dict[str, Any]) -> forms.Field:
+    return forms.CharField(
+        max_length=snap.max_chars or 200,
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": snap.placeholder}
+        ),
+        **common,
+    )
+
+
+def _build_textarea(snap: FieldSnapshot, common: dict[str, Any]) -> forms.Field:
+    return forms.CharField(
+        max_length=snap.max_chars or 2000,
+        widget=forms.Textarea(
+            attrs={"class": "form-control", "rows": 4, "placeholder": snap.placeholder}
+        ),
+        **common,
+    )
+
+
+def _build_number(snap: FieldSnapshot, common: dict[str, Any]) -> forms.Field:
+    return forms.DecimalField(
+        widget=forms.NumberInput(attrs={"class": "form-control", "step": "any"}),
+        **common,
+    )
+
+
+def _build_date(snap: FieldSnapshot, common: dict[str, Any]) -> forms.Field:
+    return forms.DateField(
+        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+        **common,
+    )
+
+
+def _build_select(snap: FieldSnapshot, common: dict[str, Any]) -> forms.Field:
+    choices = [("", "---------")] + [(o, o) for o in snap.options]
+    return forms.ChoiceField(
+        choices=choices,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        **common,
+    )
+
+
+def _build_file(snap: FieldSnapshot, common: dict[str, Any]) -> forms.Field:
+    return forms.FileField(
+        validators=[
+            make_extension_validator(snap.accepted_extensions),
+            make_size_validator(snap.max_size_mb),
+        ],
+        widget=forms.ClearableFileInput(
+            attrs={
+                "class": "form-control",
+                "accept": ",".join(snap.accepted_extensions),
+            }
+        ),
+        **common,
+    )
+
+
+# Dispatch table — every FieldType maps to a builder. New types must register.
+_FIELD_BUILDERS = {
+    FieldType.TEXT: _build_text,
+    FieldType.TEXTAREA: _build_textarea,
+    FieldType.NUMBER: _build_number,
+    FieldType.DATE: _build_date,
+    FieldType.SELECT: _build_select,
+    FieldType.FILE: _build_file,
+}
+
+
 def _build_django_field(snap: FieldSnapshot) -> forms.Field:
     common: dict[str, Any] = {
         "label": snap.label,
         "required": snap.required,
         "help_text": snap.help_text or "",
     }
-
-    if snap.field_type is FieldType.TEXT:
-        return forms.CharField(
-            max_length=snap.max_chars or 200,
-            widget=forms.TextInput(
-                attrs={"class": "form-control", "placeholder": snap.placeholder}
-            ),
-            **common,
-        )
-    if snap.field_type is FieldType.TEXTAREA:
-        return forms.CharField(
-            max_length=snap.max_chars or 2000,
-            widget=forms.Textarea(
-                attrs={
-                    "class": "form-control",
-                    "rows": 4,
-                    "placeholder": snap.placeholder,
-                }
-            ),
-            **common,
-        )
-    if snap.field_type is FieldType.NUMBER:
-        return forms.DecimalField(
-            widget=forms.NumberInput(
-                attrs={"class": "form-control", "step": "any"}
-            ),
-            **common,
-        )
-    if snap.field_type is FieldType.DATE:
-        return forms.DateField(
-            widget=forms.DateInput(
-                attrs={"class": "form-control", "type": "date"}
-            ),
-            **common,
-        )
-    if snap.field_type is FieldType.SELECT:
-        choices = [("", "---------")] + [(o, o) for o in snap.options]
-        return forms.ChoiceField(
-            choices=choices,
-            widget=forms.Select(attrs={"class": "form-select"}),
-            **common,
-        )
-    if snap.field_type is FieldType.FILE:
-        return forms.FileField(
-            validators=[
-                make_extension_validator(snap.accepted_extensions),
-                make_size_validator(snap.max_size_mb),
-            ],
-            widget=forms.ClearableFileInput(
-                attrs={
-                    "class": "form-control",
-                    "accept": ",".join(snap.accepted_extensions),
-                }
-            ),
-            **common,
-        )
-
-    # Defensive — every FieldType has a branch above. New types must extend.
-    raise ValueError(f"Unsupported FieldType: {snap.field_type}")
+    builder = _FIELD_BUILDERS.get(snap.field_type)
+    if builder is None:
+        # Defensive — every FieldType has a builder above. New types must extend.
+        raise ValueError(f"Unsupported FieldType: {snap.field_type}")
+    return builder(snap, common)
 
 
 def build_django_form(snapshot: FormSnapshot) -> type[forms.Form]:

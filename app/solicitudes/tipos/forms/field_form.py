@@ -14,6 +14,12 @@ from solicitudes.tipos.constants import (
 )
 
 
+def _split_csv(raw: str | None) -> list[str]:
+    """Split a comma-separated string into trimmed, non-empty parts."""
+    text = (raw or "").strip()
+    return [s.strip() for s in text.split(",") if s.strip()] if text else []
+
+
 class FieldForm(forms.Form):
     """One row in the dynamic-fields editor."""
 
@@ -105,14 +111,20 @@ class FieldForm(forms.Form):
         if not ft_value:
             return cleaned
         ft = FieldType(ft_value)
-        opts_csv = (cleaned.get("options_csv") or "").strip()
-        exts_csv = (cleaned.get("accepted_extensions_csv") or "").strip()
 
-        options = [s.strip() for s in opts_csv.split(",") if s.strip()] if opts_csv else []
-        extensions = (
-            [e.strip().lower() for e in exts_csv.split(",") if e.strip()] if exts_csv else []
-        )
+        options = _split_csv(cleaned.get("options_csv"))
+        extensions = [e.lower() for e in _split_csv(cleaned.get("accepted_extensions_csv"))]
 
+        self._validate_options(ft, options)
+        self._validate_extensions(ft, extensions)
+
+        cleaned["options"] = options
+        cleaned["accepted_extensions"] = extensions
+        self._normalize_type_only_fields(cleaned, ft)
+        cleaned["source"] = self._normalize_source(cleaned.get("source"), ft)
+        return cleaned
+
+    def _validate_options(self, ft: FieldType, options: list[str]) -> None:
         if ft is FieldType.SELECT and not options:
             self.add_error(
                 "options_csv",
@@ -121,51 +133,49 @@ class FieldForm(forms.Form):
         if ft is not FieldType.SELECT and options:
             self.add_error("options_csv", "Solo los campos SELECT usan opciones.")
 
-        if ft is FieldType.FILE:
-            if not extensions:
+    def _validate_extensions(self, ft: FieldType, extensions: list[str]) -> None:
+        if ft is not FieldType.FILE:
+            if extensions:
                 self.add_error(
                     "accepted_extensions_csv",
-                    "Declara las extensiones permitidas (p. ej. .pdf,.zip).",
+                    "Solo los campos FILE usan extensiones.",
                 )
-            for e in extensions:
-                if not e.startswith("."):
-                    self.add_error(
-                        "accepted_extensions_csv",
-                        "Las extensiones deben empezar con un punto (p. ej. .pdf).",
-                    )
-                    break
-        elif extensions:
+            return
+        if not extensions:
             self.add_error(
                 "accepted_extensions_csv",
-                "Solo los campos FILE usan extensiones.",
+                "Declara las extensiones permitidas (p. ej. .pdf,.zip).",
+            )
+        if any(not e.startswith(".") for e in extensions):
+            self.add_error(
+                "accepted_extensions_csv",
+                "Las extensiones deben empezar con un punto (p. ej. .pdf).",
             )
 
-        cleaned["options"] = options
-        cleaned["accepted_extensions"] = extensions
-
-        # Normalize per-type-only fields. The UI hides the irrelevant inputs
-        # via JS, but a stale value can still arrive (e.g., the admin set
-        # max_chars on a TEXT row, then changed it to NUMBER without clearing
-        # the now-hidden input). Drop those values so the schema accepts them.
+    @staticmethod
+    def _normalize_type_only_fields(cleaned: dict[str, Any], ft: FieldType) -> None:
+        # The UI hides irrelevant inputs via JS, but a stale value can still
+        # arrive (e.g. max_chars set on a TEXT row, then switched to NUMBER
+        # without clearing the now-hidden input). Drop those so the schema
+        # accepts them.
         if ft is not FieldType.FILE:
             cleaned["max_size_mb"] = 10
         if ft not in (FieldType.TEXT, FieldType.TEXTAREA):
             cleaned["max_chars"] = None
 
+    @staticmethod
+    def _normalize_source(src_value: str | None, ft: FieldType) -> str:
         # Source ↔ field_type compatibility. The dropdown is hidden for
-        # incompatible types in the UI, but if the admin switches the type
-        # after picking a USER_* source the previous value can ride along.
-        # Reset to USER_INPUT silently — defense in depth that mirrors the
-        # `_check_source_matches_type` validator on CreateFieldInput.
-        src_value = (cleaned.get("source") or FieldSource.USER_INPUT.value)
+        # incompatible types in the UI, but a stale USER_* source can ride
+        # along after a type switch. Reset to USER_INPUT silently — defense in
+        # depth mirroring `_check_source_matches_type` on CreateFieldInput.
         try:
-            src = FieldSource(src_value)
+            src = FieldSource(src_value or FieldSource.USER_INPUT.value)
         except ValueError:
             src = FieldSource.USER_INPUT
         if ft not in FIELD_SOURCE_ALLOWED_TYPES[src]:
             src = FieldSource.USER_INPUT
-        cleaned["source"] = src.value
-        return cleaned
+        return src.value
 
 
 # A formset of FieldForm rows. ``can_delete=True`` lets the admin remove rows;

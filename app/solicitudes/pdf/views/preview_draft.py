@@ -20,17 +20,26 @@ from django.template import Context, Template, TemplateSyntaxError
 from django.utils.html import escape
 from django.views import View
 
-from solicitudes.pdf.context import assemble_html, build_synthetic_context
 from _shared.exceptions import AppError
-from solicitudes.plantilla_assets.dependencies import get_asset_service
+from solicitudes.pdf.context import assemble_html, build_synthetic_context
 from solicitudes.pdf.services.pdf_service.implementation import (
     asset_to_data_uri,
 )
+from solicitudes.plantilla_assets.dependencies import get_asset_service
 from usuarios.permissions import AdminRequiredMixin
 
 logger = logging.getLogger(__name__)
 
 _SESSION_KEY = "plantilla_draft"
+
+
+def _parse_uuid(raw: object) -> UUID | None:
+    if not raw:
+        return None
+    try:
+        return UUID(str(raw))
+    except ValueError:
+        return None
 
 
 class PlantillaPreviewDraftView(AdminRequiredMixin, View):
@@ -42,35 +51,16 @@ class PlantillaPreviewDraftView(AdminRequiredMixin, View):
 
         html_body = str(payload.get("html") or "")
         css_body = str(payload.get("css") or "")
-        plantilla_id_raw = payload.get("plantilla_id") or None
-        plantilla_uuid: UUID | None = None
-        if plantilla_id_raw:
-            try:
-                plantilla_uuid = UUID(str(plantilla_id_raw))
-            except ValueError:
-                plantilla_uuid = None
+        plantilla_uuid = _parse_uuid(payload.get("plantilla_id") or None)
 
-        # Resolve assets so {{ assets.<slug> }} works in the preview. Narrow
-        # to AppError so infra failures bubble to middleware.
-        asset_service = get_asset_service()
-        try:
-            asset_dtos = asset_service.list_for_render(plantilla_uuid)
-            assets_map = {dto.slug: asset_to_data_uri(dto) for dto in asset_dtos}
-        except AppError:
-            logger.warning("AssetService refused list_for_render for preview")
-            assets_map = {}
-
+        assets_map = self._resolve_assets(plantilla_uuid)
         ctx = build_synthetic_context(now=datetime.now(UTC), assets=assets_map)
 
-        try:
-            tpl = Template(html_body)
-            body_rendered = tpl.render(Context(ctx))
-        except TemplateSyntaxError as exc:
-            return self._error(f"Error de sintaxis: {exc}")
-        except Exception as exc:  # noqa: BLE001 — variable lookup / filter errors
-            return self._error(f"Error al renderizar: {exc}")
+        rendered = self._render_body(html_body, ctx)
+        if isinstance(rendered, HttpResponse):
+            return rendered
 
-        full_html = assemble_html(body_rendered, css_body)
+        full_html = assemble_html(rendered, css_body)
 
         if request.GET.get("persist") == "1":
             request.session[_SESSION_KEY] = {
@@ -86,6 +76,29 @@ class PlantillaPreviewDraftView(AdminRequiredMixin, View):
         )
         resp["X-Frame-Options"] = "SAMEORIGIN"
         return resp
+
+    @staticmethod
+    def _resolve_assets(plantilla_uuid: UUID | None) -> dict[str, str]:
+        # Resolve assets so {{ assets.<slug> }} works in the preview. Narrow
+        # to AppError so infra failures bubble to middleware.
+        asset_service = get_asset_service()
+        try:
+            asset_dtos = asset_service.list_for_render(plantilla_uuid)
+            return {dto.slug: asset_to_data_uri(dto) for dto in asset_dtos}
+        except AppError:
+            logger.warning("AssetService refused list_for_render for preview")
+            return {}
+
+    def _render_body(
+        self, html_body: str, ctx: dict[str, object]
+    ) -> str | HttpResponse:
+        try:
+            tpl = Template(html_body)
+            return tpl.render(Context(ctx))
+        except TemplateSyntaxError as exc:
+            return self._error(f"Error de sintaxis: {exc}")
+        except Exception as exc:
+            return self._error(f"Error al renderizar: {exc}")
 
     @staticmethod
     def _error(message: str) -> HttpResponse:

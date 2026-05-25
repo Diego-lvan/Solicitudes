@@ -12,9 +12,15 @@ from django.views import View
 from _shared.exceptions import AppError, DomainValidationError
 from solicitudes.pdf.dependencies import get_plantilla_service
 from solicitudes.pdf.forms import PlantillaForm
-from solicitudes.pdf.schemas import UpdatePlantillaInput
+from solicitudes.pdf.schemas import PlantillaDTO, UpdatePlantillaInput
 from solicitudes.pdf.views._editor_context import panel_variables
 from usuarios.permissions import AdminRequiredMixin
+
+
+def _apply_domain_errors(form: PlantillaForm, exc: DomainValidationError) -> None:
+    for field, errs in exc.field_errors.items():
+        for e in errs:
+            form.add_error(field if field in form.fields else None, e)
 
 
 class PlantillaEditView(AdminRequiredMixin, View):
@@ -55,19 +61,7 @@ class PlantillaEditView(AdminRequiredMixin, View):
             return redirect(reverse("solicitudes:plantillas:list"))
 
         if not form.is_valid():
-            return render(
-                request,
-                self.template_name,
-                {
-                    "form": form,
-                    "plantilla": plantilla,
-                    "form_title": f"Editar «{plantilla.nombre}»",
-                    "submit_label": "Guardar cambios",
-                    "tipo_id": request.GET.get("tipo_id") or "",
-                    **panel_variables(),
-                },
-                status=400,
-            )
+            return self._render_form(request, plantilla, form, status=400)
 
         input_dto = UpdatePlantillaInput(
             id=plantilla_id,
@@ -80,39 +74,35 @@ class PlantillaEditView(AdminRequiredMixin, View):
         try:
             dto = service.update(input_dto)
         except DomainValidationError as exc:
-            for field, errs in exc.field_errors.items():
-                for e in errs:
-                    form.add_error(field if field in form.fields else None, e)
-            return render(
-                request,
-                self.template_name,
-                {
-                    "form": form,
-                    "plantilla": plantilla,
-                    "form_title": f"Editar «{plantilla.nombre}»",
-                    "submit_label": "Guardar cambios",
-                    "tipo_id": request.GET.get("tipo_id") or "",
-                    **panel_variables(),
-                },
-                status=exc.http_status,
-            )
+            _apply_domain_errors(form, exc)
+            return self._render_form(request, plantilla, form, status=exc.http_status)
         except AppError as exc:
             form.add_error(None, exc.user_message)
-            return render(
-                request,
-                self.template_name,
-                {
-                    "form": form,
-                    "plantilla": plantilla,
-                    "form_title": f"Editar «{plantilla.nombre}»",
-                    "submit_label": "Guardar cambios",
-                    "tipo_id": request.GET.get("tipo_id") or "",
-                    **panel_variables(),
-                },
-                status=exc.http_status,
-            )
+            return self._render_form(request, plantilla, form, status=exc.http_status)
 
         messages.success(request, f"Plantilla «{dto.nombre}» actualizada.")
         return redirect(
             reverse("solicitudes:plantillas:detail", kwargs={"plantilla_id": dto.id})
+        )
+
+    def _render_form(
+        self,
+        request: HttpRequest,
+        plantilla: PlantillaDTO,
+        form: PlantillaForm,
+        *,
+        status: int,
+    ) -> HttpResponse:
+        return render(
+            request,
+            self.template_name,
+            {
+                "form": form,
+                "plantilla": plantilla,
+                "form_title": f"Editar «{plantilla.nombre}»",
+                "submit_label": "Guardar cambios",
+                "tipo_id": request.GET.get("tipo_id") or "",
+                **panel_variables(),
+            },
+            status=status,
         )

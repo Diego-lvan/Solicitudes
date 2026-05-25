@@ -6,7 +6,6 @@
 """
 from __future__ import annotations
 
-import json
 from uuid import UUID
 
 from django.contrib import messages
@@ -134,18 +133,7 @@ class AssetUploadForPlantillaView(AdminRequiredMixin, View):
     def post(self, request: HttpRequest, plantilla_id: UUID) -> HttpResponse:
         form = AssetUploadForm(request.POST, request.FILES)
         if not form.is_valid():
-            if _accepts_json(request):
-                return JsonResponse(
-                    {"error": "Datos inválidos", "field_errors": form.errors},
-                    status=422,
-                )
-            messages.error(request, "Datos inválidos.")
-            return redirect(
-                reverse(
-                    "solicitudes:plantillas:edit",
-                    kwargs={"plantilla_id": plantilla_id},
-                )
-            )
+            return self._invalid_form(request, plantilla_id, form.errors)
 
         file = form.cleaned_data["imagen"]
         input_dto = CreateAssetInput(
@@ -160,42 +148,53 @@ class AssetUploadForPlantillaView(AdminRequiredMixin, View):
         try:
             row = get_asset_service().create(input_dto)
         except DomainValidationError as exc:
-            if _accepts_json(request):
-                return JsonResponse(
-                    {"error": exc.user_message, "field_errors": exc.field_errors},
-                    status=exc.http_status,
-                )
-            for field, errs in exc.field_errors.items():
-                for e in errs:
-                    messages.error(request, f"{field}: {e}")
-            return redirect(
-                reverse(
-                    "solicitudes:plantillas:edit",
-                    kwargs={"plantilla_id": plantilla_id},
-                )
-            )
+            return self._domain_error(request, plantilla_id, exc)
         except AppError as exc:
-            if _accepts_json(request):
-                return JsonResponse(
-                    {"error": exc.user_message}, status=exc.http_status
-                )
-            messages.error(request, exc.user_message)
-            return redirect(
-                reverse(
-                    "solicitudes:plantillas:edit",
-                    kwargs={"plantilla_id": plantilla_id},
-                )
-            )
+            return self._app_error(request, plantilla_id, exc)
 
         if _accepts_json(request):
             return JsonResponse(_row_to_json(row), status=201)
         messages.success(request, f"Imagen «{row.nombre}» cargada.")
+        return self._redirect_to_edit(plantilla_id)
+
+    @staticmethod
+    def _redirect_to_edit(plantilla_id: UUID) -> HttpResponseRedirect:
         return redirect(
             reverse(
-                "solicitudes:plantillas:edit",
-                kwargs={"plantilla_id": plantilla_id},
+                "solicitudes:plantillas:edit", kwargs={"plantilla_id": plantilla_id}
             )
         )
+
+    def _invalid_form(
+        self, request: HttpRequest, plantilla_id: UUID, errors: object
+    ) -> HttpResponse:
+        if _accepts_json(request):
+            return JsonResponse(
+                {"error": "Datos inválidos", "field_errors": errors}, status=422
+            )
+        messages.error(request, "Datos inválidos.")
+        return self._redirect_to_edit(plantilla_id)
+
+    def _domain_error(
+        self, request: HttpRequest, plantilla_id: UUID, exc: DomainValidationError
+    ) -> HttpResponse:
+        if _accepts_json(request):
+            return JsonResponse(
+                {"error": exc.user_message, "field_errors": exc.field_errors},
+                status=exc.http_status,
+            )
+        for field, errs in exc.field_errors.items():
+            for e in errs:
+                messages.error(request, f"{field}: {e}")
+        return self._redirect_to_edit(plantilla_id)
+
+    def _app_error(
+        self, request: HttpRequest, plantilla_id: UUID, exc: AppError
+    ) -> HttpResponse:
+        if _accepts_json(request):
+            return JsonResponse({"error": exc.user_message}, status=exc.http_status)
+        messages.error(request, exc.user_message)
+        return self._redirect_to_edit(plantilla_id)
 
 
 class AssetDeleteView(AdminRequiredMixin, View):
