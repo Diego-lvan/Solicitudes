@@ -5,7 +5,6 @@ from urllib.parse import urlencode, urlparse
 
 from usuarios.directory.schemas import UserListFilters
 
-
 _MAX_RETURN_LEN = 512
 
 

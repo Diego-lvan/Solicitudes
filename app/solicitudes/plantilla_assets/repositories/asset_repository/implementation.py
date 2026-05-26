@@ -111,7 +111,7 @@ class OrmAssetRepository(AssetRepository):
         # Storage cleanup first; if it fails the row stays, surfacing the error.
         try:
             row.imagen.delete(save=False)
-        except FileNotFoundError:  # noqa: BLE001
+        except FileNotFoundError:
             logger.warning("Asset file already missing", extra={"id": str(asset_id)})
         row.delete()
 

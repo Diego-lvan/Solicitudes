@@ -66,3 +66,6 @@ docker-compose.override.yml
 
 # Git worktrees
 .worktrees/
+
+# Acceptance (behave+selenium) virtualenv
+acceptance/.venv/

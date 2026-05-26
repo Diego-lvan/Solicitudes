@@ -34,7 +34,7 @@ class CreateRespuestaInput(BaseModel):
     )
 
     @model_validator(mode="after")
-    def _at_least_one_payload(self) -> "CreateRespuestaInput":
+    def _at_least_one_payload(self) -> CreateRespuestaInput:
         if not self.archivos and not self.comentario.strip():
             raise ValueError("Adjunta al menos un archivo o escribe un comentario.")
         return self

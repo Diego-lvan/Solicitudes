@@ -5,7 +5,6 @@ from abc import ABC, abstractmethod
 from uuid import UUID
 
 from solicitudes.plantilla_assets.schemas import (
-    CreateAssetInput,
     PlantillaAssetDTO,
 )
 

@@ -19,7 +19,9 @@ class CreateRespuestaView(ReviewerRequiredMixin, View):
     """POST-only handler that builds a :class:`CreateRespuestaInput` and
     calls the service. Redirects back to the revision detail with a flash."""
 
-    http_method_names = ["post"]
+    # Django's View declares this as an instance attribute; a ClassVar annotation
+    # (what RUF012 wants) conflicts with that base declaration under mypy.
+    http_method_names = ["post"]  # noqa: RUF012
 
     def post(self, request: HttpRequest, folio: str) -> HttpResponse:
         actor = actor_from_request(request)
