@@ -79,4 +79,4 @@ def test_home_redirects_non_admin_roles_to_role_specific_landing(
 def test_home_redirects_anonymous_to_login() -> None:
     response = Client().get("/")
     assert response.status_code == 302
-    assert "/auth/login" in response["Location"]
+    assert "/auth/dev-login" in response["Location"]
