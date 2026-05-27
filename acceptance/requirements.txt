@@ -1,0 +1,5 @@
+# Pruebas de aceptación (behave + selenium)
+# Se instalan en un venv aparte del proyecto Django:
+#   python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+behave==1.2.6
+selenium==4.44.0
