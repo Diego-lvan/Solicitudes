@@ -244,7 +244,8 @@ def test_render_with_missing_asset_slug_in_template_does_not_crash() -> None:
 
 @pytest.mark.django_db
 def testasset_to_data_uri_returns_empty_when_file_missing() -> None:
-    from datetime import UTC, datetime as _dt
+    from datetime import UTC
+    from datetime import datetime as _dt
     from uuid import uuid4
 
     from solicitudes.pdf.services.pdf_service.implementation import (
@@ -290,3 +291,74 @@ def test_two_renders_with_same_asset_under_frozen_clock_are_byte_identical() -> 
         first = get_pdf_service().render_for_solicitud(sol.folio, requester)
         second = get_pdf_service().render_for_solicitud(sol.folio, requester)
     assert first.bytes_ == second.bytes_
+
+
+# ---------- template syntax errors at render time ----------
+
+
+@pytest.mark.django_db
+def test_render_for_solicitud_raises_on_bad_template_syntax() -> None:
+    from solicitudes.pdf.exceptions import PlantillaTemplateError
+
+    tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)
+    # The factory persists html verbatim without the service's parse check,
+    # simulating a plantilla saved before a regression or via raw ORM.
+    _attach_plantilla(tipo, html="<p>{% if x %}</p>")
+    sol = make_solicitud(tipo=tipo, estado=Estado.FINALIZADA)
+    personal = make_user(
+        matricula="P-BAD", email="p-bad@uaz.edu.mx", role=Role.CONTROL_ESCOLAR.value
+    )
+    requester = _user_dto(personal, Role.CONTROL_ESCOLAR)
+    with pytest.raises(PlantillaTemplateError):
+        get_pdf_service().render_for_solicitud(sol.folio, requester)
+
+
+@pytest.mark.django_db
+def test_render_sample_returns_pdf_bytes() -> None:
+    plantilla = make_plantilla(nombre="Sample")
+    result = get_pdf_service().render_sample(plantilla.id)
+    assert result.bytes_.startswith(b"%PDF")
+    assert result.folio == "PREVIEW"
+    assert result.suggested_filename.endswith(".pdf")
+
+
+@pytest.mark.django_db
+def test_render_sample_raises_on_bad_template_syntax() -> None:
+    from solicitudes.pdf.exceptions import PlantillaTemplateError
+
+    plantilla = make_plantilla(html="<p>{% for x %}</p>")
+    with pytest.raises(PlantillaTemplateError):
+        get_pdf_service().render_sample(plantilla.id)
+
+
+@pytest.mark.django_db
+def test_resolve_assets_swallows_app_error_and_returns_empty() -> None:
+    from _shared.exceptions import Conflict
+    from solicitudes.pdf.dependencies import (
+        get_plantilla_repository,
+    )
+    from solicitudes.pdf.services.pdf_service.implementation import (
+        DefaultPdfService,
+    )
+
+    class _FailingAssets:
+        def list_for_render(self, _pid: Any) -> Any:
+            raise Conflict("asset table borked")
+
+    service = DefaultPdfService(
+        lifecycle_service=get_pdf_service()._lifecycle,  # type: ignore[attr-defined]
+        plantilla_repository=get_plantilla_repository(),
+        user_service=get_pdf_service()._users,  # type: ignore[attr-defined]
+        asset_service=_FailingAssets(),  # type: ignore[arg-type]
+    )
+    # The plantilla references an asset slug; the failing service degrades to
+    # an empty map and the PDF still renders.
+    tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)
+    _attach_plantilla(tipo, html='<p><img src="{{ assets.x }}"></p>')
+    sol = make_solicitud(tipo=tipo, estado=Estado.FINALIZADA)
+    personal = make_user(
+        matricula="P-AE", email="p-ae@uaz.edu.mx", role=Role.CONTROL_ESCOLAR.value
+    )
+    requester = _user_dto(personal, Role.CONTROL_ESCOLAR)
+    result = service.render_for_solicitud(sol.folio, requester)
+    assert result.bytes_.startswith(b"%PDF")

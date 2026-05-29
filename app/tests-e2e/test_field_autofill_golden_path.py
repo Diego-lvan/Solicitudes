@@ -15,7 +15,6 @@ the UI can be visually verified per the frontend-design skill.
 """
 from __future__ import annotations
 
-from datetime import UTC
 from importlib import reload
 from pathlib import Path
 from typing import Any

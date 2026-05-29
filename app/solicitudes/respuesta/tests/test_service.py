@@ -6,14 +6,14 @@ list/download paths.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
 
 pytestmark = pytest.mark.django_db
 
-from _shared.exceptions import Unauthorized  # noqa: E402
+from _shared.exceptions import Unauthorized
 from solicitudes.formularios.schemas import FormSnapshot
 from solicitudes.lifecycle.constants import Estado
 from solicitudes.lifecycle.schemas import SolicitudDetail
@@ -36,7 +36,6 @@ from solicitudes.respuesta.tests.fakes import (
 from solicitudes.tipos.schemas import TipoSolicitudRow
 from usuarios.constants import Role
 from usuarios.schemas import UserDTO
-
 
 # ---- builders ----------------------------------------------------------
 
@@ -72,7 +71,7 @@ def _detail(
 ) -> SolicitudDetail:
     sol = solicitante or _solicitante()
     t = tipo or _tipo()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return SolicitudDetail(
         folio=folio,
         tipo=t,

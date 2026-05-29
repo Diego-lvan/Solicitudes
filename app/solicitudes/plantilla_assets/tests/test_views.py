@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import time
 from collections.abc import Iterator
+from uuid import uuid4
 
 import jwt
 import pytest
@@ -13,9 +14,13 @@ from django.test.utils import override_settings
 from django.urls import reverse
 
 from solicitudes.models import PlantillaAsset
-from solicitudes.plantilla_assets.constants import MAX_ASSET_BYTES
-from solicitudes.plantilla_assets.tests.factories import PNG_1X1, make_global_asset
 from solicitudes.pdf.tests.factories import make_plantilla
+from solicitudes.plantilla_assets.constants import MAX_ASSET_BYTES
+from solicitudes.plantilla_assets.tests.factories import (
+    PNG_1X1,
+    make_global_asset,
+    make_plantilla_asset,
+)
 from usuarios.constants import SESSION_COOKIE_NAME, Role
 
 JWT_SECRET = "plantilla-assets-test-secret-32-bytes-long-aa"
@@ -140,8 +145,6 @@ def test_admin_upload_oversize_returns_422_json(admin_client: Client) -> None:
 @pytest.mark.django_db
 def test_admin_list_json(admin_client: Client) -> None:
     plantilla = make_plantilla()
-    from solicitudes.plantilla_assets.tests.factories import make_plantilla_asset
-
     g = make_global_asset(nombre="Glob A", slug="glob_a")
     pa = make_plantilla_asset(plantilla, nombre="P A", slug="p_a")
 
@@ -181,3 +184,247 @@ def test_admin_delete_post_removes_asset(admin_client: Client) -> None:
     )
     assert resp.status_code == 302
     assert not PlantillaAsset.objects.filter(pk=asset.id).exists()
+
+
+# ---- upload: HTML error branches ----
+
+
+@pytest.mark.django_db
+def test_admin_upload_html_form_errors_rerenders_400(admin_client: Client) -> None:
+    big = b"\x00" * (MAX_ASSET_BYTES + 1)
+    upload = SimpleUploadedFile("big.png", big, content_type="image/png")
+    resp = admin_client.post(
+        reverse("solicitudes:plantilla_assets:upload_global"),
+        data={"nombre": "Big", "imagen": upload},
+    )
+    assert resp.status_code == 400
+    assert resp.context["form"].errors
+    template_names = {t.name for t in resp.templates if t.name}
+    assert "solicitudes/admin/plantilla_assets/list.html" in template_names
+
+
+@pytest.mark.django_db
+def test_admin_upload_html_domain_error_redirects(admin_client: Client) -> None:
+    # A name that the form accepts (>=2 chars) but slugifies to empty,
+    # so the service raises a DomainValidationError (InvalidImageType).
+    upload = SimpleUploadedFile("logo.png", PNG_1X1, content_type="image/png")
+    resp = admin_client.post(
+        reverse("solicitudes:plantilla_assets:upload_global"),
+        data={"nombre": "中文", "imagen": upload},
+    )
+    assert resp.status_code == 302
+    assert not PlantillaAsset.objects.exists()
+
+
+@pytest.mark.django_db
+def test_admin_upload_json_domain_error_returns_422(admin_client: Client) -> None:
+    upload = SimpleUploadedFile("logo.png", PNG_1X1, content_type="image/png")
+    resp = admin_client.post(
+        reverse("solicitudes:plantilla_assets:upload_global"),
+        data={"nombre": "中文", "imagen": upload},
+        HTTP_ACCEPT="application/json",
+    )
+    assert resp.status_code == 422
+    assert "field_errors" in json.loads(resp.content)
+
+
+@pytest.mark.django_db(transaction=True)
+def test_admin_upload_html_duplicate_slug_redirects(admin_client: Client) -> None:
+    make_global_asset(nombre="Logo UAZ", slug="logo_uaz")
+    upload = SimpleUploadedFile("logo.png", PNG_1X1, content_type="image/png")
+    resp = admin_client.post(
+        reverse("solicitudes:plantilla_assets:upload_global"),
+        data={"nombre": "Logo UAZ", "imagen": upload},
+    )
+    assert resp.status_code == 302
+    assert PlantillaAsset.objects.filter(slug="logo_uaz").count() == 1
+
+
+@pytest.mark.django_db
+def test_admin_upload_json_duplicate_slug_returns_conflict(admin_client: Client) -> None:
+    make_global_asset(nombre="Logo UAZ", slug="logo_uaz")
+    upload = SimpleUploadedFile("logo.png", PNG_1X1, content_type="image/png")
+    resp = admin_client.post(
+        reverse("solicitudes:plantilla_assets:upload_global"),
+        data={"nombre": "Logo UAZ", "imagen": upload},
+        HTTP_ACCEPT="application/json",
+    )
+    assert resp.status_code == 409
+    assert "error" in json.loads(resp.content)
+
+
+# ---- per-plantilla upload ----
+
+
+@pytest.mark.django_db
+def test_admin_upload_for_plantilla_html_redirects_to_edit(admin_client: Client) -> None:
+    plantilla = make_plantilla()
+    upload = SimpleUploadedFile("sello.png", PNG_1X1, content_type="image/png")
+    resp = admin_client.post(
+        reverse(
+            "solicitudes:plantilla_assets:upload_plantilla",
+            kwargs={"plantilla_id": plantilla.id},
+        ),
+        data={"nombre": "Sello plantilla", "imagen": upload},
+    )
+    assert resp.status_code == 302
+    assert "/plantillas/" in resp["Location"]
+    assert PlantillaAsset.objects.filter(
+        plantilla=plantilla, scope=PlantillaAsset.SCOPE_PLANTILLA
+    ).exists()
+
+
+@pytest.mark.django_db
+def test_admin_upload_for_plantilla_json_returns_201(admin_client: Client) -> None:
+    plantilla = make_plantilla()
+    upload = SimpleUploadedFile("sello.png", PNG_1X1, content_type="image/png")
+    resp = admin_client.post(
+        reverse(
+            "solicitudes:plantilla_assets:upload_plantilla",
+            kwargs={"plantilla_id": plantilla.id},
+        ),
+        data={"nombre": "Sello json", "imagen": upload},
+        HTTP_ACCEPT="application/json",
+    )
+    assert resp.status_code == 201, resp.content
+    payload = json.loads(resp.content)
+    assert payload["scope"] == PlantillaAsset.SCOPE_PLANTILLA
+    assert payload["plantilla_id"] == str(plantilla.id)
+
+
+@pytest.mark.django_db
+def test_admin_upload_for_plantilla_html_form_errors_redirect(admin_client: Client) -> None:
+    plantilla = make_plantilla()
+    big = b"\x00" * (MAX_ASSET_BYTES + 1)
+    upload = SimpleUploadedFile("big.png", big, content_type="image/png")
+    resp = admin_client.post(
+        reverse(
+            "solicitudes:plantilla_assets:upload_plantilla",
+            kwargs={"plantilla_id": plantilla.id},
+        ),
+        data={"nombre": "Big", "imagen": upload},
+    )
+    assert resp.status_code == 302
+    assert "/plantillas/" in resp["Location"]
+
+
+@pytest.mark.django_db
+def test_admin_upload_for_plantilla_json_form_errors_422(admin_client: Client) -> None:
+    plantilla = make_plantilla()
+    big = b"\x00" * (MAX_ASSET_BYTES + 1)
+    upload = SimpleUploadedFile("big.png", big, content_type="image/png")
+    resp = admin_client.post(
+        reverse(
+            "solicitudes:plantilla_assets:upload_plantilla",
+            kwargs={"plantilla_id": plantilla.id},
+        ),
+        data={"nombre": "Big", "imagen": upload},
+        HTTP_ACCEPT="application/json",
+    )
+    assert resp.status_code == 422
+    assert "field_errors" in json.loads(resp.content)
+
+
+@pytest.mark.django_db
+def test_admin_upload_for_plantilla_html_domain_error_redirect(admin_client: Client) -> None:
+    plantilla = make_plantilla()
+    upload = SimpleUploadedFile("sello.png", PNG_1X1, content_type="image/png")
+    resp = admin_client.post(
+        reverse(
+            "solicitudes:plantilla_assets:upload_plantilla",
+            kwargs={"plantilla_id": plantilla.id},
+        ),
+        data={"nombre": "中文", "imagen": upload},
+    )
+    assert resp.status_code == 302
+    assert not PlantillaAsset.objects.exists()
+
+
+@pytest.mark.django_db
+def test_admin_upload_for_plantilla_json_domain_error_422(admin_client: Client) -> None:
+    plantilla = make_plantilla()
+    upload = SimpleUploadedFile("sello.png", PNG_1X1, content_type="image/png")
+    resp = admin_client.post(
+        reverse(
+            "solicitudes:plantilla_assets:upload_plantilla",
+            kwargs={"plantilla_id": plantilla.id},
+        ),
+        data={"nombre": "中文", "imagen": upload},
+        HTTP_ACCEPT="application/json",
+    )
+    assert resp.status_code == 422
+    assert "field_errors" in json.loads(resp.content)
+
+
+@pytest.mark.django_db
+def test_admin_upload_for_plantilla_html_conflict_redirect(admin_client: Client) -> None:
+    plantilla = make_plantilla()
+    make_plantilla_asset(plantilla, nombre="Sello dup", slug="sello_dup")
+    upload = SimpleUploadedFile("sello.png", PNG_1X1, content_type="image/png")
+    resp = admin_client.post(
+        reverse(
+            "solicitudes:plantilla_assets:upload_plantilla",
+            kwargs={"plantilla_id": plantilla.id},
+        ),
+        data={"nombre": "Sello dup", "imagen": upload},
+    )
+    assert resp.status_code == 302
+    assert "/plantillas/" in resp["Location"]
+
+
+@pytest.mark.django_db
+def test_admin_upload_for_plantilla_json_conflict_409(admin_client: Client) -> None:
+    plantilla = make_plantilla()
+    make_plantilla_asset(plantilla, nombre="Sello dup", slug="sello_dup")
+    upload = SimpleUploadedFile("sello.png", PNG_1X1, content_type="image/png")
+    resp = admin_client.post(
+        reverse(
+            "solicitudes:plantilla_assets:upload_plantilla",
+            kwargs={"plantilla_id": plantilla.id},
+        ),
+        data={"nombre": "Sello dup", "imagen": upload},
+        HTTP_ACCEPT="application/json",
+    )
+    assert resp.status_code == 409
+    assert "error" in json.loads(resp.content)
+
+
+# ---- delete: error branches ----
+
+
+@pytest.mark.django_db
+def test_admin_delete_get_missing_redirects(admin_client: Client) -> None:
+    resp = admin_client.get(
+        reverse(
+            "solicitudes:plantilla_assets:delete",
+            kwargs={"asset_id": uuid4()},
+        )
+    )
+    assert resp.status_code == 302
+
+
+@pytest.mark.django_db
+def test_admin_delete_post_missing_redirects(admin_client: Client) -> None:
+    resp = admin_client.post(
+        reverse(
+            "solicitudes:plantilla_assets:delete",
+            kwargs={"asset_id": uuid4()},
+        )
+    )
+    assert resp.status_code == 302
+
+
+# ---- list_json: malformed plantilla_id ----
+
+
+@pytest.mark.django_db
+def test_admin_list_json_bad_plantilla_id_ignored(admin_client: Client) -> None:
+    make_global_asset(nombre="Glob B", slug="glob_b")
+    resp = admin_client.get(
+        reverse("solicitudes:plantilla_assets:list_json"),
+        {"plantilla_id": "not-a-uuid"},
+    )
+    assert resp.status_code == 200
+    payload = json.loads(resp.content)
+    assert payload["plantilla"] == []
+    assert {row["slug"] for row in payload["global"]} >= {"glob_b"}

@@ -300,3 +300,358 @@ def test_preview_draft_then_pdf_returns_pdf(admin_client: Client) -> None:
     assert resp_pdf.status_code == 200
     assert resp_pdf["Content-Type"] == "application/pdf"
     assert resp_pdf.content.startswith(b"%PDF")
+
+
+# ---------- create: GET + error branches ----------
+
+
+@pytest.mark.django_db
+def test_admin_create_get_renders_form(admin_client: Client) -> None:
+    resp = admin_client.get(reverse("solicitudes:plantillas:create"))
+    assert resp.status_code == 200
+    assert "form" in resp.context
+    assert resp.context["form_title"] == "Nueva plantilla"
+
+
+@pytest.mark.django_db
+def test_admin_create_invalid_form_rerenders_400(admin_client: Client) -> None:
+    resp = admin_client.post(
+        reverse("solicitudes:plantillas:create"),
+        data={"nombre": "", "descripcion": "", "html": "", "css": "", "activo": "on"},
+    )
+    assert resp.status_code == 400
+    assert resp.context["form"].errors
+    assert PlantillaSolicitud.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_admin_create_app_error_rerenders_with_form_error(
+    admin_client: Client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import solicitudes.pdf.views.create as create_mod
+    from _shared.exceptions import Conflict
+
+    class _FakeService:
+        def create(self, _input: object) -> object:
+            raise Conflict("dup")
+
+    monkeypatch.setattr(create_mod, "get_plantilla_service", lambda: _FakeService())
+    resp = admin_client.post(
+        reverse("solicitudes:plantillas:create"),
+        data={
+            "nombre": "Xyz",
+            "descripcion": "",
+            "html": "<p>ok</p>",
+            "css": "",
+            "activo": "on",
+        },
+    )
+    assert resp.status_code == 409
+    assert resp.context["form"].errors
+
+
+# ---------- detail ----------
+
+
+@pytest.mark.django_db
+def test_admin_detail_renders(admin_client: Client) -> None:
+    p = make_plantilla()
+    resp = admin_client.get(
+        reverse("solicitudes:plantillas:detail", kwargs={"plantilla_id": p.id})
+    )
+    assert resp.status_code == 200
+    assert resp.context["plantilla"].id == p.id
+
+
+# ---------- edit: GET + error branches ----------
+
+
+@pytest.mark.django_db
+def test_admin_edit_get_renders_form(admin_client: Client) -> None:
+    p = make_plantilla(nombre="Editable")
+    resp = admin_client.get(
+        reverse("solicitudes:plantillas:edit", kwargs={"plantilla_id": p.id})
+    )
+    assert resp.status_code == 200
+    assert resp.context["form"].initial["nombre"] == "Editable"
+
+
+@pytest.mark.django_db
+def test_admin_edit_missing_plantilla_redirects() -> None:
+    from uuid import uuid4
+
+    c = _client_for("ADMIN1", Role.ADMIN)
+    resp = c.post(
+        reverse("solicitudes:plantillas:edit", kwargs={"plantilla_id": uuid4()}),
+        data={
+            "nombre": "Xyz",
+            "descripcion": "",
+            "html": "<p>x</p>",
+            "css": "",
+            "activo": "on",
+        },
+    )
+    assert resp.status_code == 302
+
+
+@pytest.mark.django_db
+def test_admin_edit_invalid_form_rerenders_400(admin_client: Client) -> None:
+    p = make_plantilla()
+    resp = admin_client.post(
+        reverse("solicitudes:plantillas:edit", kwargs={"plantilla_id": p.id}),
+        data={"nombre": "", "descripcion": "", "html": "", "css": "", "activo": "on"},
+    )
+    assert resp.status_code == 400
+    assert resp.context["form"].errors
+
+
+@pytest.mark.django_db
+def test_admin_edit_invalid_template_returns_422(admin_client: Client) -> None:
+    p = make_plantilla()
+    resp = admin_client.post(
+        reverse("solicitudes:plantillas:edit", kwargs={"plantilla_id": p.id}),
+        data={
+            "nombre": "Bad",
+            "descripcion": "",
+            "html": "<p>{% if x %}</p>",
+            "css": "",
+            "activo": "on",
+        },
+    )
+    assert resp.status_code == 422
+    assert resp.context["form"].errors
+
+
+@pytest.mark.django_db
+def test_admin_edit_app_error_rerenders_with_form_error(
+    admin_client: Client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import solicitudes.pdf.views.edit as edit_mod
+    from _shared.exceptions import Conflict
+
+    p = make_plantilla()
+    real_service = edit_mod.get_plantilla_service()
+
+    class _FakeService:
+        def get(self, plantilla_id: object) -> object:
+            return real_service.get(plantilla_id)
+
+        def update(self, _input: object) -> object:
+            raise Conflict("dup")
+
+    monkeypatch.setattr(edit_mod, "get_plantilla_service", lambda: _FakeService())
+    resp = admin_client.post(
+        reverse("solicitudes:plantillas:edit", kwargs={"plantilla_id": p.id}),
+        data={
+            "nombre": "Xyz",
+            "descripcion": "",
+            "html": "<p>ok</p>",
+            "css": "",
+            "activo": "on",
+        },
+    )
+    assert resp.status_code == 409
+    assert resp.context["form"].errors
+
+
+# ---------- deactivate (delete) ----------
+
+
+@pytest.mark.django_db
+def test_admin_deactivate_get_renders_confirm(admin_client: Client) -> None:
+    p = make_plantilla()
+    resp = admin_client.get(
+        reverse("solicitudes:plantillas:deactivate", kwargs={"plantilla_id": p.id})
+    )
+    assert resp.status_code == 200
+    assert resp.context["plantilla"].id == p.id
+
+
+@pytest.mark.django_db
+def test_admin_deactivate_post_succeeds(admin_client: Client) -> None:
+    p = make_plantilla(activo=True)
+    resp = admin_client.post(
+        reverse("solicitudes:plantillas:deactivate", kwargs={"plantilla_id": p.id})
+    )
+    assert resp.status_code == 302
+    p.refresh_from_db()
+    assert p.activo is False
+
+
+@pytest.mark.django_db
+def test_admin_deactivate_missing_redirects() -> None:
+    from uuid import uuid4
+
+    c = _client_for("ADMIN1", Role.ADMIN)
+    resp = c.post(
+        reverse("solicitudes:plantillas:deactivate", kwargs={"plantilla_id": uuid4()})
+    )
+    assert resp.status_code == 302
+
+
+# ---------- preview_draft: extra branches ----------
+
+
+@pytest.mark.django_db
+def test_preview_draft_invalid_json_returns_banner(admin_client: Client) -> None:
+    resp = admin_client.post(
+        reverse("solicitudes:plantillas:preview_draft"),
+        data="not json",
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+    assert b"Error de plantilla" in resp.content
+
+
+@pytest.mark.django_db
+def test_preview_draft_with_valid_plantilla_id(admin_client: Client) -> None:
+    p = make_plantilla()
+    body = _json.dumps({"html": "<p>x</p>", "css": "", "plantilla_id": str(p.id)})
+    resp = admin_client.post(
+        reverse("solicitudes:plantillas:preview_draft"),
+        data=body,
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+
+
+@pytest.mark.django_db
+def test_preview_draft_with_bad_plantilla_id_ignored(admin_client: Client) -> None:
+    body = _json.dumps({"html": "<p>x</p>", "css": "", "plantilla_id": "not-a-uuid"})
+    resp = admin_client.post(
+        reverse("solicitudes:plantillas:preview_draft"),
+        data=body,
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+
+
+@pytest.mark.django_db
+def test_preview_draft_runtime_render_error_renders_banner(admin_client: Client) -> None:
+    # A filter applied to an incompatible type raises at render time (not parse).
+    body = _json.dumps({"html": "{{ solicitante.nombre|add:undefined_var.x }}", "css": ""})
+    resp = admin_client.post(
+        reverse("solicitudes:plantillas:preview_draft"),
+        data=body,
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+
+
+@pytest.mark.django_db
+def test_preview_draft_asset_service_failure_falls_back(
+    admin_client: Client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import solicitudes.pdf.views.preview_draft as pd_mod
+    from _shared.exceptions import Conflict
+
+    p = make_plantilla()
+
+    class _FakeAssets:
+        def list_for_render(self, _pid: object) -> object:
+            raise Conflict("nope")
+
+    monkeypatch.setattr(pd_mod, "get_asset_service", lambda: _FakeAssets())
+    body = _json.dumps({"html": "<p>x</p>", "css": "", "plantilla_id": str(p.id)})
+    resp = admin_client.post(
+        reverse("solicitudes:plantillas:preview_draft"),
+        data=body,
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+
+
+# ---------- preview_draft_pdf: extra branches ----------
+
+
+@pytest.mark.django_db
+def test_preview_draft_pdf_with_plantilla_id_in_session(admin_client: Client) -> None:
+    p = make_plantilla()
+    body = _json.dumps({"html": "<p>x</p>", "css": "", "plantilla_id": str(p.id)})
+    admin_client.post(
+        reverse("solicitudes:plantillas:preview_draft") + "?persist=1",
+        data=body,
+        content_type="application/json",
+    )
+    resp = admin_client.get(reverse("solicitudes:plantillas:preview_draft_pdf"))
+    assert resp.status_code == 200
+    assert resp["Content-Type"] == "application/pdf"
+
+
+@pytest.mark.django_db
+def test_preview_draft_pdf_render_error_returns_422(admin_client: Client) -> None:
+    # Persist a draft with an unclosed tag, then request the PDF: the render
+    # step raises DomainValidationError → 422.
+    session = admin_client.session
+    session["plantilla_draft"] = {
+        "html": "<p>{% if x %}</p>",
+        "css": "",
+        "plantilla_id": None,
+    }
+    session.save()
+    resp = admin_client.get(reverse("solicitudes:plantillas:preview_draft_pdf"))
+    assert resp.status_code == 422
+
+
+@pytest.mark.django_db
+def test_preview_draft_pdf_asset_service_failure_falls_back(
+    admin_client: Client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import solicitudes.pdf.views.preview_draft_pdf as pdf_mod
+    from _shared.exceptions import Conflict
+
+    p = make_plantilla()
+
+    class _FakeAssets:
+        def list_for_render(self, _pid: object) -> object:
+            raise Conflict("nope")
+
+    monkeypatch.setattr(pdf_mod, "get_asset_service", lambda: _FakeAssets())
+    session = admin_client.session
+    session["plantilla_draft"] = {
+        "html": "<p>x</p>",
+        "css": "",
+        "plantilla_id": str(p.id),
+    }
+    session.save()
+    resp = admin_client.get(reverse("solicitudes:plantillas:preview_draft_pdf"))
+    assert resp.status_code == 200
+    assert resp["Content-Type"] == "application/pdf"
+
+
+@pytest.mark.django_db
+def test_preview_draft_pdf_bad_plantilla_id_in_session(admin_client: Client) -> None:
+    session = admin_client.session
+    session["plantilla_draft"] = {
+        "html": "<p>x</p>",
+        "css": "",
+        "plantilla_id": "not-a-uuid",
+    }
+    session.save()
+    resp = admin_client.get(reverse("solicitudes:plantillas:preview_draft_pdf"))
+    assert resp.status_code == 200
+    assert resp["Content-Type"] == "application/pdf"
+
+
+@pytest.mark.django_db
+def test_preview_draft_pdf_runtime_render_error_returns_422(
+    admin_client: Client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Force the render step to raise a non-syntax exception so the generic
+    # except branch maps it to a DomainValidationError (HTTP 422).
+    import solicitudes.pdf.views.preview_draft_pdf as pdf_mod
+
+    class _Boom:
+        def render(self, _ctx: object) -> str:
+            raise RuntimeError("boom at render time")
+
+    monkeypatch.setattr(pdf_mod, "Template", lambda _html: _Boom())
+    session = admin_client.session
+    session["plantilla_draft"] = {
+        "html": "<p>x</p>",
+        "css": "",
+        "plantilla_id": None,
+    }
+    session.save()
+    resp = admin_client.get(reverse("solicitudes:plantillas:preview_draft_pdf"))
+    assert resp.status_code == 422

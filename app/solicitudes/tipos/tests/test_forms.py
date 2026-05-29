@@ -193,3 +193,56 @@ def test_field_form_source_normalized_when_text_meets_user_semestre() -> None:
     form = FieldForm(data=_field_data(field_type="TEXT", source="USER_SEMESTRE"))
     assert form.is_valid()
     assert form.cleaned_data["source"] == "USER_INPUT"
+
+
+# ---- FieldForm.clean early-return + source normalization edge cases ----
+
+
+def test_field_form_clean_returns_early_when_field_type_missing() -> None:
+    # An empty field_type makes the ChoiceField invalid; `clean()` then returns
+    # the partial cleaned_data without running the per-type validators.
+    form = FieldForm(data=_field_data(field_type=""))
+    assert not form.is_valid()
+    assert "field_type" in form.errors
+    # No spurious options/extensions errors were added.
+    assert "options_csv" not in form.errors
+
+
+def test_normalize_source_falls_back_on_unknown_value() -> None:
+    from solicitudes.tipos.constants import FieldSource, FieldType
+
+    # An unrecognized source string is coerced to USER_INPUT (defensive).
+    result = FieldForm._normalize_source("NOT_A_SOURCE", FieldType.TEXT)
+    assert result == FieldSource.USER_INPUT.value
+
+
+# ---- TipoForm plantilla_id ----
+
+
+def test_tipo_form_accepts_known_plantilla_choice() -> None:
+    from uuid import uuid4
+
+    pid = uuid4()
+    form = TipoForm(
+        data=_tipo_data(plantilla_id=str(pid)),
+        plantilla_choices=[(str(pid), "Plantilla A")],
+    )
+    assert form.is_valid(), form.errors
+    assert form.cleaned_data["plantilla_id"] == pid
+
+
+def test_tipo_form_blank_plantilla_is_none() -> None:
+    form = TipoForm(data=_tipo_data(plantilla_id=""))
+    assert form.is_valid()
+    assert form.cleaned_data["plantilla_id"] is None
+
+
+def test_tipo_form_rejects_non_uuid_plantilla_choice() -> None:
+    # A choice whose value is not a UUID passes ChoiceField (it is a listed
+    # choice) but fails `clean_plantilla_id`'s UUID parse.
+    form = TipoForm(
+        data=_tipo_data(plantilla_id="not-a-uuid"),
+        plantilla_choices=[("not-a-uuid", "Corrupt")],
+    )
+    assert not form.is_valid()
+    assert "plantilla_id" in form.errors

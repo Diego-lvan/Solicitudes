@@ -190,3 +190,25 @@ def test_delete_delegates_to_repo() -> None:
     row = service.create(_create_input(nombre="Una"))
     service.delete(row.id)
     assert repo.rows == []
+
+
+def test_to_row_appends_trailing_slash_to_media_url(
+    settings: object,
+) -> None:
+    # MEDIA_URL without a trailing slash must still yield a well-formed
+    # thumb_url (the `_to_row` helper normalizes it).
+    settings.MEDIA_URL = "/media"  # type: ignore[attr-defined]
+    repo = InMemoryAssetRepository()
+    service = DefaultAssetService(asset_repository=repo)
+    row = service.create(_create_input(nombre="Sello"))
+    assert "//" not in row.thumb_url.replace("https://", "")
+    assert row.thumb_url.startswith("/media/")
+
+
+def test_ext_of_handles_filename_without_dot() -> None:
+    from solicitudes.plantilla_assets.services.asset_service.implementation import (
+        _ext_of,
+    )
+
+    assert _ext_of("noextension") == ""
+    assert _ext_of("logo.PNG") == ".png"

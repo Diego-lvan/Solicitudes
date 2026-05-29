@@ -190,3 +190,19 @@ def test_scope_consistency_constraint_plantilla_without_plantilla_raises() -> No
     asset.imagen.save("x.png", ContentFile(PNG_1X1), save=False)
     with pytest.raises(IntegrityError):
         asset.save()
+
+
+@pytest.mark.django_db
+def test_delete_tolerates_already_missing_file() -> None:
+    """If the underlying image file vanished, ``delete`` still removes the row
+    instead of crashing on the storage cleanup."""
+    import os
+
+    asset = make_global_asset()
+    repo = OrmAssetRepository()
+    # Remove the backing file out from under the ORM.
+    path = asset.imagen.path
+    if os.path.exists(path):
+        os.remove(path)
+    repo.delete(asset.id)
+    assert not PlantillaAsset.objects.filter(pk=asset.id).exists()

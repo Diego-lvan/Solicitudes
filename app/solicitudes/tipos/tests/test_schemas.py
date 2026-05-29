@@ -129,3 +129,104 @@ def test_source_rejected_on_select_file_date_textarea() -> None:
                 source=FieldSource.USER_FULL_NAME,
                 **extra,
             )
+
+
+# ---- options / extensions cross-type rules ----
+
+
+def test_options_rejected_on_non_select_field() -> None:
+    with pytest.raises(ValueError, match="only SELECT fields may use options"):
+        CreateFieldInput(
+            label="X",
+            field_type=FieldType.TEXT,
+            order=0,
+            options=["a", "b"],
+        )
+
+
+def test_file_field_requires_accepted_extensions() -> None:
+    with pytest.raises(ValueError, match="FILE fields must declare"):
+        CreateFieldInput(
+            label="X",
+            field_type=FieldType.FILE,
+            order=0,
+            accepted_extensions=[],
+        )
+
+
+def test_accepted_extensions_rejected_on_non_file_field() -> None:
+    with pytest.raises(ValueError, match="only FILE fields may declare"):
+        CreateFieldInput(
+            label="X",
+            field_type=FieldType.TEXT,
+            order=0,
+            accepted_extensions=[".pdf"],
+        )
+
+
+# ---- CreateTipoInput validators ----
+
+
+def _base_tipo_kwargs() -> dict:
+    from usuarios.constants import Role
+
+    return {
+        "nombre": "Constancia",
+        "responsible_role": Role.CONTROL_ESCOLAR,
+        "creator_roles": {Role.ALUMNO},
+    }
+
+
+def test_creator_roles_must_be_alumno_or_docente() -> None:
+    from solicitudes.tipos.schemas import CreateTipoInput
+    from usuarios.constants import Role
+
+    kwargs = _base_tipo_kwargs()
+    kwargs["creator_roles"] = {Role.ADMIN}
+    with pytest.raises(ValueError, match="creator_roles only supports"):
+        CreateTipoInput(**kwargs)
+
+
+def test_responsible_role_must_be_in_allowed_set() -> None:
+    from solicitudes.tipos.schemas import CreateTipoInput
+    from usuarios.constants import Role
+
+    kwargs = _base_tipo_kwargs()
+    kwargs["responsible_role"] = Role.ALUMNO
+    with pytest.raises(ValueError, match="responsible_role must be"):
+        CreateTipoInput(**kwargs)
+
+
+def test_mentor_exempt_auto_cleared_without_payment() -> None:
+    from solicitudes.tipos.schemas import CreateTipoInput
+
+    kwargs = _base_tipo_kwargs()
+    kwargs["requires_payment"] = False
+    kwargs["mentor_exempt"] = True
+    dto = CreateTipoInput(**kwargs)
+    assert dto.mentor_exempt is False
+
+
+def test_field_count_capped() -> None:
+    from solicitudes.tipos.constants import MAX_FIELDS_PER_TIPO
+    from solicitudes.tipos.schemas import CreateTipoInput
+
+    kwargs = _base_tipo_kwargs()
+    kwargs["fields"] = [
+        CreateFieldInput(label=f"F{i}", field_type=FieldType.TEXT, order=i)
+        for i in range(MAX_FIELDS_PER_TIPO + 1)
+    ]
+    with pytest.raises(ValueError, match="cannot have more than"):
+        CreateTipoInput(**kwargs)
+
+
+def test_field_orders_must_be_unique() -> None:
+    from solicitudes.tipos.schemas import CreateTipoInput
+
+    kwargs = _base_tipo_kwargs()
+    kwargs["fields"] = [
+        CreateFieldInput(label="A", field_type=FieldType.TEXT, order=0),
+        CreateFieldInput(label="B", field_type=FieldType.TEXT, order=0),
+    ]
+    with pytest.raises(ValueError, match="`order` values must be unique"):
+        CreateTipoInput(**kwargs)

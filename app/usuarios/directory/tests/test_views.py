@@ -15,7 +15,6 @@ import jwt
 import pytest
 from django.test import Client
 from django.test.utils import override_settings
-from django.urls import reverse
 
 from usuarios.constants import PROVIDER_ROLE_MAP, SESSION_COOKIE_NAME, Role
 from usuarios.models import User
@@ -193,7 +192,7 @@ def _patch_mentor(returns: bool | None = None, raises: Exception | None = None):
     target = "usuarios.directory.services.user_directory.implementation."
     target += "DefaultUserDirectoryService"
 
-    def _is_mentor(self: Any, matricula: str) -> bool:  # noqa: ARG001
+    def _is_mentor(self: Any, matricula: str) -> bool:
         if raises is not None:
             raise raises
         assert returns is not None
@@ -214,7 +213,7 @@ def test_detail_renders_with_is_mentor_true(
 ) -> None:
     make_user(matricula="ALU01", role=Role.ALUMNO.value, full_name="Ana")
     with _patch_mentor(returns=True):
-        response = admin_client.get(f"/usuarios/ALU01/")
+        response = admin_client.get("/usuarios/ALU01/")
     assert response.status_code == 200
     body = response.content.decode()
     assert "Sí" in body
@@ -227,7 +226,7 @@ def test_detail_renders_with_is_mentor_false(
 ) -> None:
     make_user(matricula="ALU01", role=Role.ALUMNO.value)
     with _patch_mentor(returns=False):
-        response = admin_client.get(f"/usuarios/ALU01/")
+        response = admin_client.get("/usuarios/ALU01/")
     assert response.status_code == 200
     body = response.content.decode()
     assert "No figura" in body
@@ -239,7 +238,7 @@ def test_detail_when_mentor_service_raises_renders_desconocido(
 ) -> None:
     make_user(matricula="ALU01", role=Role.ALUMNO.value)
     with _patch_mentor(raises=RuntimeError("upstream boom")):
-        response = admin_client.get(f"/usuarios/ALU01/")
+        response = admin_client.get("/usuarios/ALU01/")
     assert response.status_code == 200
     body = response.content.decode()
     assert "Desconocido" in body

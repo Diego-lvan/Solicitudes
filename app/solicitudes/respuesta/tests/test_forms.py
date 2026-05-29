@@ -66,3 +66,19 @@ def test_files_plus_comment_accepted() -> None:
     assert form.is_valid(), form.errors
     assert form.cleaned_data["comentario"] == "Hola"
     assert len(form.cleaned_data["archivos_list"]) == 1
+
+
+def test_multiple_file_field_to_python_handles_empty_and_single() -> None:
+    from solicitudes.respuesta.forms.respuesta_upload_form import (
+        _MultipleFileField,
+    )
+
+    field = _MultipleFileField(required=False)
+    # Empty / None inputs collapse to None.
+    assert field.to_python(None) is None
+    assert field.to_python("") is None
+    # A single (non-list) UploadedFile is wrapped into a one-item list.
+    one = SimpleUploadedFile("a.pdf", b"data", content_type="application/pdf")
+    out = field.to_python(one)
+    assert isinstance(out, list)
+    assert len(out) == 1

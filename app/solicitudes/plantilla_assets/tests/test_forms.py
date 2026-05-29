@@ -34,3 +34,12 @@ def test_bad_mime_rejected() -> None:
     form = AssetUploadForm(data={"nombre": "Logo"}, files={"imagen": upload})
     assert not form.is_valid()
     assert "imagen" in form.errors
+
+
+def test_whitespace_collapsing_to_short_name_rejected() -> None:
+    # "  a " passes the field's min_length=2 (raw len) but `clean_nombre`
+    # strips it to a single character → custom "muy corto" error.
+    upload = SimpleUploadedFile("logo.png", PNG_1X1, content_type="image/png")
+    form = AssetUploadForm(data={"nombre": "  a "}, files={"imagen": upload})
+    assert not form.is_valid()
+    assert "nombre" in form.errors

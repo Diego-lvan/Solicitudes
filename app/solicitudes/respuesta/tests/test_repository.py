@@ -1,7 +1,7 @@
 """Repository tests — real DB, DTO assertions, append-only contract."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from hashlib import sha256
 from uuid import uuid4
 
@@ -27,7 +27,7 @@ def _record(folio: str, name: str = "x.pdf") -> ArchivoRespuestaRecord:
         content_type="application/pdf",
         size_bytes=128,
         sha256=sha256(name.encode()).hexdigest(),
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )
 
 

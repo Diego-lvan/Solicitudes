@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from io import BytesIO
 from typing import BinaryIO
 from uuid import UUID, uuid4
@@ -36,7 +36,7 @@ from usuarios.schemas import UserDTO
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class InMemoryRespuestaRepository(RespuestaRepository):

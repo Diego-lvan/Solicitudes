@@ -228,6 +228,47 @@ def test_to_values_dict_serializes_json_safe() -> None:
     assert values[str(date_id)] == "2026-04-25"
 
 
+def test_to_values_dict_skips_unfilled_optional_fields() -> None:
+    text_id, date_id = uuid4(), uuid4()
+    snap = _snap(
+        fields=[
+            FieldSnapshot(field_id=text_id, label="N", field_type=FieldType.TEXT, required=False, order=0),
+            FieldSnapshot(field_id=date_id, label="Opt", field_type=FieldType.DATE, required=False, order=1),
+        ]
+    )
+    Form = build_django_form(snap)
+    # An unfilled optional DATE cleans to None (unlike TEXT which cleans to "").
+    form = Form(data={field_attr_name(text_id): "Ada"})
+    assert form.is_valid()
+    values = form.to_values_dict()  # type: ignore[attr-defined]
+    assert values[str(text_id)] == "Ada"
+    # The None-valued optional field is skipped.
+    assert str(date_id) not in values
+
+
+def test_to_values_dict_records_file_field_name() -> None:
+    file_id = uuid4()
+    snap = _snap(
+        fields=[
+            FieldSnapshot(
+                field_id=file_id,
+                label="Adjunto",
+                field_type=FieldType.FILE,
+                required=True,
+                order=0,
+                accepted_extensions=[".pdf"],
+            ),
+        ]
+    )
+    Form = build_django_form(snap)
+    upload = SimpleUploadedFile("doc.pdf", b"hi", content_type="application/pdf")
+    form = Form(data={}, files={field_attr_name(file_id): upload})
+    assert form.is_valid(), form.errors
+    values = form.to_values_dict()  # type: ignore[attr-defined]
+    # FILE values are out-of-band; only the filename is recorded.
+    assert values[str(file_id)] == "doc.pdf"
+
+
 @pytest.mark.parametrize("ft", list(FieldType))
 def test_every_field_type_is_buildable(ft: FieldType) -> None:
     fid = uuid4()

@@ -159,8 +159,9 @@ def test_owner_can_download_when_finalizada(tmp_path: object) -> None:
         solicitud=sol, actor=actor, actor_role=Role.CONTROL_ESCOLAR
     )
     # Write a real file on the per-test MEDIA_ROOT so the FileResponse can stream it.
-    from django.conf import settings
     from pathlib import Path
+
+    from django.conf import settings
 
     rel = f"solicitudes/{sol.folio}/respuesta-bytes.pdf"
     p = Path(settings.MEDIA_ROOT) / rel

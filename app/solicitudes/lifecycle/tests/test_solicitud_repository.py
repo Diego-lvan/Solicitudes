@@ -139,6 +139,28 @@ def test_list_filters_by_folio_substring(repo: OrmSolicitudRepository) -> None:
 
 
 @pytest.mark.django_db
+def test_list_all_filters_by_solicitante_substring(
+    repo: OrmSolicitudRepository,
+) -> None:
+    ana = make_user(matricula="ANA-1", full_name="Ana Pérez")
+    beto = make_user(matricula="BETO-9", full_name="Beto Ruiz")
+    make_solicitud(solicitante=ana, folio="SOL-2026-07001")
+    make_solicitud(solicitante=beto, folio="SOL-2026-07002")
+    # Match by full_name substring.
+    page = repo.list_all(
+        page=PageRequest(),
+        filters=SolicitudFilter(solicitante_contains="ana"),
+    )
+    assert {r.folio for r in page.items} == {"SOL-2026-07001"}
+    # Match by matricula substring.
+    page2 = repo.list_all(
+        page=PageRequest(),
+        filters=SolicitudFilter(solicitante_contains="BETO"),
+    )
+    assert {r.folio for r in page2.items} == {"SOL-2026-07002"}
+
+
+@pytest.mark.django_db
 def test_list_pagination_returns_correct_window(
     repo: OrmSolicitudRepository,
 ) -> None:

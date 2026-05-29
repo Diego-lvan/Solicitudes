@@ -1,6 +1,7 @@
 """Tests for the {% lucide %} template tag."""
 from __future__ import annotations
 
+import pytest
 from django.template import Context, Template
 
 
@@ -33,3 +34,24 @@ def test_label_is_html_escaped() -> None:
     out = _render('{% lucide "check" label=evil %}', evil='<script>x</script>')
     assert "<script>" not in out
     assert "&lt;script&gt;" in out
+
+
+def test_sprite_markup_returns_empty_when_file_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """If the vendored sprite is absent, ``_sprite_markup`` degrades to an
+    empty string instead of raising."""
+    from pathlib import Path
+
+    import _shared.templatetags.lucide as lucide_mod
+
+    def _raise(self: Path, *args: object, **kwargs: object) -> str:
+        raise FileNotFoundError
+
+    # The result is lru_cached; clear it so the patched read is observed.
+    lucide_mod._sprite_markup.cache_clear()
+    monkeypatch.setattr(Path, "read_text", _raise)  # type: ignore[arg-type]
+    try:
+        assert lucide_mod._sprite_markup() == ""
+    finally:
+        lucide_mod._sprite_markup.cache_clear()

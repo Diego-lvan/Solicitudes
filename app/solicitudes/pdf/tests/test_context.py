@@ -146,3 +146,16 @@ def test_assemble_html_wraps_body_with_style() -> None:
 def test_assemble_html_omits_empty_style_tag() -> None:
     out = assemble_html("<p/>", "")
     assert "<style>" not in out
+
+
+def test_render_value_none_becomes_empty_string() -> None:
+    from solicitudes.pdf.context import _render_value
+
+    assert _render_value(None) == ""
+
+
+def test_render_value_list_is_comma_joined() -> None:
+    from solicitudes.pdf.context import _render_value
+
+    assert _render_value(["a", "b", "c"]) == "a, b, c"
+    assert _render_value([1, 2]) == "1, 2"

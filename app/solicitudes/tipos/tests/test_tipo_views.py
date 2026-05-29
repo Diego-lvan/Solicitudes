@@ -403,6 +403,188 @@ def test_create_post_persists_three_fields_after_renumber(admin_client: Client) 
 
 
 @pytest.mark.django_db
+def test_create_post_duplicate_field_orders_returns_400(admin_client: Client) -> None:
+    # Two field rows post the same `order`: each FieldForm is valid, but the
+    # CreateTipoInput.`_check_field_orders_unique` validator raises, hitting the
+    # view's PydValidationError branch.
+    response = admin_client.post(
+        reverse("solicitudes:tipos:create"),
+        data={
+            "nombre": "Tipo orders dup",
+            "descripcion": "",
+            "responsible_role": Role.CONTROL_ESCOLAR.value,
+            "creator_roles": [Role.ALUMNO.value],
+            "fields-TOTAL_FORMS": "2",
+            "fields-INITIAL_FORMS": "0",
+            "fields-MIN_NUM_FORMS": "0",
+            "fields-MAX_NUM_FORMS": "50",
+            "fields-0-label": "A",
+            "fields-0-field_type": "TEXT",
+            "fields-0-required": "on",
+            "fields-0-order": "0",
+            "fields-1-label": "B",
+            "fields-1-field_type": "TEXT",
+            "fields-1-required": "on",
+            "fields-1-order": "0",
+        },
+    )
+    assert response.status_code == 400
+    assert response.context["tipo_form"].errors
+    assert TipoSolicitud.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_create_post_service_app_error_rerenders(
+    admin_client: Client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import solicitudes.tipos.views.create as create_mod
+    from _shared.exceptions import Conflict
+
+    class _FakeService:
+        def create(self, _input: object) -> object:
+            raise Conflict("dup slug")
+
+    monkeypatch.setattr(create_mod, "get_tipo_service", lambda: _FakeService())
+    response = admin_client.post(
+        reverse("solicitudes:tipos:create"),
+        data={
+            "nombre": "Tipo conflict",
+            "descripcion": "",
+            "responsible_role": Role.CONTROL_ESCOLAR.value,
+            "creator_roles": [Role.ALUMNO.value],
+            "fields-TOTAL_FORMS": "0",
+            "fields-INITIAL_FORMS": "0",
+            "fields-MIN_NUM_FORMS": "0",
+            "fields-MAX_NUM_FORMS": "50",
+        },
+    )
+    assert response.status_code == 409
+    assert response.context["tipo_form"].errors
+
+
+@pytest.mark.django_db
+def test_edit_post_missing_tipo_redirects(admin_client: Client) -> None:
+    from uuid import uuid4
+
+    response = admin_client.post(
+        reverse("solicitudes:tipos:edit", kwargs={"tipo_id": uuid4()}),
+        data={
+            "nombre": "Whatever",
+            "responsible_role": Role.CONTROL_ESCOLAR.value,
+            "creator_roles": [Role.ALUMNO.value],
+            "fields-TOTAL_FORMS": "0",
+            "fields-INITIAL_FORMS": "0",
+            "fields-MIN_NUM_FORMS": "0",
+            "fields-MAX_NUM_FORMS": "50",
+        },
+    )
+    assert response.status_code == 302
+    assert response["Location"] == reverse("solicitudes:tipos:list")
+
+
+@pytest.mark.django_db
+def test_edit_post_duplicate_field_orders_returns_400(admin_client: Client) -> None:
+    tipo = make_tipo()
+    response = admin_client.post(
+        reverse("solicitudes:tipos:edit", kwargs={"tipo_id": tipo.id}),
+        data={
+            "nombre": tipo.nombre,
+            "responsible_role": tipo.responsible_role,
+            "creator_roles": tipo.creator_roles,
+            "fields-TOTAL_FORMS": "2",
+            "fields-INITIAL_FORMS": "0",
+            "fields-MIN_NUM_FORMS": "0",
+            "fields-MAX_NUM_FORMS": "50",
+            "fields-0-label": "A",
+            "fields-0-field_type": "TEXT",
+            "fields-0-required": "on",
+            "fields-0-order": "0",
+            "fields-1-label": "B",
+            "fields-1-field_type": "TEXT",
+            "fields-1-required": "on",
+            "fields-1-order": "0",
+        },
+    )
+    assert response.status_code == 400
+    assert response.context["tipo_form"].errors
+
+
+@pytest.mark.django_db
+def test_edit_post_invalid_form_rerenders_400(admin_client: Client) -> None:
+    tipo = make_tipo(nombre="Editable")
+    response = admin_client.post(
+        reverse("solicitudes:tipos:edit", kwargs={"tipo_id": tipo.id}),
+        data={
+            "nombre": "ab",  # too short → form invalid
+            "responsible_role": tipo.responsible_role,
+            "creator_roles": tipo.creator_roles,
+            "fields-TOTAL_FORMS": "0",
+            "fields-INITIAL_FORMS": "0",
+            "fields-MIN_NUM_FORMS": "0",
+            "fields-MAX_NUM_FORMS": "50",
+        },
+    )
+    assert response.status_code == 400
+    assert response.context["tipo_form"].errors
+
+
+@pytest.mark.django_db
+def test_edit_post_service_app_error_rerenders(
+    admin_client: Client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import solicitudes.tipos.views.edit as edit_mod
+    from _shared.exceptions import Conflict
+
+    tipo = make_tipo()
+    real = edit_mod.get_tipo_service()
+
+    class _FakeService:
+        def get_for_admin(self, tid: object) -> object:
+            return real.get_for_admin(tid)
+
+        def update(self, _input: object) -> object:
+            raise Conflict("dup")
+
+    monkeypatch.setattr(edit_mod, "get_tipo_service", lambda: _FakeService())
+    response = admin_client.post(
+        reverse("solicitudes:tipos:edit", kwargs={"tipo_id": tipo.id}),
+        data={
+            "nombre": tipo.nombre,
+            "responsible_role": tipo.responsible_role,
+            "creator_roles": tipo.creator_roles,
+            "fields-TOTAL_FORMS": "0",
+            "fields-INITIAL_FORMS": "0",
+            "fields-MIN_NUM_FORMS": "0",
+            "fields-MAX_NUM_FORMS": "50",
+        },
+    )
+    assert response.status_code == 409
+    assert response.context["tipo_form"].errors
+
+
+@pytest.mark.django_db
+def test_deactivate_post_missing_tipo_redirects(admin_client: Client) -> None:
+    from uuid import uuid4
+
+    response = admin_client.post(
+        reverse("solicitudes:tipos:deactivate", kwargs={"tipo_id": uuid4()})
+    )
+    assert response.status_code == 302
+    assert response["Location"] == reverse("solicitudes:tipos:list")
+
+
+@pytest.mark.django_db
+def test_list_ignores_unknown_responsible_role(admin_client: Client) -> None:
+    make_tipo(slug="x", nombre="X", responsible_role=Role.CONTROL_ESCOLAR.value)
+    response = admin_client.get(
+        reverse("solicitudes:tipos:list"), {"responsible_role": "NOT_A_ROLE"}
+    )
+    assert response.status_code == 200
+    # Unknown role string is ignored → no filtering → tipo still listed.
+    assert {t.slug for t in response.context["tipos"]} == {"x"}
+
+
+@pytest.mark.django_db
 def test_fields_json_returns_slug_label_type(admin_client: Client) -> None:
     tipo = make_tipo()
     make_field(tipo, order=0, label="Nombre completo", field_type=FieldType.TEXT.value)
