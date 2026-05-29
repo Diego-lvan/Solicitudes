@@ -495,3 +495,56 @@ def test_bulk_deactivate_rejects_non_admin(alumno_client: Client) -> None:
         reverse("mentores:deactivate_bulk"), {"action": "all"}
     )
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_bulk_deactivate_all_with_no_active_flashes_info(
+    admin_client: Client, admin_user: object
+) -> None:
+    # No active periods at all → service returns closed=0, already_inactive=0
+    # → the view flashes an informational "nothing to do" message.
+    token = _bulk_token("all", [])
+    response = admin_client.post(
+        reverse("mentores:deactivate_bulk"), {"token": token}
+    )
+    assert response.status_code == 302
+    assert response["Location"].endswith(reverse("mentores:list"))
+
+
+@pytest.mark.django_db
+def test_bulk_deactivate_selected_with_already_inactive_in_summary(
+    admin_client: Client, admin_user: object
+) -> None:
+    # One active + one already-closed in the selected set → the summary
+    # mentions both the closed count and the already-inactive count.
+    make_mentor_periodo(matricula="11111111", creado_por=admin_user)
+    make_mentor_periodo(
+        matricula="22222222",
+        creado_por=admin_user,
+        fecha_baja=timezone.now() - timedelta(days=5),
+    )
+    token = _bulk_token("selected", ["11111111", "22222222"])
+    response = admin_client.post(
+        reverse("mentores:deactivate_bulk"), {"token": token}
+    )
+    assert response.status_code == 302
+
+
+# ---- list pagination + import_csv form errors ----
+
+
+@pytest.mark.django_db
+def test_list_non_numeric_page_defaults_to_first(
+    admin_client: Client, admin_user: object
+) -> None:
+    make_mentor_periodo(matricula="11111111", creado_por=admin_user)
+    response = admin_client.get(reverse("mentores:list") + "?page=abc")
+    assert response.status_code == 200
+    assert response.context["page"].page == 1
+
+
+@pytest.mark.django_db
+def test_import_csv_post_without_file_rerenders_400(admin_client: Client) -> None:
+    response = admin_client.post(reverse("mentores:import_csv"), {})
+    assert response.status_code == 400
+    assert response.context["form"].errors

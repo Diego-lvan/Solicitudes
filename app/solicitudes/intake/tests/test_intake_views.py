@@ -392,7 +392,50 @@ def test_create_post_returns_422_when_required_auto_fill_missing(
     assert b"Control Escolar" in response.content
 
 
+# ---- create: stray file inputs are ignored ----
+
+
+@pytest.mark.django_db
+def test_create_post_ignores_unrecognized_file_inputs(
+    alumno_client: Client,
+) -> None:
+    """Stray multipart file parts whose names are neither the comprobante nor a
+    ``field_<uuid>`` map to no field. The view skips them (``_field_id_from_attr``
+    returns None) and still persists the solicitud from the recognized values."""
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    tipo = make_tipo(slug="constancia", creator_roles=[Role.ALUMNO.value])
+    field = make_field(tipo, order=0, label="Motivo", field_type=FieldType.TEXT.value)
+    field_attr = f"field_{str(field.id).replace('-', '')}"
+
+    stray_plain = SimpleUploadedFile("a.bin", b"x", content_type="application/octet-stream")
+    stray_bad_uuid = SimpleUploadedFile("b.bin", b"y", content_type="application/octet-stream")
+    response = alumno_client.post(
+        reverse("solicitudes:intake:create", kwargs={"slug": "constancia"}),
+        data={
+            field_attr: "Necesito constancia",
+            "totally_unrelated": stray_plain,
+            "field_not-a-uuid": stray_bad_uuid,
+        },
+    )
+    assert response.status_code == 302
+    assert Solicitud.objects.count() == 1
+
+
 # ---- mis_solicitudes ----
+
+
+@pytest.mark.django_db
+def test_mis_solicitudes_non_numeric_page_defaults_to_first(
+    alumno_client: Client,
+) -> None:
+    owner = make_user(matricula="ALU1", email="alu1@uaz.edu.mx", role=Role.ALUMNO.value)
+    make_solicitud(solicitante=owner, folio="SOL-2026-00050")
+    response = alumno_client.get(
+        reverse("solicitudes:intake:mis_solicitudes"), {"page": "abc"}
+    )
+    assert response.status_code == 200
+    assert response.context["page"].page == 1
 
 
 @pytest.mark.django_db
