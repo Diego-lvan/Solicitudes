@@ -197,6 +197,81 @@ def test_cancel_by_personal_succeeds(ce_client: Client) -> None:
     assert s.estado == Estado.CANCELADA.value
 
 
+# ---- invalid TransitionForm (observaciones too long) ----
+
+
+@pytest.mark.django_db
+def test_take_invalid_observaciones_redirects_without_transition(
+    ce_client: Client,
+) -> None:
+    make_user(matricula="CE1", email="ce1@uaz.edu.mx", role=Role.CONTROL_ESCOLAR.value)
+    tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)
+    s = make_solicitud(tipo=tipo, estado=Estado.CREADA)
+    response = ce_client.post(
+        reverse("solicitudes:revision:take", kwargs={"folio": s.folio}),
+        data={"observaciones": "x" * 2001},
+    )
+    assert response.status_code == 302
+    s.refresh_from_db()
+    assert s.estado == Estado.CREADA.value
+
+
+@pytest.mark.django_db
+def test_finalize_invalid_observaciones_redirects_without_transition(
+    ce_client: Client,
+) -> None:
+    make_user(matricula="CE1", email="ce1@uaz.edu.mx", role=Role.CONTROL_ESCOLAR.value)
+    tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)
+    s = make_solicitud(tipo=tipo, estado=Estado.EN_PROCESO)
+    response = ce_client.post(
+        reverse("solicitudes:revision:finalize", kwargs={"folio": s.folio}),
+        data={"observaciones": "x" * 2001},
+    )
+    assert response.status_code == 302
+    s.refresh_from_db()
+    assert s.estado == Estado.EN_PROCESO.value
+
+
+@pytest.mark.django_db
+def test_cancel_invalid_observaciones_redirects_without_transition(
+    ce_client: Client,
+) -> None:
+    make_user(matricula="CE1", email="ce1@uaz.edu.mx", role=Role.CONTROL_ESCOLAR.value)
+    tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)
+    s = make_solicitud(tipo=tipo, estado=Estado.EN_PROCESO)
+    response = ce_client.post(
+        reverse("solicitudes:revision:cancel", kwargs={"folio": s.folio}),
+        data={"observaciones": "x" * 2001},
+    )
+    assert response.status_code == 302
+    s.refresh_from_db()
+    assert s.estado == Estado.EN_PROCESO.value
+
+
+@pytest.mark.django_db
+def test_cancel_from_finalizada_blocked(ce_client: Client) -> None:
+    make_user(matricula="CE1", email="ce1@uaz.edu.mx", role=Role.CONTROL_ESCOLAR.value)
+    tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)
+    s = make_solicitud(tipo=tipo, estado=Estado.FINALIZADA)
+    response = ce_client.post(
+        reverse("solicitudes:revision:cancel", kwargs={"folio": s.folio})
+    )
+    assert response.status_code == 302
+    s.refresh_from_db()
+    assert s.estado == Estado.FINALIZADA.value
+
+
+@pytest.mark.django_db
+def test_queue_non_numeric_page_defaults_to_first(ce_client: Client) -> None:
+    tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)
+    make_solicitud(tipo=tipo, folio="SOL-2026-09001")
+    response = ce_client.get(
+        reverse("solicitudes:revision:queue"), {"page": "not-a-number"}
+    )
+    assert response.status_code == 200
+    assert response.context["page"].page == 1
+
+
 # ---- atendida_por display (initiative 014) ----
 
 
