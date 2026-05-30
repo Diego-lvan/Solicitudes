@@ -1,0 +1,495 @@
+\documentclass[12pt,letterpaper]{report}
+\input{../preambulo.tex}
+\begin{document}
+\portada{PLAN DE PRUEBA}{}
+\tableofcontents\newpage
+
+% ===================================================================
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+Este documento provee una vista general del proyecto \textbf{Sistema de
+Solicitudes} de la Universidad Autónoma de Zacatecas y describe la estrategia
+de pruebas del producto, la lista de los entregables de \emph{testing} y el
+plan para llevar a cabo dichas actividades durante el desarrollo.
+
+El Sistema de Solicitudes es una aplicación web monolítica construida con
+Django~5 que digitaliza el ciclo de vida de las solicitudes académicas y
+administrativas de la institución: catálogo dinámico de tipos de solicitud,
+formularios configurables, generación de documentos PDF a partir de plantillas,
+máquina de estados con enrutamiento por roles, gestión de archivos adjuntos,
+notificaciones por correo y administración de mentores. El presente plan
+prescribe el alcance, el enfoque, los recursos y el calendario de todas las
+actividades de prueba asociadas, así como los criterios que determinan su
+terminación exitosa.
+
+% ===================================================================
+\chapter*{Historial de Versiones}
+\addcontentsline{toc}{chapter}{Historial de Versiones}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabularx}{\textwidth}{|C{1.6cm}|C{2.4cm}|L{4.2cm}|X|}
+\hline
+\rowcolor{uazblue!12}
+\textbf{Versión} & \textbf{Fecha} & \textbf{Autor} & \textbf{Descripción} \\
+\hline
+v1.0 & Junio 2026 & Equipo de desarrollo (Correa, González, Ramos, Carlos) &
+Versión inicial del Plan de Prueba del Sistema de Solicitudes. Se define la
+estrategia de pruebas unitarias, de integración, funcionales/de aceptación y de
+performance, los criterios de salida y los entregables de \emph{testing}. \\
+\hline
+\end{tabularx}
+\end{center}
+
+% ===================================================================
+\chapter*{Introducción}
+\addcontentsline{toc}{chapter}{Introducción}
+
+El presente Plan de Prueba está diseñado para prescribir el \textbf{alcance}, el
+\textbf{enfoque}, los \textbf{recursos} y el \textbf{calendario} de todas las
+actividades de \emph{testing} del proyecto Sistema de Solicitudes de la
+Universidad Autónoma de Zacatecas.
+
+En el plan se identifican los elementos y características a ser probados, los
+tipos de prueba a ejecutar, el personal responsable de las pruebas, los recursos
+de hardware y software requeridos, el calendario estimado para completar el
+\emph{testing} y los riesgos asociados con su ejecución. El documento sirve como
+guía operativa para el equipo y como referencia de cumplimiento frente a la
+especificación de requerimientos de software (SRS) y al diseño del sistema
+(SDD).
+
+El enfoque de pruebas se apoya en la metodología \textbf{TDD} (Test-Driven
+Development): las pruebas se escriben antes que el código de producción, de modo
+que cada requerimiento funcional queda respaldado por una o más pruebas
+ejecutables. El \emph{stack} de pruebas se compone de \texttt{pytest} con
+\texttt{pytest-django} para las pruebas unitarias y de integración,
+\texttt{behave} con \texttt{Selenium} para las pruebas funcionales/de aceptación
+en navegador, \texttt{JMeter} para las pruebas de performance, \texttt{coverage}
+para la medición de cobertura, \texttt{radon} para la complejidad ciclomática y
+\texttt{ruff} para la conformidad con PEP\,8.
+
+% ===================================================================
+\chapter{Estrategia de Test}
+
+\section{Alcance del Testing}
+
+\subsection{Características a ser testeadas}
+
+Todas las características funcionales del Sistema de Solicitudes definidas en la
+especificación de requerimientos de software deben ser probadas. Estas
+características corresponden a los once requerimientos funcionales (RF-01 a
+RF-11) y a los casos de uso CU-01 a CU-17 del SRS, distribuidos entre los cinco
+roles del sistema: \textbf{ALUMNO}, \textbf{DOCENTE},
+\textbf{CONTROL\_ESCOLAR}, \textbf{RESPONSABLE\_PROGRAMA} y \textbf{ADMIN}.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|C{1.6cm}|L{4.6cm}|X|}
+\hline
+\rowcolor{uazblue!12}
+\textbf{Caso} & \textbf{Característica} & \textbf{Descripción de lo que se prueba} \\
+\hline
+CU-01 & Crear solicitud & El solicitante selecciona un tipo, llena el formulario
+dinámico, adjunta archivos, se genera el folio \texttt{SOL-AAAA-NNNNN} y la
+solicitud queda en estado ``Creada''; se valida la regla de comprobante de pago
+y la exención de mentores. \\
+\hline
+CU-02 & Consultar solicitudes propias & El solicitante lista sus solicitudes con
+folio, tipo, fecha y estado, y aplica filtros. \\
+\hline
+CU-03 & Ver detalle de solicitud & Visualización del formulario, archivos
+adjuntos e historial de seguimiento. \\
+\hline
+CU-04 & Cancelar solicitud propia & El solicitante cancela una solicitud que se
+encuentra en estado ``Creada''. \\
+\hline
+CU-05 & Ver seguimiento & Consulta del historial de cambios de estado con fechas
+y observaciones. \\
+\hline
+CU-06 & Listar solicitudes asignadas & El personal ve únicamente las solicitudes
+dirigidas a su rol, con filtros y búsqueda. \\
+\hline
+CU-07 & Atender solicitud & El personal revisa el detalle de una solicitud
+asignada y ejecuta las acciones de resolución. \\
+\hline
+CU-08 & Cambiar estado & Transiciones de la máquina de estados (En proceso,
+Finalizada, Cancelada) con observaciones. \\
+\hline
+CU-09 & Generar documento PDF & Generación del PDF a partir de la plantilla del
+tipo, sustituyendo variables con datos del solicitante. \\
+\hline
+CU-10 & Gestionar tipos de solicitud & El administrador crea, edita o elimina
+tipos del catálogo. \\
+\hline
+CU-11 & Gestionar formularios dinámicos & Configuración de los campos del
+formulario de cada tipo. \\
+\hline
+CU-12 & Gestionar plantillas & Administración de plantillas de documento con
+variables sustituibles. \\
+\hline
+CU-13 & Gestionar mentores & Alta/baja/consulta de mentores de forma manual o
+mediante carga CSV. \\
+\hline
+CU-14 & Ver dashboard y métricas & Estadísticas de solicitudes por tipo, estado
+y período. \\
+\hline
+CU-15 & Exportar reportes & Exportación de métricas en formato CSV o PDF. \\
+\hline
+CU-17 & Notificar por correo & Despacho automático de correos al personal al
+crear una solicitud y al solicitante al cambiar el estado, incluyendo el
+\emph{fallback} ante fallas de SMTP. \\
+\hline
+\end{tabularx}
+\end{center}
+
+Adicionalmente se prueban las reglas transversales asociadas: el enrutamiento de
+solicitudes por rol responsable (RF-06), la fotografía (\emph{snapshot}) de la
+definición de campos del tipo al momento de la creación (RF-04), la generación
+secuencial y única del folio por año, la validación del tamaño máximo de archivo
+(10\,MB) y de los tipos de archivo permitidos.
+
+\subsection{Características que NO serán testeadas}
+
+Las siguientes características quedan \textbf{fuera del alcance} de este plan,
+porque corresponden a sistemas de terceros sobre los que el equipo no tiene
+control, o porque no forman parte de la especificación de requerimientos de
+software del Sistema de Solicitudes. Su exclusión se justifica a continuación.
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Proveedor de autenticación externo (validación de JWT de
+  terceros / SIGA).} El sistema no implementa autenticación propia; recibe y
+  confía en un JWT emitido por un proveedor externo (RNF-01) y consulta datos de
+  usuario a SIGA (RNF-02). La emisión, firma y validación del token por parte
+  del proveedor, así como la disponibilidad de SIGA, son responsabilidad de esos
+  servicios y no pueden ser controlados ni reproducidos de forma fiable por el
+  equipo. Sí se prueba, en cambio, el \emph{middleware} que decodifica el token
+  ya recibido y el \emph{fallback} a los datos del JWT cuando SIGA no responde,
+  empleando dobles de prueba.
+  \item \textbf{Envío real a través del servidor SMTP externo.} El servidor de
+  correo es un servicio de terceros (IE-03). Se prueba el \emph{dispatch} de las
+  notificaciones (que el sistema construye y entrega el mensaje al backend de
+  correo) y el comportamiento de \emph{fallback} ante una falla de SMTP (la
+  operación de negocio no debe verse afectada), pero no se prueba la entrega
+  efectiva del correo por parte del servidor de un tercero.
+  \item \textbf{Interfaces de hardware.} El sistema es una aplicación web que no
+  interactúa directamente con dispositivos de hardware; no existen controladores
+  ni interfaces físicas que probar.
+\end{itemize}
+
+\section{Tipo de Test}
+
+En el proyecto Sistema de Solicitudes se ejecutan \textbf{cuatro} tipos de
+prueba a lo largo del desarrollo:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{(a) Pruebas Unitarias.} Verifican de forma aislada el
+  comportamiento de las unidades de software más pequeñas (servicios,
+  repositorios, formularios, esquemas Pydantic, funciones de dominio). Se
+  desarrollan de manera colaborativa: cada integrante escribe las pruebas de los
+  módulos a su cargo. Se implementan con \texttt{pytest} + \texttt{pytest-django}
+  (sobre el estilo \texttt{TestCase} cuando aplica) y constituyen el grueso de la
+  suite, con \textbf{769 pruebas} (\textbf{714 funciones de test únicas}).
+
+  \item \textbf{(b) Pruebas Funcionales / de Aceptación.} Simulan el
+  comportamiento del sistema tal como lo experimenta el usuario final, para
+  evaluar la conformidad con los requerimientos especificados y las historias de
+  usuario. Se redactan en \textbf{Gherkin} y se ejecutan con \textbf{behave} y
+  \textbf{Selenium}, controlando un navegador real. La suite de aceptación cubre
+  \textbf{7 \emph{features}} y \textbf{20 escenarios} que recorren los flujos
+  principales de los cinco roles (creación, consulta, atención, cambio de estado
+  y administración).
+
+  \item \textbf{(c) Pruebas de Performance.} Evalúan el comportamiento del
+  sistema bajo carga y concurrencia. Se ejecutan con \textbf{JMeter} sobre
+  \textbf{2 casos}: (1) \emph{login} con 10 usuarios concurrentes y (2) alta de
+  solicitud con 5 usuarios concurrentes. Se observan tiempos de respuesta, tasa
+  de error y \emph{throughput}.
+
+  \item \textbf{(d) Pruebas de Integración.} Verifican que los distintos
+  componentes colaboren correctamente entre sí. En la arquitectura por capas de
+  Django (View~$\rightarrow$~Service~$\rightarrow$~Repository sobre el ORM), las
+  pruebas de integración están \textbf{entremezcladas con las unitarias}: al
+  probar una vista a través del cliente de pruebas de Django se integran de
+  hecho el servicio, el repositorio y el ORM contra una base de datos real, así
+  como la serialización de DTOs Pydantic y el \emph{rendering} de plantillas.
+  Estas pruebas se identifican con el \emph{marker} \texttt{integration} de
+  \texttt{pytest}, lo que permite ejecutarlas o aislarlas de forma selectiva
+  (\texttt{pytest -m integration}).
+\end{itemize}
+
+\section{Riesgos y Problemas}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabularx}{\textwidth}{|L{5.6cm}|X|}
+\hline
+\rowcolor{uazblue!12}
+\textbf{Riesgo} & \textbf{Mitigación} \\
+\hline
+Dependencia del proveedor de autenticación externo (JWT) y de SIGA: una falla o
+indisponibilidad bloquearía las pruebas que requieren un usuario autenticado. &
+Aislar la dependencia mediante dobles de prueba (tokens fabricados, respuestas
+de SIGA simuladas con \texttt{responses}); probar el \emph{fallback} a datos del
+JWT y no depender de los servicios reales en la suite automatizada. \\
+\hline
+Fallas del servidor SMTP externo durante las pruebas de notificación. & Usar el
+\emph{backend} de correo en memoria de Django en pruebas; verificar únicamente
+el \emph{dispatch} y el comportamiento de \emph{fallback}, garantizando que la
+operación de negocio no se vea afectada. \\
+\hline
+Datos sembrados (\emph{seed}) inconsistentes o insuficientes que invaliden los
+escenarios. & Construir datos con \texttt{model\_bakery} y \emph{fixtures}
+deterministas; congelar el tiempo con \texttt{freezegun} donde el folio o las
+fechas sean relevantes. \\
+\hline
+Tiempo limitado del equipo frente al volumen de casos a cubrir. & Priorizar por
+criticidad (flujos núcleo CU-01, CU-07, CU-08 primero); paralelizar el trabajo
+por módulo entre los integrantes; aprovechar TDD para evitar retrabajo. \\
+\hline
+Pruebas \emph{flaky} (intermitentes) en navegador con Selenium por
+sincronización o tiempos de carga. & Emplear esperas explícitas, fijar la
+versión de Chrome/\emph{driver}, ejecutar en un entorno Docker reproducible y
+reintentar escenarios marcados como inestables antes de declararlos fallidos. \\
+\hline
+\end{tabularx}
+\end{center}
+
+\section{Logística de Pruebas}
+
+\subsection{¿Quiénes realizarán las pruebas?}
+
+Para este proyecto las pruebas serán realizadas por los propios miembros del
+equipo de desarrollo, quienes fungen con el rol de \emph{testers} con el
+objetivo de optimizar los costos y los tiempos del proyecto. Cada integrante es
+responsable de escribir y mantener las pruebas del módulo a su cargo, además de
+participar en la construcción de la suite de aceptación compartida.
+
+\subsection{¿Cuándo ocurrirán las pruebas?}
+
+Conforme a la metodología \textbf{TDD}, las pruebas se escriben \textbf{antes}
+que el código de producción y se ejecutan de forma continua durante todo el
+desarrollo. Los \emph{testers} del equipo pueden comenzar la ejecución de las
+pruebas cuando las siguientes entradas se encuentren listas:
+
+\begin{itemize}[leftmargin=*]
+  \item Se cuenta con el ambiente de pruebas de Django configurado y
+  reproducible (contenedores Docker con la base de datos de pruebas).
+  \item De acuerdo con TDD, el desarrollo del software se realiza a la par de la
+  escritura de las pruebas (\emph{prueba primero}: RED\,$\rightarrow$\,GREEN\,$\rightarrow$\,REFACTOR).
+  \item Se cuenta con la definición de los requerimientos técnicos y los
+  criterios de aceptación de las historias de usuario del proyecto.
+  \item Se dispone de los datos de prueba y \emph{fixtures} necesarios para los
+  escenarios.
+\end{itemize}
+
+% ===================================================================
+\chapter{Objetivos del Test}
+
+Los objetivos de la prueba son verificar la funcionalidad del Sistema de
+Solicitudes de la UAZ y, mediante la implementación de la metodología TDD,
+desarrollar dicha funcionalidad a partir de la creación de diferentes pruebas:
+pruebas unitarias, pruebas de integración, pruebas funcionales/de aceptación y
+pruebas de performance.
+
+El proyecto se enfoca en probar la funcionalidad descrita en las historias de
+usuario y casos de uso del SRS, teniendo en cuenta el manejo de las operaciones
+principales del sistema:
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Catálogo y formularios:} gestión de tipos de solicitud,
+  formularios dinámicos y plantillas (CU-10, CU-11, CU-12).
+  \item \textbf{Ciclo de vida de solicitudes:} creación con folio único,
+  consulta, detalle, cancelación y seguimiento (CU-01 a CU-05).
+  \item \textbf{Atención por el personal:} listado de asignadas, atención,
+  cambio de estado y generación de PDF, con enrutamiento por rol (CU-06 a
+  CU-09).
+  \item \textbf{Administración:} mentores, dashboard de métricas y exportación
+  de reportes (CU-13, CU-14, CU-15).
+  \item \textbf{Notificaciones:} despacho de correos por evento y
+  \emph{fallback} ante fallas (CU-17).
+\end{itemize}
+
+El propósito es garantizar que estas operaciones se implementen correctamente y
+funcionen de manera estable en un entorno real de trabajo, respetando las reglas
+de negocio y la separación de responsabilidades por rol.
+
+% ===================================================================
+\chapter{Criterio de Prueba}
+
+\section{Criterio de Suspensión}
+
+En caso de que los miembros del equipo detecten que las pruebas no están
+contribuyendo positivamente al desarrollo del proyecto conforme a la metodología
+TDD —por ejemplo, ante una tasa elevada de fallos no atribuibles al código bajo
+prueba, dependencias externas inestables o un ambiente de pruebas roto— se
+suspenderá la ejecución, se revisarán los apartados descritos por TDD, se harán
+las correcciones necesarias en las pruebas o en el ambiente y se retomará el
+ciclo RED\,$\rightarrow$\,GREEN\,$\rightarrow$\,REFACTOR para continuar con el
+desarrollo del proyecto.
+
+\section{Criterio de Salida}
+
+Definen los criterios que denotan una terminación exitosa del desarrollo del
+proyecto con sus respectivas pruebas:
+
+\begin{itemize}[leftmargin=*]
+  \item De acuerdo con la metodología TDD, las pruebas definidas cubren el
+  \textbf{100\,\%} de las funcionalidades requeridas del proyecto, con un
+  objetivo de \textbf{cobertura de 100\,\%} medida con \texttt{coverage} sobre
+  modelos, vistas, formularios y servicios (reporte de cobertura adjunto a los
+  entregables).
+  \item Las pruebas de aceptación con \textbf{behave} y \textbf{Selenium} cubren
+  las historias de usuario descritas en el SRS; las pruebas unitarias se
+  implementan con \texttt{TestCase}/\texttt{pytest}.
+  \item Todos los métodos del sistema presentan una \textbf{complejidad
+  ciclomática $\leq$ 10}, verificada con \texttt{radon}.
+  \item El código cumple con el estándar de estilo \textbf{PEP\,8}, verificado
+  con \texttt{ruff}.
+  \item La totalidad de la suite automatizada (unitarias, integración y
+  aceptación) pasa en verde en el ambiente de pruebas, y las pruebas de
+  performance con JMeter se ejecutan dentro de umbrales aceptables de tiempo de
+  respuesta y tasa de error.
+\end{itemize}
+
+% ===================================================================
+\chapter{Planeación de Recursos}
+
+\section{Recursos del sistema}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{\textwidth}{|C{0.8cm}|L{4.4cm}|X|}
+\hline
+\rowcolor{uazblue!12}
+\textbf{No.} & \textbf{Recurso} & \textbf{Descripción} \\
+\hline
+1 & Contenedores Docker & Orquestación del ambiente de desarrollo y pruebas
+(\emph{web} + base de datos + MailHog) de forma reproducible en cada equipo. \\
+\hline
+2 & PostgreSQL & Motor de base de datos para el ambiente de pruebas e
+integración; SQLite para ejecuciones locales rápidas. \\
+\hline
+3 & Python 3.12+ y Django 5 & Plataforma de ejecución del sistema y de la suite
+de pruebas (\texttt{pytest}, \texttt{pytest-django}). \\
+\hline
+4 & Navegador Chrome + \emph{driver} & Requerido por Selenium para las pruebas
+funcionales/de aceptación en navegador real. \\
+\hline
+5 & Apache JMeter & Herramienta para las pruebas de performance (carga y
+concurrencia). \\
+\hline
+6 & Herramientas de calidad & \texttt{coverage} (cobertura), \texttt{radon}
+(complejidad ciclomática) y \texttt{ruff} (PEP\,8). \\
+\hline
+7 & Equipos de cómputo & Una computadora por integrante con los requisitos
+mínimos para ejecutar Docker y el \emph{stack} de pruebas. \\
+\hline
+\end{tabularx}
+\end{center}
+
+\section{Recursos Humanos}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabularx}{\textwidth}{|C{0.8cm}|L{5.0cm}|L{3.6cm}|X|}
+\hline
+\rowcolor{uazblue!12}
+\textbf{No.} & \textbf{Integrante} & \textbf{Rol de testing} & \textbf{Módulo a cargo} \\
+\hline
+1 & Diego Iván Correa Navarrete & Test Manager / Desarrollador en Test &
+Solicitudes: ciclo de vida y estados (CU-01, CU-04, CU-05, CU-08). \\
+\hline
+2 & Juan Antonio González del Río & Desarrollador en Test &
+Catálogo, formularios y plantillas (CU-10, CU-11, CU-12). \\
+\hline
+3 & Diego Arturo Ramos Ávila & Desarrollador en Test &
+Atención, generación de PDF y archivos adjuntos (CU-06, CU-07, CU-09). \\
+\hline
+4 & Ángel David Carlos Silva & Desarrollador en Test &
+Mentores, reportes/dashboard y notificaciones (CU-13, CU-14, CU-15, CU-17). \\
+\hline
+\end{tabularx}
+\end{center}
+
+% ===================================================================
+\chapter{Ambiente de Pruebas}
+
+Cada integrante del equipo cuenta con un equipo de cómputo con las
+características mínimas requeridas y con \textbf{Docker} instalado, lo que
+permite levantar de forma idéntica el ambiente de la aplicación (servicio
+\emph{web} de Django, base de datos PostgreSQL y MailHog para inspección de
+correo) y ejecutar la suite de pruebas siguiendo la metodología TDD. El uso de
+contenedores garantiza que las pruebas se ejecuten sobre un entorno
+reproducible, eliminando las diferencias entre las máquinas de los
+desarrolladores.
+
+Las pruebas unitarias, de integración y de aceptación se ejecutan de manera
+\textbf{local} dentro de los contenedores Docker de cada integrante. Para las
+pruebas de performance con JMeter se contempla, además, la disposición de un
+\textbf{servidor de pruebas / preproducción} que reproduzca condiciones más
+cercanas a producción, de modo que las mediciones de carga y concurrencia sean
+representativas y no se vean distorsionadas por los recursos de una máquina de
+desarrollo.
+
+% ===================================================================
+\chapter{Calendario y Estimación}
+
+A continuación se presentan las tareas de prueba y su estimación aproximada,
+distribuidas entre abril y junio de 2026, en paralelo con el desarrollo
+incremental del sistema bajo TDD.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabularx}{\textwidth}{|X|C{2.6cm}|C{3.2cm}|}
+\hline
+\rowcolor{uazblue!12}
+\textbf{Tarea} & \textbf{Responsables} & \textbf{Fecha aproximada} \\
+\hline
+Definición de historias de usuario y criterios de aceptación & Todos & Abril 2026 \\
+\hline
+Configuración del ambiente de pruebas (Docker, pytest, behave, Selenium) & Todos & Abril 2026 \\
+\hline
+Elaboración del Plan de Prueba y plantilla de casos de prueba & Todos & Abril 2026 \\
+\hline
+Pruebas unitarias y de integración por módulo (TDD) & Todos & Abril--Mayo 2026 \\
+\hline
+Pruebas funcionales / de aceptación (behave + Selenium) & Todos & Mayo--Junio 2026 \\
+\hline
+Pruebas de performance con JMeter & Todos & Junio 2026 \\
+\hline
+Medición de cobertura, complejidad (radon) y estilo (ruff) & Todos & Junio 2026 \\
+\hline
+Ejecución integral, reportes y matriz de trazabilidad & Todos & Junio 2026 \\
+\hline
+\end{tabularx}
+\end{center}
+
+% ===================================================================
+\chapter{Entregables de Testing}
+
+Como resultado de las actividades de prueba se entregan los siguientes
+artefactos:
+
+\begin{itemize}[leftmargin=*]
+  \item Código fuente del sistema acompañado de sus \textbf{pruebas unitarias}
+  (suite \texttt{pytest} + \texttt{pytest-django}, 769 pruebas).
+  \item \textbf{Pruebas de integración} (marcadas con el \emph{marker}
+  \texttt{integration}), entremezcladas con las unitarias.
+  \item \textbf{Pruebas de aceptación} en \textbf{behave + Selenium}
+  (7 \emph{features}, 20 escenarios en Gherkin).
+  \item \textbf{Matriz de trazabilidad} requerimientos/casos de uso
+  $\leftrightarrow$ pruebas.
+  \item \textbf{Plantilla de casos de prueba} y los casos de prueba derivados de
+  ella.
+  \item El presente \textbf{Plan de Prueba}.
+  \item \textbf{Pruebas de performance} con JMeter (2 casos) y sus resultados.
+  \item \textbf{Reportes de cobertura} (\texttt{coverage}, objetivo 100\,\%) y de
+  \textbf{complejidad ciclomática} (\texttt{radon}, métodos $\leq$ 10), junto con
+  la verificación de estilo PEP\,8 (\texttt{ruff}).
+  \item Documentación de soporte: \textbf{SRS}, \textbf{SDD}, documento de
+  \textbf{Visión y Alcance}, \textbf{esquema de la base de datos} y
+  \textbf{manuales} (de usuario y técnico).
+\end{itemize}
+
+\end{document}

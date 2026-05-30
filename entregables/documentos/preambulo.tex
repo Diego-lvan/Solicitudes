@@ -1,0 +1,67 @@
+% Preámbulo compartido para los documentos del Sistema de Solicitudes (UAZ).
+% Identidad visual alineada con el SRS. Compilar con pdflatex.
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish, mexico]{babel}
+\usepackage{geometry}
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage{listings}
+
+\definecolor{uazblue}{RGB}{0, 51, 102}
+\definecolor{lightgray}{RGB}{240, 240, 240}
+\definecolor{codebg}{RGB}{248, 248, 248}
+
+\hypersetup{colorlinks=true, linkcolor=uazblue, urlcolor=uazblue, citecolor=uazblue}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\color{uazblue}}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{-20pt}{40pt}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{lightgray},
+  breaklines=true,
+  columns=fullflexible,
+  showstringspaces=false,
+  keepspaces=true,
+}
+
+% Portada institucional reutilizable:
+% \portada{TÍTULO DEL DOCUMENTO}{Subtítulo opcional}
+\newcommand{\portada}[2]{%
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+    {\Large\bfseries UNIVERSIDAD AUTÓNOMA DE ZACATECAS}\\[12pt]
+    {\normalsize UNIDAD ACADÉMICA DE INGENIERÍA ELÉCTRICA}\\[24pt]
+    \IfFileExists{uaz.png}{\includegraphics[width=1.5in]{uaz.png}\\[40pt]}{\vspace{40pt}}
+    {\large\bfseries #1}\\[6pt]
+    {\large\bfseries SISTEMA DE SOLICITUDES}\\[10pt]
+    {\normalsize #2}\\[24pt]
+    {\normalsize\bfseries
+    Diego Iván Correa Navarrete\\
+    Juan Antonio González del Río\\
+    Diego Arturo Ramos Ávila\\
+    Ángel David Carlos Silva\\}
+    \vspace{30pt}
+    {\normalsize\bfseries LICENCIATURA EN INGENIERÍA DE SOFTWARE}\\[16pt]
+    {\normalsize Junio de 2026}
+\end{titlepage}}

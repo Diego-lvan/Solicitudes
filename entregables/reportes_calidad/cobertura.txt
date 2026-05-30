@@ -1,0 +1,307 @@
+Name                                                                           Stmts   Miss  Cover   Missing
+------------------------------------------------------------------------------------------------------------
+_shared/__init__.py                                                                0      0   100%
+_shared/apps.py                                                                    5      0   100%
+_shared/audit.py                                                                   6      0   100%
+_shared/auth.py                                                                   24      0   100%
+_shared/exceptions.py                                                             35      0   100%
+_shared/logging_config.py                                                         20      1    95%   36
+_shared/management/__init__.py                                                     0      0   100%
+_shared/management/commands/__init__.py                                            0      0   100%
+_shared/management/commands/seed.py                                               60      3    95%   81, 98-99
+_shared/middleware/__init__.py                                                     0      0   100%
+_shared/middleware/error_handler.py                                               39      0   100%
+_shared/middleware/logging.py                                                     16      0   100%
+_shared/middleware/request_id.py                                                  21      0   100%
+_shared/pagination.py                                                             29      1    97%   30
+_shared/pdf.py                                                                     8      0   100%
+_shared/request_actor.py                                                           9      1    89%   26
+_shared/templatetags/__init__.py                                                   0      0   100%
+_shared/templatetags/lucide.py                                                    26      0   100%
+_shared/templatetags/role_display.py                                              10      0   100%
+_shared/views.py                                                                  16      1    94%   13
+config/__init__.py                                                                 0      0   100%
+config/urls.py                                                                     4      0   100%
+mentores/__init__.py                                                               0      0   100%
+mentores/adapters/__init__.py                                                      0      0   100%
+mentores/adapters/intake_adapter.py                                                8      0   100%
+mentores/apps.py                                                                   6      0   100%
+mentores/constants.py                                                              9      0   100%
+mentores/dependencies.py                                                          18      0   100%
+mentores/exceptions.py                                                            11      0   100%
+mentores/forms/__init__.py                                                         3      0   100%
+mentores/forms/add_mentor_form.py                                                 14      0   100%
+mentores/forms/csv_import_form.py                                                 11      0   100%
+mentores/models/__init__.py                                                        2      0   100%
+mentores/models/mentor_periodo.py                                                 24      0   100%
+mentores/permissions.py                                                            3      0   100%
+mentores/repositories/__init__.py                                                  0      0   100%
+mentores/repositories/mentor/__init__.py                                           3      0   100%
+mentores/repositories/mentor/implementation.py                                    67      0   100%
+mentores/repositories/mentor/interface.py                                         30      0   100%
+mentores/schemas.py                                                               32      0   100%
+mentores/services/__init__.py                                                      0      0   100%
+mentores/services/csv_importer/__init__.py                                         3      0   100%
+mentores/services/csv_importer/implementation.py                                  59      0   100%
+mentores/services/csv_importer/interface.py                                        7      0   100%
+mentores/services/mentor_service/__init__.py                                       3      0   100%
+mentores/services/mentor_service/implementation.py                                49      0   100%
+mentores/services/mentor_service/interface.py                                     25      0   100%
+mentores/urls.py                                                                  10      0   100%
+mentores/validators.py                                                            11      0   100%
+mentores/views/__init__.py                                                         0      0   100%
+mentores/views/add.py                                                             30      1    97%   31
+mentores/views/bulk_deactivate.py                                                 63      1    98%   57
+mentores/views/deactivate.py                                                      25      1    96%   28
+mentores/views/detail.py                                                          15      0   100%
+mentores/views/import_csv.py                                                      27      1    96%   28
+mentores/views/list.py                                                            19      0   100%
+solicitudes/__init__.py                                                            1      0   100%
+solicitudes/apps.py                                                                6      0   100%
+solicitudes/archivos/__init__.py                                                   0      0   100%
+solicitudes/archivos/constants.py                                                 14      0   100%
+solicitudes/archivos/dependencies.py                                              14      0   100%
+solicitudes/archivos/exceptions.py                                                19      0   100%
+solicitudes/archivos/repositories/__init__.py                                      0      0   100%
+solicitudes/archivos/repositories/archivo/__init__.py                              0      0   100%
+solicitudes/archivos/repositories/archivo/implementation.py                       45      0   100%
+solicitudes/archivos/repositories/archivo/interface.py                            18      0   100%
+solicitudes/archivos/schemas.py                                                   29      0   100%
+solicitudes/archivos/services/__init__.py                                          0      0   100%
+solicitudes/archivos/services/archivo_service/__init__.py                          0      0   100%
+solicitudes/archivos/services/archivo_service/implementation.py                  126      0   100%
+solicitudes/archivos/services/archivo_service/interface.py                        17      0   100%
+solicitudes/archivos/storage/__init__.py                                           0      0   100%
+solicitudes/archivos/storage/interface.py                                         12      0   100%
+solicitudes/archivos/storage/local.py                                             75      0   100%
+solicitudes/archivos/urls.py                                                       5      0   100%
+solicitudes/archivos/views/__init__.py                                             0      0   100%
+solicitudes/archivos/views/download.py                                            16      0   100%
+solicitudes/formularios/__init__.py                                                0      0   100%
+solicitudes/formularios/builder.py                                                54      1    98%   112
+solicitudes/formularios/schemas.py                                                26      0   100%
+solicitudes/formularios/validators.py                                             22      0   100%
+solicitudes/intake/__init__.py                                                     0      0   100%
+solicitudes/intake/dependencies.py                                                16      0   100%
+solicitudes/intake/exceptions.py                                                  11      0   100%
+solicitudes/intake/forms/__init__.py                                               0      0   100%
+solicitudes/intake/forms/intake_form.py                                           16      0   100%
+solicitudes/intake/mentor_port.py                                                  8      1    88%   24
+solicitudes/intake/permissions.py                                                  6      0   100%
+solicitudes/intake/schemas.py                                                      9      0   100%
+solicitudes/intake/services/__init__.py                                            0      0   100%
+solicitudes/intake/services/auto_fill_resolver/__init__.py                         0      0   100%
+solicitudes/intake/services/auto_fill_resolver/implementation.py                  59      1    98%   122
+solicitudes/intake/services/auto_fill_resolver/interface.py                       14      0   100%
+solicitudes/intake/services/intake_service/__init__.py                             0      0   100%
+solicitudes/intake/services/intake_service/implementation.py                      64      0   100%
+solicitudes/intake/services/intake_service/interface.py                           18      0   100%
+solicitudes/intake/urls.py                                                         9      0   100%
+solicitudes/intake/views/__init__.py                                               0      0   100%
+solicitudes/intake/views/cancel.py                                                21      0   100%
+solicitudes/intake/views/catalog.py                                               13      0   100%
+solicitudes/intake/views/create.py                                                67      1    99%   107
+solicitudes/intake/views/detail.py                                                24      0   100%
+solicitudes/intake/views/mis_solicitudes.py                                       31      0   100%
+solicitudes/lifecycle/__init__.py                                                  0      0   100%
+solicitudes/lifecycle/constants.py                                                19      0   100%
+solicitudes/lifecycle/dependencies.py                                             36      0   100%
+solicitudes/lifecycle/exceptions.py                                               16      0   100%
+solicitudes/lifecycle/notification_port.py                                        14      2    86%   39, 48
+solicitudes/lifecycle/repositories/__init__.py                                     0      0   100%
+solicitudes/lifecycle/repositories/folio/__init__.py                               0      0   100%
+solicitudes/lifecycle/repositories/folio/implementation.py                        11      0   100%
+solicitudes/lifecycle/repositories/folio/interface.py                              5      0   100%
+solicitudes/lifecycle/repositories/historial/__init__.py                           0      0   100%
+solicitudes/lifecycle/repositories/historial/implementation.py                    17      0   100%
+solicitudes/lifecycle/repositories/historial/interface.py                         10      0   100%
+solicitudes/lifecycle/repositories/solicitud/__init__.py                           0      0   100%
+solicitudes/lifecycle/repositories/solicitud/implementation.py                   106      0   100%
+solicitudes/lifecycle/repositories/solicitud/interface.py                         31      0   100%
+solicitudes/lifecycle/schemas.py                                                  79      0   100%
+solicitudes/lifecycle/services/__init__.py                                         0      0   100%
+solicitudes/lifecycle/services/folio_service/__init__.py                           0      0   100%
+solicitudes/lifecycle/services/folio_service/implementation.py                     9      0   100%
+solicitudes/lifecycle/services/folio_service/interface.py                          5      0   100%
+solicitudes/lifecycle/services/lifecycle_service/__init__.py                       0      0   100%
+solicitudes/lifecycle/services/lifecycle_service/implementation.py                71      1    99%   211
+solicitudes/lifecycle/services/lifecycle_service/interface.py                     10      0   100%
+solicitudes/models/__init__.py                                                    11      0   100%
+solicitudes/models/archivo_respuesta.py                                           21      0   100%
+solicitudes/models/archivo_solicitud.py                                           26      0   100%
+solicitudes/models/field_definition.py                                            27      0   100%
+solicitudes/models/folio_counter.py                                               12      0   100%
+solicitudes/models/historial_estado.py                                            24      0   100%
+solicitudes/models/plantilla_asset.py                                             27      0   100%
+solicitudes/models/plantilla_solicitud.py                                         21      0   100%
+solicitudes/models/respuesta_solicitud.py                                         21      0   100%
+solicitudes/models/solicitud.py                                                   24      0   100%
+solicitudes/models/tipo_solicitud.py                                              26      0   100%
+solicitudes/pdf/__init__.py                                                        0      0   100%
+solicitudes/pdf/context.py                                                        38      0   100%
+solicitudes/pdf/dependencies.py                                                   14      0   100%
+solicitudes/pdf/exceptions.py                                                     11      0   100%
+solicitudes/pdf/forms/__init__.py                                                  2      0   100%
+solicitudes/pdf/forms/plantilla_form.py                                           14      0   100%
+solicitudes/pdf/repositories/__init__.py                                           0      0   100%
+solicitudes/pdf/repositories/plantilla/__init__.py                                 3      0   100%
+solicitudes/pdf/repositories/plantilla/implementation.py                          43      0   100%
+solicitudes/pdf/repositories/plantilla/interface.py                               15      0   100%
+solicitudes/pdf/schemas.py                                                        30      0   100%
+solicitudes/pdf/services/__init__.py                                               0      0   100%
+solicitudes/pdf/services/pdf_service/__init__.py                                   3      0   100%
+solicitudes/pdf/services/pdf_service/implementation.py                            86      0   100%
+solicitudes/pdf/services/pdf_service/interface.py                                 10      0   100%
+solicitudes/pdf/services/plantilla_service/__init__.py                             3      0   100%
+solicitudes/pdf/services/plantilla_service/implementation.py                      33      0   100%
+solicitudes/pdf/services/plantilla_service/interface.py                            9      0   100%
+solicitudes/pdf/urls.py                                                           12      0   100%
+solicitudes/pdf/views/__init__.py                                                  0      0   100%
+solicitudes/pdf/views/_editor_context.py                                           3      0   100%
+solicitudes/pdf/views/create.py                                                   43      0   100%
+solicitudes/pdf/views/delete.py                                                   23      0   100%
+solicitudes/pdf/views/detail.py                                                   12      0   100%
+solicitudes/pdf/views/download.py                                                 12      0   100%
+solicitudes/pdf/views/edit.py                                                     46      0   100%
+solicitudes/pdf/views/list.py                                                     12      0   100%
+solicitudes/pdf/views/preview.py                                                  15      0   100%
+solicitudes/pdf/views/preview_draft.py                                            68      0   100%
+solicitudes/pdf/views/preview_draft_pdf.py                                        55      0   100%
+solicitudes/plantilla_assets/__init__.py                                           0      0   100%
+solicitudes/plantilla_assets/constants.py                                          4      0   100%
+solicitudes/plantilla_assets/dependencies.py                                       7      0   100%
+solicitudes/plantilla_assets/exceptions.py                                        14      0   100%
+solicitudes/plantilla_assets/forms/__init__.py                                     2      0   100%
+solicitudes/plantilla_assets/forms/asset_form.py                                  24      1    96%   28
+solicitudes/plantilla_assets/permissions.py                                        3      0   100%
+solicitudes/plantilla_assets/repositories/__init__.py                              0      0   100%
+solicitudes/plantilla_assets/repositories/asset_repository/__init__.py             3      0   100%
+solicitudes/plantilla_assets/repositories/asset_repository/implementation.py      54      3    94%   103, 114-115
+solicitudes/plantilla_assets/repositories/asset_repository/interface.py           17      0   100%
+solicitudes/plantilla_assets/schemas.py                                           40      0   100%
+solicitudes/plantilla_assets/services/__init__.py                                  0      0   100%
+solicitudes/plantilla_assets/services/asset_service/__init__.py                    3      0   100%
+solicitudes/plantilla_assets/services/asset_service/implementation.py             68      0   100%
+solicitudes/plantilla_assets/services/asset_service/interface.py                  17      0   100%
+solicitudes/plantilla_assets/urls.py                                               5      0   100%
+solicitudes/plantilla_assets/views/__init__.py                                     0      0   100%
+solicitudes/plantilla_assets/views/admin.py                                      126      0   100%
+solicitudes/respuesta/__init__.py                                                  0      0   100%
+solicitudes/respuesta/constants.py                                                 5      0   100%
+solicitudes/respuesta/dependencies.py                                             11      0   100%
+solicitudes/respuesta/exceptions.py                                               37      0   100%
+solicitudes/respuesta/forms/__init__.py                                            0      0   100%
+solicitudes/respuesta/forms/respuesta_upload_form.py                              30      0   100%
+solicitudes/respuesta/repositories/__init__.py                                     0      0   100%
+solicitudes/respuesta/repositories/respuesta/__init__.py                           0      0   100%
+solicitudes/respuesta/repositories/respuesta/implementation.py                    31      0   100%
+solicitudes/respuesta/repositories/respuesta/interface.py                         11      0   100%
+solicitudes/respuesta/schemas.py                                                  52      0   100%
+solicitudes/respuesta/services/__init__.py                                         0      0   100%
+solicitudes/respuesta/services/respuesta_service/__init__.py                       0      0   100%
+solicitudes/respuesta/services/respuesta_service/implementation.py                88      1    99%   142
+solicitudes/respuesta/services/respuesta_service/interface.py                     13      0   100%
+solicitudes/respuesta/urls.py                                                      6      0   100%
+solicitudes/respuesta/views/__init__.py                                            0      0   100%
+solicitudes/respuesta/views/personal.py                                           38      3    92%   56-58
+solicitudes/respuesta/views/shared.py                                             16      0   100%
+solicitudes/revision/__init__.py                                                   0      0   100%
+solicitudes/revision/dependencies.py                                               6      0   100%
+solicitudes/revision/forms/__init__.py                                             0      0   100%
+solicitudes/revision/forms/transition_form.py                                      4      0   100%
+solicitudes/revision/permissions.py                                                6      0   100%
+solicitudes/revision/services/__init__.py                                          0      0   100%
+solicitudes/revision/services/review_service/__init__.py                           0      0   100%
+solicitudes/revision/services/review_service/implementation.py                    27      1    96%   39
+solicitudes/revision/services/review_service/interface.py                          7      0   100%
+solicitudes/revision/urls.py                                                       9      0   100%
+solicitudes/revision/views/__init__.py                                             0      0   100%
+solicitudes/revision/views/_helpers.py                                             3      0   100%
+solicitudes/revision/views/cancel.py                                              24      0   100%
+solicitudes/revision/views/detail.py                                              20      0   100%
+solicitudes/revision/views/finalize.py                                            24      0   100%
+solicitudes/revision/views/queue.py                                               33      0   100%
+solicitudes/revision/views/take.py                                                24      0   100%
+solicitudes/seeders.py                                                            27      0   100%
+solicitudes/templatetags/__init__.py                                               0      0   100%
+solicitudes/templatetags/solicitudes_tags.py                                      10      0   100%
+solicitudes/templatetags/tipos_tags.py                                             7      0   100%
+solicitudes/tipos/__init__.py                                                      0      0   100%
+solicitudes/tipos/constants.py                                                    28      0   100%
+solicitudes/tipos/dependencies.py                                                  7      0   100%
+solicitudes/tipos/exceptions.py                                                   11      0   100%
+solicitudes/tipos/forms/__init__.py                                                3      0   100%
+solicitudes/tipos/forms/field_form.py                                             66      0   100%
+solicitudes/tipos/forms/tipo_form.py                                              33      0   100%
+solicitudes/tipos/repositories/__init__.py                                         0      0   100%
+solicitudes/tipos/repositories/tipo/__init__.py                                    3      0   100%
+solicitudes/tipos/repositories/tipo/implementation.py                            107      4    96%   90-96
+solicitudes/tipos/repositories/tipo/interface.py                                  20      0   100%
+solicitudes/tipos/schemas.py                                                     120      0   100%
+solicitudes/tipos/services/__init__.py                                             0      0   100%
+solicitudes/tipos/services/tipo_service/__init__.py                                3      0   100%
+solicitudes/tipos/services/tipo_service/implementation.py                         40      0   100%
+solicitudes/tipos/services/tipo_service/interface.py                              11      0   100%
+solicitudes/tipos/urls.py                                                         10      0   100%
+solicitudes/tipos/views/__init__.py                                                0      0   100%
+solicitudes/tipos/views/_helpers.py                                               26      1    96%   90
+solicitudes/tipos/views/create.py                                                 39      0   100%
+solicitudes/tipos/views/delete.py                                                 25      0   100%
+solicitudes/tipos/views/detail.py                                                 18      0   100%
+solicitudes/tipos/views/edit.py                                                   49      0   100%
+solicitudes/tipos/views/fields_json.py                                            19      0   100%
+solicitudes/tipos/views/list.py                                                   21      0   100%
+solicitudes/urls.py                                                                5      0   100%
+usuarios/__init__.py                                                               1      0   100%
+usuarios/apps.py                                                                   6      0   100%
+usuarios/constants.py                                                             13      0   100%
+usuarios/dependencies.py                                                          15      0   100%
+usuarios/directory/__init__.py                                                     0      0   100%
+usuarios/directory/constants.py                                                    2      0   100%
+usuarios/directory/dependencies.py                                                10      0   100%
+usuarios/directory/forms/__init__.py                                               0      0   100%
+usuarios/directory/forms/filter_form.py                                           20      3    85%   34-35, 39
+usuarios/directory/repositories/__init__.py                                        0      0   100%
+usuarios/directory/repositories/user_directory/__init__.py                         3      0   100%
+usuarios/directory/repositories/user_directory/implementation.py                  29      0   100%
+usuarios/directory/repositories/user_directory/interface.py                        9      0   100%
+usuarios/directory/schemas.py                                                     30      0   100%
+usuarios/directory/services/__init__.py                                            0      0   100%
+usuarios/directory/services/user_directory/__init__.py                             3      0   100%
+usuarios/directory/services/user_directory/implementation.py                      23      0   100%
+usuarios/directory/services/user_directory/interface.py                            9      0   100%
+usuarios/directory/urls.py                                                         6      0   100%
+usuarios/directory/views/__init__.py                                               0      0   100%
+usuarios/directory/views/_helpers.py                                              20      1    95%   29
+usuarios/directory/views/detail.py                                                15      0   100%
+usuarios/directory/views/list.py                                                  17      0   100%
+usuarios/exceptions.py                                                            14      0   100%
+usuarios/middleware.py                                                            62      5    92%   84-88, 94-99
+usuarios/models/__init__.py                                                        2      0   100%
+usuarios/models/user.py                                                           38      1    97%   81
+usuarios/permissions.py                                                           29      0   100%
+usuarios/repositories/__init__.py                                                  0      0   100%
+usuarios/repositories/user/__init__.py                                             3      0   100%
+usuarios/repositories/user/implementation.py                                      39      1    97%   41
+usuarios/repositories/user/interface.py                                           16      0   100%
+usuarios/schemas.py                                                               47      0   100%
+usuarios/seeders.py                                                                9      0   100%
+usuarios/services/__init__.py                                                      0      0   100%
+usuarios/services/role_resolver/__init__.py                                        3      0   100%
+usuarios/services/role_resolver/interface.py                                       7      0   100%
+usuarios/services/role_resolver/jwt_implementation.py                             11      0   100%
+usuarios/services/siga/__init__.py                                                 3      0   100%
+usuarios/services/siga/http_implementation.py                                     28      0   100%
+usuarios/services/siga/interface.py                                                6      0   100%
+usuarios/services/siga/jwt_fallback.py                                            12      0   100%
+usuarios/services/user_service/__init__.py                                         3      0   100%
+usuarios/services/user_service/implementation.py                                  34      0   100%
+usuarios/services/user_service/interface.py                                       14      0   100%
+usuarios/urls.py                                                                  11      0   100%
+usuarios/views/__init__.py                                                         0      0   100%
+usuarios/views/callback.py                                                        38      2    95%   58, 63
+usuarios/views/dev_login.py                                                       54      4    93%   76-77, 80, 88
+usuarios/views/logout.py                                                          13      0   100%
+usuarios/views/me.py                                                              10      0   100%
+------------------------------------------------------------------------------------------------------------
+TOTAL                                                                           5451     49    99%
