@@ -425,3 +425,139 @@ def test_open_blocks_unrelated_user() -> None:
     )
     with pytest.raises(Unauthorized):
         svc.open_for_download(dto.id, _user("OTHER", Role.DOCENTE))
+
+
+# -- comprobante estado guard --------------------------------------------
+
+
+def test_store_comprobante_blocked_when_estado_not_creada() -> None:
+    detail = _detail(requiere_pago=True, estado=Estado.EN_PROCESO)
+    svc, *_ = _service([detail])
+    with pytest.raises(DomainValidationError):
+        svc.store_for_solicitud(
+            folio=detail.folio,
+            field_id=None,
+            kind=ArchivoKind.COMPROBANTE,
+            uploaded_file=_upload("r.pdf"),
+            uploader=_user(matricula=detail.solicitante.matricula),
+        )
+
+
+# -- FORM upload without a field_id --------------------------------------
+
+
+def test_store_form_without_field_id_raises() -> None:
+    detail = _detail(fields=[])
+    svc, *_ = _service([detail])
+    with pytest.raises(DomainValidationError):
+        svc.store_for_solicitud(
+            folio=detail.folio,
+            field_id=None,
+            kind=ArchivoKind.FORM,
+            uploaded_file=_upload(),
+            uploader=_user(matricula=detail.solicitante.matricula),
+        )
+
+
+# -- delete_archivo -------------------------------------------------------
+
+
+@pytest.mark.django_db(transaction=True)
+def test_delete_archivo_by_solicitante_removes_row_and_file() -> None:
+    field_id = uuid4()
+    detail = _detail(fields=[_field_snap(field_id=field_id, accepted=[".pdf"])])
+    svc, repo, storage, _ = _service([detail])
+    dto = svc.store_for_solicitud(
+        folio=detail.folio,
+        field_id=field_id,
+        kind=ArchivoKind.FORM,
+        uploaded_file=_upload(content=b"v1"),
+        uploader=_user(matricula=detail.solicitante.matricula),
+    )
+    svc.delete_archivo(dto.id, _user(matricula=detail.solicitante.matricula))
+    assert svc.list_for_solicitud(detail.folio) == []
+    # on_commit fired under transaction=True → file removed from storage.
+    assert storage.deleted
+
+
+@pytest.mark.django_db(transaction=True)
+def test_delete_archivo_by_admin_allowed() -> None:
+    field_id = uuid4()
+    detail = _detail(fields=[_field_snap(field_id=field_id, accepted=[".pdf"])])
+    svc, *_ = _service([detail])
+    dto = svc.store_for_solicitud(
+        folio=detail.folio,
+        field_id=field_id,
+        kind=ArchivoKind.FORM,
+        uploaded_file=_upload(),
+        uploader=_user(matricula=detail.solicitante.matricula),
+    )
+    svc.delete_archivo(dto.id, _user("ADM-1", Role.ADMIN))
+    assert svc.list_for_solicitud(detail.folio) == []
+
+
+def test_delete_archivo_blocks_unrelated_user() -> None:
+    field_id = uuid4()
+    detail = _detail(fields=[_field_snap(field_id=field_id, accepted=[".pdf"])])
+    svc, *_ = _service([detail])
+    dto = svc.store_for_solicitud(
+        folio=detail.folio,
+        field_id=field_id,
+        kind=ArchivoKind.FORM,
+        uploaded_file=_upload(),
+        uploader=_user(matricula=detail.solicitante.matricula),
+    )
+    with pytest.raises(Unauthorized):
+        svc.delete_archivo(dto.id, _user("OTHER", Role.DOCENTE))
+    # No mutation on rejection.
+    assert len(svc.list_for_solicitud(detail.folio)) == 1
+
+
+def test_delete_archivo_blocked_once_review_started() -> None:
+    field_id = uuid4()
+    creada = _detail(fields=[_field_snap(field_id=field_id, accepted=[".pdf"])])
+    svc, repo, storage, lifecycle = _service([creada])
+    dto = svc.store_for_solicitud(
+        folio=creada.folio,
+        field_id=field_id,
+        kind=ArchivoKind.FORM,
+        uploaded_file=_upload(),
+        uploader=_user(matricula=creada.solicitante.matricula),
+    )
+    # Move the solicitud out of CREADA before attempting delete.
+    lifecycle.register(
+        _detail(
+            folio=creada.folio,
+            estado=Estado.EN_PROCESO,
+            fields=[_field_snap(field_id=field_id, accepted=[".pdf"])],
+        )
+    )
+    with pytest.raises(DomainValidationError):
+        svc.delete_archivo(dto.id, _user(matricula=creada.solicitante.matricula))
+    assert len(svc.list_for_solicitud(creada.folio)) == 1
+
+
+# -- replace-on-reupload schedules prior file deletion (on_commit) -------
+
+
+@pytest.mark.django_db(transaction=True)
+def test_reupload_schedules_prior_file_delete_on_commit() -> None:
+    field_id = uuid4()
+    detail = _detail(fields=[_field_snap(field_id=field_id, accepted=[".pdf"])])
+    svc, _repo, storage, _ = _service([detail])
+    svc.store_for_solicitud(
+        folio=detail.folio,
+        field_id=field_id,
+        kind=ArchivoKind.FORM,
+        uploaded_file=_upload(content=b"v1"),
+        uploader=_user(matricula=detail.solicitante.matricula),
+    )
+    svc.store_for_solicitud(
+        folio=detail.folio,
+        field_id=field_id,
+        kind=ArchivoKind.FORM,
+        uploaded_file=_upload(content=b"v2"),
+        uploader=_user(matricula=detail.solicitante.matricula),
+    )
+    # The prior bytes were scheduled for deletion and the on_commit hook ran.
+    assert storage.deleted

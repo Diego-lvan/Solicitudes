@@ -107,3 +107,68 @@ def test_open_rejects_path_traversal(
 @pytest.mark.django_db(transaction=True)
 def test_cleanup_pending_when_empty_is_noop(storage: LocalFileStorage) -> None:
     storage.cleanup_pending()  # should not raise
+
+
+@pytest.mark.django_db(transaction=True)
+def test_commit_raises_when_partial_vanished(
+    storage: LocalFileStorage, tmp_path: Path
+) -> None:
+    # Remove the .partial before the on_commit rename fires → the _commit hook
+    # hits FileNotFoundError and re-raises out of the commit.
+    with pytest.raises(FileNotFoundError), transaction.atomic():
+        rel = storage.save(
+            folio="SOL-2026-00301",
+            suggested_name="gone.pdf",
+            content=b"data",
+        )
+        partial = (tmp_path / rel).with_name((tmp_path / rel).name + ".partial")
+        os.remove(partial)
+
+
+@pytest.mark.django_db(transaction=True)
+def test_commit_reraises_oserror_on_rename(
+    storage: LocalFileStorage,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import solicitudes.archivos.storage.local as local_mod
+
+    def _boom(_src: str, _dst: str) -> None:
+        raise OSError("ENOSPC")
+
+    with pytest.raises(OSError), transaction.atomic():
+        storage.save(
+            folio="SOL-2026-00302",
+            suggested_name="x.pdf",
+            content=b"data",
+        )
+        monkeypatch.setattr(local_mod.os, "replace", _boom)
+    # Drain the leftover partial so it doesn't bleed into other tests.
+    storage.cleanup_pending()
+
+
+def test_cleanup_pending_logs_and_continues_on_oserror(
+    storage: LocalFileStorage,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import solicitudes.archivos.storage.local as local_mod
+    from solicitudes.archivos.storage.local import _pending
+
+    # Two queued partials: the first raises OSError (logged + skipped), the
+    # second a FileNotFoundError (silently continued).
+    _pending.paths.clear()
+    _pending.paths.extend([str(tmp_path / "a.partial"), str(tmp_path / "b.partial")])
+
+    calls: list[str] = []
+
+    def _remove(path: str) -> None:
+        calls.append(path)
+        if path.endswith("a.partial"):
+            raise OSError("locked")
+        raise FileNotFoundError
+
+    monkeypatch.setattr(local_mod.os, "remove", _remove)
+    storage.cleanup_pending()  # must not raise
+    assert len(calls) == 2
+    assert _pending.paths == []
