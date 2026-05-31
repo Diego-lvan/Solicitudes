@@ -1,0 +1,339 @@
+\documentclass[12pt,letterpaper]{report}
+\input{../preambulo.tex}
+
+\newcommand{\captura}[3]{%
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=#3\textwidth]{../../../docs/screenshots/#1}
+    \caption{#2}
+  \end{figure}}
+
+\begin{document}
+\portada{MANUAL DE USUARIO}{\strut}
+\tableofcontents\newpage
+
+% ===================================================================
+\chapter{Introducción}
+
+El \textbf{Sistema de Solicitudes} de la Universidad Autónoma de Zacatecas
+(UAZ) es una aplicación web que centraliza la gestión de trámites académicos
+y administrativos. Sustituye los procesos manuales en papel y por correo por
+un flujo digital donde cada solicitud queda registrada, con folio único,
+historial de cambios de estado y notificaciones automáticas.
+
+El sistema fue diseñado para acompañar el ciclo completo de un trámite: desde
+que el alumno lo inicia, pasando por la revisión del personal responsable,
+hasta su finalización con la respuesta entregada por la institución.
+
+\section{¿Para quién es este manual?}
+
+Este documento está dirigido a todos los usuarios del sistema, sin importar su
+rol. Cada capítulo describe las pantallas y acciones disponibles según el
+perfil con el que se ingresa. No se requiere conocimiento técnico para
+seguirlo: basta con tener acceso al sistema y un usuario válido.
+
+\section{Roles del sistema}
+
+El acceso y las acciones disponibles dependen del rol asignado a cada usuario.
+Los roles provienen del proveedor de identidad institucional (SIGA) y no se
+editan dentro de la aplicación.
+
+\begin{table}[H]
+\centering
+\caption{Roles del Sistema de Solicitudes}
+\begin{tabularx}{\textwidth}{>{\bfseries}l X}
+\toprule
+Rol & Descripción \\
+\midrule
+Alumno &
+  Inicia solicitudes desde el catálogo, llena los formularios, adjunta
+  archivos y da seguimiento a sus trámites. \\
+Docente &
+  Puede iniciar ciertos tipos de solicitud habilitados para su perfil. \\
+Control Escolar &
+  Atiende la cola de revisión de los trámites a su cargo, adjunta respuestas
+  y finaliza o cancela solicitudes. \\
+Responsable de Programa &
+  Revisa y resuelve las solicitudes vinculadas a su programa académico. \\
+Administrador &
+  Gestiona el catálogo de tipos de solicitud, las plantillas de PDF, la
+  biblioteca de imágenes, el catálogo de mentores, el directorio de usuarios
+  y los reportes. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent
+A lo largo del manual, cada capítulo indica qué rol o roles utilizan la
+pantalla descrita.
+
+% ===================================================================
+\chapter{Acceso}
+
+\section{Login de desarrollo}
+
+El selector de usuarios está disponible únicamente en el entorno de
+desarrollo (cuando \texttt{DEBUG=True}). Permite ingresar al sistema con un rol
+predefinido (columna izquierda) o como un usuario ya existente (columna
+derecha).
+
+\begin{quote}\small
+\textbf{Nota.} En producción este selector se reemplaza por el inicio de
+sesión institucional (SSO) de la UAZ; el usuario llegará directamente a la
+pantalla de autenticación oficial.
+\end{quote}
+
+\captura{01-dev-login.png}{Login de desarrollo: selección de rol o usuario.}{0.9}
+
+\section{Mi perfil}
+
+Una vez dentro, la vista \textbf{Mi perfil} muestra los datos provenientes del
+proveedor de identidad: matrícula, correo, rol, programa académico y semestre.
+Es una vista de \textbf{solo lectura}: cualquier corrección a estos datos se
+realiza en SIGA, no dentro del Sistema de Solicitudes.
+
+\captura{02-alumno-perfil.png}{Mi perfil: datos de identidad de solo lectura.}{0.9}
+
+% ===================================================================
+\chapter{Flujo del alumno}
+
+Este capítulo describe el recorrido completo de un alumno: desde elegir un
+trámite en el catálogo hasta consultar el detalle y la respuesta de la
+institución.
+
+\section{Catálogo --- Crear solicitud}
+
+El catálogo lista los tipos de solicitud que el alumno puede iniciar. Cada
+tarjeta indica el nombre del trámite y señala si requiere pago. Al
+seleccionar una tarjeta se abre el formulario correspondiente.
+
+\captura{03-alumno-crear-solicitud.png}{Catálogo de tipos de solicitud disponibles para el alumno.}{0.9}
+
+\section{Mis solicitudes}
+
+La vista \textbf{Mis solicitudes} es el histórico personal del alumno. Muestra
+cada trámite con su folio, tipo, fecha y estado actual. La lista puede
+filtrarse por folio, por estado o por rango de fechas para localizar
+rápidamente una solicitud.
+
+\captura{04-alumno-mis-solicitudes.png}{Mis solicitudes: histórico personal con folio, tipo, fecha y estado.}{0.9}
+
+\section{Formulario dinámico}
+
+Cada tipo de solicitud renderiza un formulario distinto, definido previamente
+por el administrador. Los formularios admiten distintos tipos de campo: texto,
+selección y archivos adjuntos. El alumno completa los datos requeridos y envía
+la solicitud, que a partir de ese momento entra al flujo de revisión.
+
+\captura{05-alumno-formulario-dinamico.png}{Formulario dinámico: campos definidos por el administrador para cada tipo.}{0.9}
+
+\section{Detalle de la solicitud}
+
+El detalle reúne toda la información de un trámite: los datos enviados, los
+archivos adjuntos y el historial completo de cambios de estado.
+
+Cuando la solicitud queda \textbf{finalizada}, aparece la sección
+\textbf{«Respuesta de la institución»} con los comentarios y archivos que
+entregó el personal. Esta respuesta solo es visible para el alumno una vez que
+el trámite cierra.
+
+\captura{06-alumno-detalle-solicitud.png}{Detalle de la solicitud: datos, archivos, historial y respuesta de la institución.}{0.9}
+
+% ===================================================================
+\chapter{Flujo de Control Escolar / Responsable de Programa}
+
+Este capítulo describe las pantallas del personal que atiende los trámites:
+Control Escolar y Responsable de Programa.
+
+\section{Cola de revisión}
+
+La cola de revisión lista las solicitudes pendientes para el rol responsable.
+Incluye filtros por folio, por solicitante y por estado, lo que permite
+priorizar el trabajo y encontrar trámites concretos.
+
+\captura{07-ce-cola-revision.png}{Cola de revisión: solicitudes pendientes del personal responsable.}{0.9}
+
+\section{Detalle de revisión}
+
+La vista de detalle del personal muestra los datos del solicitante, los
+archivos que adjuntó, el historial del trámite y las acciones disponibles:
+\textbf{atender}, \textbf{finalizar} o \textbf{cancelar}.
+
+Mientras la solicitud está \textbf{en proceso} aparecen dos tarjetas
+adicionales:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Adjuntar respuesta} --- permite enviar un comentario opcional y
+        hasta 10 archivos (máximo 10 MB cada uno) en cada envío. Es
+        \emph{append-only}: cada envío se registra como un lote y no puede
+        editarse desde la aplicación.
+  \item \textbf{Respuestas entregadas} --- listado cronológico de lo ya subido,
+        con autor, fecha, comentario y descarga por archivo.
+\end{itemize}
+
+\noindent
+El botón \textbf{«Descargar borrador»} (antes «Generar PDF») reemplaza a la
+descarga final: el alumno ya no descarga el PDF generado por el sistema, sino
+la respuesta entregada por el personal.
+
+\captura{08-ce-detalle-revision.png}{Detalle de revisión: datos del solicitante, acciones y tarjetas de respuesta.}{0.9}
+
+% ===================================================================
+\chapter{Administración del catálogo}
+
+Las pantallas de este capítulo están reservadas al rol \textbf{Administrador}.
+Aquí se define qué trámites existen, cómo se ven sus formularios y cómo se
+generan sus PDF.
+
+\section{Tipos de solicitud}
+
+El catálogo de tipos es un CRUD completo. Cada tipo define el rol que lo
+atiende, qué roles pueden crearlo, si requiere pago y la plantilla de PDF
+asociada.
+
+\captura{09-admin-tipos-list.png}{Tipos de solicitud: catálogo administrable.}{0.9}
+
+\section{Nuevo tipo de solicitud}
+
+El editor de un nuevo tipo ofrece una vista previa en vivo del formulario que
+verá el solicitante. Los campos se agregan de forma dinámica, definiendo su
+etiqueta, su tipo y si son obligatorios.
+
+\captura{10-admin-tipos-nuevo.png}{Nuevo tipo de solicitud: editor con vista previa del formulario.}{0.9}
+
+\section{Plantillas de PDF}
+
+Las plantillas son documentos HTML/CSS que WeasyPrint usa para producir el PDF
+final del trámite. Se versionan y pueden activarse o desactivarse según
+convenga.
+
+\captura{11-admin-plantillas-list.png}{Plantillas de PDF: listado versionado.}{0.9}
+
+\section{Editor de plantillas con preview en vivo}
+
+El editor de plantillas utiliza una distribución de tres columnas:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Panel izquierdo} --- pestañas \emph{Variables}, \emph{Campos}
+        (poblada con \texttt{?tipo\_id=}) e \emph{Imágenes}. Al hacer clic en
+        cualquier chip se inserta el snippet en la posición del cursor.
+  \item \textbf{Editor central} --- nombre, descripción, HTML y CSS con
+        validación en línea. Soporta plantillas Django
+        (\texttt{\{\{ solicitante.nombre \}\}}, \texttt{\{\% if ... \%\}},
+        etc.).
+  \item \textbf{Preview derecho} --- iframe con el render HTML refrescado en
+        vivo (con un \emph{debounce} de 500 ms). El botón
+        \textbf{«Ver PDF real»} abre el PDF renderizado por WeasyPrint en una
+        pestaña nueva, para verificar saltos de página y márgenes.
+\end{itemize}
+
+\noindent
+Las imágenes de la biblioteca se insertan con
+\texttt{\{\{ assets.<slug> \}\}} y se incrustan como \texttt{data:} URI al
+renderizar, de modo que el PDF queda autocontenido y reproducible.
+
+\captura{12-admin-plantilla-editor.png}{Editor de plantillas: panel de inserción, editor central y preview en vivo.}{0.95}
+
+\section{Biblioteca de imágenes}
+
+La biblioteca reúne los activos institucionales reutilizables (logos, sellos,
+firmas). Cada imagen tiene un \emph{slug} y un \emph{scope}:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Global} --- disponible para todas las plantillas
+        (\texttt{\{\{ assets.logo\_uaz \}\}}).
+  \item \textbf{Por plantilla} --- imágenes que solo sirven a una plantilla
+        concreta; se suben desde el modal del editor sin salir de la página.
+\end{itemize}
+
+\noindent
+Formatos aceptados: PNG, JPG o WEBP, con un máximo de 2 MB por archivo.
+
+\captura{22-admin-plantilla-assets.png}{Biblioteca de imágenes: activos institucionales reutilizables.}{0.9}
+
+% ===================================================================
+\chapter{Mentores}
+
+El módulo de mentores permite mantener el catálogo de personas habilitadas
+como mentores. Es una sección administrativa.
+
+\section{Catálogo de mentores}
+
+El listado muestra a los mentores con un filtro por estado activo. Permite
+seleccionar varios registros y desactivarlos en lote.
+
+\captura{13-admin-mentores-list.png}{Catálogo de mentores: listado con filtro por estado y acción en lote.}{0.9}
+
+\section{Agregar mentor}
+
+El alta manual registra un mentor a partir de su matrícula.
+
+\captura{14-admin-mentor-agregar.png}{Agregar mentor: alta manual por matrícula.}{0.9}
+
+\section{Importar CSV}
+
+La importación masiva acepta un archivo CSV con el encabezado
+\texttt{matricula}. Al procesarlo, el sistema reporta cuántas filas fueron
+\textbf{insertadas}, \textbf{reactivadas}, \textbf{omitidas} y
+\textbf{rechazadas}.
+
+\captura{15-admin-mentores-importar.png}{Importar mentores desde un archivo CSV.}{0.9}
+
+% ===================================================================
+\chapter{Directorio de usuarios}
+
+\section{Listado}
+
+El directorio es una vista de \textbf{solo lectura}: los datos los administra
+SIGA / el proveedor de identidad. Ofrece filtros por rol y una búsqueda libre
+para localizar usuarios.
+
+\captura{16-admin-usuarios-directorio.png}{Directorio de usuarios: listado de solo lectura con filtros.}{0.9}
+
+\section{Detalle de usuario}
+
+El detalle reúne la información de identidad, los datos académicos, la
+situación de mentoría y los datos de auditoría del usuario seleccionado.
+
+\captura{17-admin-usuario-detalle.png}{Detalle de usuario: identidad, datos académicos, mentoría y auditoría.}{0.9}
+
+% ===================================================================
+\chapter{Reportes}
+
+\section{Dashboard}
+
+El dashboard de reportes presenta métricas agregadas, con filtros por estado,
+tipo, responsable y rango de fechas. Incluye botones para exportar los
+resultados a CSV o a PDF.
+
+\captura{18-admin-reportes-dashboard.png}{Reportes --- Dashboard: métricas agregadas con filtros y exportación.}{0.9}
+
+\section{Lista detallada}
+
+La lista detallada es la vista tabular de las solicitudes que pasan los
+filtros del dashboard. Es exportable a CSV para su análisis externo.
+
+\captura{19-admin-reportes-lista.png}{Reportes --- Lista detallada: vista tabular exportable a CSV.}{0.9}
+
+% ===================================================================
+\chapter{Notificaciones (Mailhog)}
+
+En el entorno de desarrollo, Mailhog captura todos los correos salientes del
+sistema. Es una herramienta útil para inspeccionar las notificaciones que se
+disparan al crear o transicionar solicitudes, sin enviar correos reales.
+
+\section{Bandeja de Mailhog}
+
+La bandeja lista todos los correos capturados, con remitente, destinatario y
+asunto.
+
+\captura{20-mailhog-bandeja.png}{Bandeja de Mailhog: correos salientes capturados en desarrollo.}{0.9}
+
+\section{Detalle de un correo}
+
+Al abrir un correo se muestra su contenido completo, tal como lo recibiría el
+destinatario.
+
+\captura{21-mailhog-correo-detalle.png}{Detalle de un correo de confirmación capturado por Mailhog.}{0.9}
+
+\end{document}
