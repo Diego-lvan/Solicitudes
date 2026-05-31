@@ -1,0 +1,693 @@
+\documentclass[12pt,letterpaper]{report}
+\input{../preambulo.tex}
+\begin{document}
+\portada{MANUAL TÉCNICO}{}
+\tableofcontents\newpage
+
+% ============================================================================
+\chapter{Introducción y propósito}
+% ============================================================================
+
+El \textbf{Sistema de Solicitudes} de la Universidad Autónoma de Zacatecas (UAZ)
+es una aplicación web monolítica construida con Django que permite a alumnos y
+docentes presentar solicitudes académicas y administrativas mediante formularios
+dinámicos, dar seguimiento a su ciclo de vida con una máquina de estados, generar
+documentos PDF a partir de plantillas y gestionar todo el flujo con base en roles.
+
+Este \textbf{Manual Técnico} está dirigido al personal de desarrollo,
+mantenimiento y operación del sistema. Su propósito es documentar, de forma
+verificable y reproducible:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item Los requisitos del entorno de ejecución y las versiones del stack.
+  \item La arquitectura técnica y la organización del código.
+  \item El procedimiento de instalación y despliegue con Docker.
+  \item Los comandos de operación diaria.
+  \item Las variables de configuración.
+  \item La estrategia de pruebas (unitarias, integración, aceptación,
+        rendimiento) y de aseguramiento de calidad.
+  \item Las tareas de mantenimiento y extensión.
+  \item La solución de los problemas más comunes.
+\end{itemize}
+
+\paragraph{Convenciones.} Los identificadores de código (variables, funciones,
+clases, módulos) están en inglés; la copia visible para el usuario final está en
+español. A lo largo del manual, todo comando mostrado es ejecutable tal cual
+contra el repositorio; cada atajo de \texttt{make} se acompaña de su equivalente
+crudo de \texttt{docker compose}, de modo que no es indispensable tener
+\texttt{make} instalado.
+
+% ============================================================================
+\chapter{Requisitos del sistema}
+% ============================================================================
+
+El sistema se ejecuta íntegramente dentro de contenedores Docker, por lo que la
+máquina anfitriona requiere muy pocas dependencias instaladas de forma nativa.
+
+\section{Software requerido}
+
+\begin{longtable}{L{5.5cm} L{4cm} L{4.5cm}}
+\toprule
+\textbf{Componente} & \textbf{Versión mínima} & \textbf{Notas} \\
+\midrule
+\endhead
+Docker Desktop / Docker Engine & Engine 24+ & Incluye el motor de contenedores. \\
+Docker Compose & v2 & Se invoca como \texttt{docker compose} (subcomando, no el binario antiguo \texttt{docker-compose}). \\
+git & Cualquier versión reciente & Para clonar el repositorio. \\
+\texttt{make} & Opcional & Solo por conveniencia; cada objetivo tiene su equivalente crudo de \texttt{docker compose}. \\
+\bottomrule
+\end{longtable}
+
+\section{Versiones del stack (provistas por los contenedores)}
+
+Las siguientes versiones quedan fijadas por las imágenes y los archivos de
+dependencias, no por la máquina anfitriona:
+
+\begin{longtable}{L{6cm} L{4.5cm}}
+\toprule
+\textbf{Tecnología} & \textbf{Versión} \\
+\midrule
+\endhead
+Python & 3.13 (imagen \texttt{python:3.13.13-slim-bookworm}) \\
+Django & 5.1.15 \\
+Pydantic & 2.13.3 \\
+PostgreSQL (desarrollo) & 18.3 \\
+Nginx (TLS dev) & 1.30.0-alpine \\
+Mailhog & v1.0.1 \\
+Tailwind CSS (CLI standalone) & 4.2.4 \\
+WeasyPrint & 68.1 \\
+Gunicorn & 25.3.0 \\
+psycopg (binary) & 3.3.3 \\
+PyJWT & 2.12.1 \\
+\bottomrule
+\end{longtable}
+
+\paragraph{Recursos.} Para desarrollo basta una máquina con Docker Desktop y unos
+2~GB de RAM libres. Los puertos \texttt{80}, \texttt{443}, \texttt{5432} y
+\texttt{8025} del anfitrión deben estar disponibles (ver capítulo de Solución de
+problemas).
+
+% ============================================================================
+\chapter{Arquitectura técnica}
+% ============================================================================
+
+\section{Estilo arquitectónico}
+
+El sistema sigue una arquitectura por capas \textbf{Vista $\rightarrow$ Servicio
+$\rightarrow$ Repositorio} (\emph{View $\rightarrow$ Service $\rightarrow$
+Repository}), con DTOs de Pydantic v2 en cada frontera entre capas:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Vista (View).} Recibe la petición HTTP, valida la entrada con
+        formularios de Django y delega la lógica al servicio. Renderiza plantillas
+        del lado del servidor a partir de DTOs de Pydantic (no hay DRF ni API JSON
+        por defecto).
+  \item \textbf{Servicio (Service).} Contiene la lógica de negocio y las reglas de
+        transición de estado. No conoce HTTP ni el ORM; opera sobre DTOs.
+  \item \textbf{Repositorio (Repository).} Único lugar donde vive el ORM de
+        Django. Traduce entre modelos del ORM y DTOs.
+\end{itemize}
+
+Todas las excepciones heredan de \texttt{\_shared.exceptions.AppError} y un
+\emph{middleware} las mapea a respuestas HTTP. La validación de JWT se realiza
+también en \emph{middleware} (el proveedor de identidad es externo).
+
+\section{Stack tecnológico}
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Python 3.13 + Django 5.x} con plantillas del lado del servidor
+        (sin DRF).
+  \item \textbf{Pydantic v2} para los DTOs en cada frontera de capa.
+  \item \textbf{PostgreSQL} en producción y desarrollo; \textbf{SQLite} para la
+        suite de pruebas en proceso. El ORM queda contenido en los repositorios.
+  \item \textbf{Tailwind CSS v4} + \textbf{Alpine.js v3} + iconos \textbf{Lucide}
+        para la interfaz. El binario standalone de Tailwind se ejecuta dentro del
+        contenedor \texttt{web} (no requiere Node).
+  \item \textbf{WeasyPrint} para la generación de PDF a partir de plantillas
+        HTML/CSS.
+  \item \textbf{Validación de JWT} en \emph{middleware} (proveedor de autenticación
+        externo).
+  \item \textbf{Celery + Redis} para correo asíncrono (opcional).
+  \item \textbf{pytest + pytest-django}, con \texttt{model\_bakery},
+        \texttt{freezegun} y \texttt{responses} para las pruebas.
+\end{itemize}
+
+\section{Aplicaciones Django}
+
+El proyecto se organiza en una aplicación Django por dominio:
+
+\begin{longtable}{L{3.2cm} L{11cm}}
+\toprule
+\textbf{App} & \textbf{Responsabilidad} \\
+\midrule
+\endhead
+\texttt{\_shared} & Infraestructura transversal: excepciones (\texttt{AppError}),
+  \emph{middleware}, auditoría y utilidades comunes. \\
+\texttt{usuarios} & Validación de JWT, roles, perfil y directorio de usuarios.
+  El proveedor de identidad es externo (SIGA). \\
+\texttt{solicitudes} & Núcleo del sistema: tipos de solicitud, formularios
+  dinámicos, ciclo de vida (\emph{lifecycle}), revisión, archivos, respuesta de
+  la institución, generación de PDF, plantillas y biblioteca de imágenes. \\
+\texttt{notificaciones} & Envío de correo (notificaciones de creación y de
+  cambio de estado). \\
+\texttt{mentores} & Catálogo de mentores, alta manual e importación masiva por
+  CSV. \\
+\texttt{reportes} & Tablero (\emph{dashboard}) de métricas y exportaciones a CSV
+  y PDF. \\
+\bottomrule
+\end{longtable}
+
+% ============================================================================
+\chapter{Estructura del proyecto}
+% ============================================================================
+
+El repositorio separa la infraestructura (raíz) del código de la aplicación
+(\texttt{app/}). La raíz solo contiene \texttt{Dockerfile}, los
+\texttt{docker-compose.*.yml}, el \texttt{Makefile}, \texttt{.env.example} y
+configuración. Todo el código nuevo vive dentro de \texttt{app/}.
+
+\section{Árbol de la raíz del repositorio}
+
+\begin{lstlisting}
+solicitudes/
+|-- Dockerfile                  # multi-stage; dependencias de WeasyPrint incluidas
+|-- docker-compose.dev.yml      # nginx + web + db + mailhog
+|-- docker-compose.test.yml     # postgres-test (sin contenedor de app)
+|-- Makefile                    # atajos sobre docker compose exec web
+|-- .env.example                # plantilla de variables de entorno
+|-- nginx/                      # configuracion de nginx (TLS dev)
+|-- certs/                      # certificados autofirmados de desarrollo
+|-- app/                        # raiz del proyecto Django (montada en /app)
+|-- acceptance/                 # pruebas de aceptacion (behave + selenium)
+|-- srs/                        # SRS formal (LaTeX)
+`-- CLAUDE.md                   # reglas de arquitectura y flujo de trabajo
+\end{lstlisting}
+
+\section{Árbol de \texttt{app/}}
+
+\begin{lstlisting}
+app/
+|-- manage.py
+|-- pyproject.toml
+|-- requirements.txt            # dependencias de runtime
+|-- requirements-dev.txt        # dependencias de desarrollo y pruebas
+|-- config/                     # settings + URLs raiz
+|   |-- settings/               # base.py, dev.py, prod.py, test_postgres.py
+|   |-- urls.py
+|   |-- wsgi.py
+|   `-- asgi.py
+|-- _shared/                    # excepciones, middleware, auth, auditoria
+|-- usuarios/                   # JWT, roles, perfil, directorio
+|-- solicitudes/                # nucleo (tipos, formularios, lifecycle, PDF...)
+|-- notificaciones/             # envio de correo
+|-- mentores/                   # catalogo de mentores
+|-- reportes/                   # dashboard + exportaciones
+|-- templates/                  # base.html + components/ + por-app
+|-- static/                     # CSS, JS, imagenes
+|-- media/                      # archivos subidos (gitignored)
+|-- locale/                     # i18n (es_MX)
+`-- tests-e2e/                  # flujos de navegador (Playwright)
+\end{lstlisting}
+
+\section{Estructura interna de una app por capas}
+
+Cada app de dominio replica la misma estructura por capas. Por ejemplo,
+\texttt{usuarios/} contiene:
+
+\begin{lstlisting}
+usuarios/
+|-- views/            # capa de presentacion (HTTP)
+|-- services/         # logica de negocio
+|-- repositories/     # ORM contenido aqui
+|-- models/           # modelos del ORM de Django
+|-- schemas.py        # DTOs de Pydantic
+|-- exceptions.py     # subclases de AppError
+|-- dependencies.py   # cableado de dependencias (composicion)
+|-- permissions.py    # reglas de autorizacion por rol
+|-- middleware.py     # validacion de JWT
+|-- migrations/       # migraciones de base de datos
+|-- seeders.py        # datos sembrados de desarrollo
+`-- tests/            # pruebas unitarias y de integracion
+\end{lstlisting}
+
+El núcleo \texttt{solicitudes/} agrupa además submódulos por característica:
+\texttt{tipos/} (catálogo de tipos de solicitud), \texttt{formularios/}
+(formularios dinámicos), \texttt{intake/} (alta), \texttt{lifecycle/} (máquina de
+estados), \texttt{revision/} (cola y atención del personal), \texttt{archivos/}
+(adjuntos), \texttt{respuesta/} (respuesta de la institución), \texttt{pdf/}
+(generación con WeasyPrint), \texttt{plantilla\_assets/} (biblioteca de imágenes)
+y \texttt{plantillas} (editor de plantillas).
+
+% ============================================================================
+\chapter{Instalación y despliegue}
+% ============================================================================
+
+El stack de desarrollo se levanta por completo en Docker: \texttt{nginx}
+(terminación TLS en el puerto \texttt{443}), \texttt{web} (Django), \texttt{db}
+(PostgreSQL) y \texttt{mailhog} (captura de SMTP en el puerto \texttt{8025}).
+
+\section{Requisitos previos}
+
+\begin{itemize}[leftmargin=1.4em]
+  \item Docker Desktop (o Docker Engine 24+ con Compose v2).
+  \item \texttt{git}.
+\end{itemize}
+
+Los certificados TLS de desarrollo para \texttt{localhost} ya están incluidos en
+el repositorio; no es necesario generarlos.
+
+\section{Instalación paso a paso}
+
+\subsection{1. Levantar el stack}
+
+\begin{lstlisting}[language=bash]
+docker compose -f docker-compose.dev.yml up -d --build
+\end{lstlisting}
+
+\subsection{2. Aplicar migraciones}
+
+\begin{lstlisting}[language=bash]
+docker compose -f docker-compose.dev.yml exec -T web python manage.py migrate
+\end{lstlisting}
+
+\subsection{3. Sembrar datos de desarrollo}
+
+\begin{lstlisting}[language=bash]
+docker compose -f docker-compose.dev.yml exec -T web python manage.py seed
+\end{lstlisting}
+
+El sembrado es \textbf{idempotente}: volver a ejecutarlo preserva las filas
+agregadas a mano. Para reconstruir desde cero, use \texttt{--fresh}:
+
+\begin{lstlisting}[language=bash]
+docker compose -f docker-compose.dev.yml exec -T web python manage.py seed --fresh
+\end{lstlisting}
+
+Para ejecutar el sembrador de una sola app:
+
+\begin{lstlisting}[language=bash]
+docker compose -f docker-compose.dev.yml exec -T web python manage.py seed --only usuarios
+\end{lstlisting}
+
+\subsection{4. Acceder al sistema}
+
+Abra \url{https://localhost/auth/dev-login} y haga clic en cualquier rol para
+iniciar sesión. El navegador puede advertir sobre el certificado autofirmado;
+acéptelo una vez.
+
+\section{URLs disponibles (tras levantar y sembrar)}
+
+\begin{longtable}{L{7cm} L{7cm}}
+\toprule
+\textbf{URL} & \textbf{Descripción} \\
+\midrule
+\endhead
+\texttt{https://localhost/auth/dev-login} & Selector de login de desarrollo
+  (solo con \texttt{DEBUG}; será reemplazado por el SSO institucional). \\
+\texttt{https://localhost/auth/me} & Perfil del usuario actual. \\
+\texttt{https://localhost/solicitudes/admin/tipos/} & Catálogo de tipos de
+  solicitud (solo admin). \\
+\texttt{https://localhost/solicitudes/admin/tipos/nuevo/} & Crear un nuevo tipo. \\
+\texttt{https://localhost/solicitudes/admin/plantillas/} & Catálogo de plantillas
+  de PDF. \\
+\texttt{https://localhost/solicitudes/admin/plantilla-assets/} & Biblioteca de
+  imágenes para plantillas. \\
+\texttt{http://localhost:8025/} & Mailhog (correo saliente capturado). \\
+\bottomrule
+\end{longtable}
+
+\section{Usuarios sembrados}
+
+\texttt{python manage.py seed} crea un usuario por rol, con la matrícula que
+utiliza el selector de \texttt{/auth/dev-login}:
+
+\begin{longtable}{L{5cm} L{3.5cm} L{5cm}}
+\toprule
+\textbf{Rol} & \textbf{Matrícula} & \textbf{Correo} \\
+\midrule
+\endhead
+\texttt{ALUMNO} & \texttt{ALUMNO\_TEST} & \texttt{alumno.test@uaz.edu.mx} \\
+\texttt{DOCENTE} & \texttt{DOCENTE\_TEST} & \texttt{docente.test@uaz.edu.mx} \\
+\texttt{CONTROL\_ESCOLAR} & \texttt{CE\_TEST} & \texttt{ce.test@uaz.edu.mx} \\
+\texttt{RESPONSABLE\_PROGRAMA} & \texttt{RP\_TEST} & \texttt{rp.test@uaz.edu.mx} \\
+\texttt{ADMIN} & \texttt{ADMIN\_TEST} & \texttt{admin.test@uaz.edu.mx} \\
+\bottomrule
+\end{longtable}
+
+\section{Servicios del stack}
+
+\paragraph{Nginx con TLS.} El servicio \texttt{nginx-dev} termina TLS en
+\texttt{:443} (y expone \texttt{:80}), usando los certificados autofirmados de
+\texttt{certs/} montados en modo solo lectura. Hace de \emph{proxy} hacia el
+contenedor \texttt{web} (Django en \texttt{:8000}) y hacia \texttt{mailhog}.
+
+\paragraph{Mailhog.} Captura todo el correo saliente en desarrollo. Su bandeja se
+consulta en \url{http://localhost:8025/}; es útil para inspeccionar las
+notificaciones que dispara el sistema al crear o transicionar solicitudes.
+
+\paragraph{Base de datos.} El servicio \texttt{db} corre PostgreSQL con un
+\emph{healthcheck} (\texttt{pg\_isready}); el contenedor \texttt{web} espera a que
+esté sano antes de arrancar. Los datos persisten en el volumen
+\texttt{solicitudes\_dev\_data}.
+
+\paragraph{Web.} El contenedor \texttt{web} arranca el binario standalone de
+Tailwind en modo \emph{watch} y el servidor de desarrollo de Django de forma
+simultánea, montando \texttt{./app} como volumen para recarga en caliente.
+
+% ============================================================================
+\chapter{Comandos de operación}
+% ============================================================================
+
+El \texttt{Makefile} ofrece atajos; cada uno tiene su equivalente crudo de
+\texttt{docker compose}, de modo que \texttt{make} es opcional. En las
+equivalencias, \texttt{<DC>} abrevia
+\texttt{docker compose -f docker-compose.dev.yml}.
+
+\begin{longtable}{L{3.6cm} L{2.7cm} L{7.2cm}}
+\toprule
+\textbf{Tarea} & \textbf{\texttt{make}} & \textbf{Equivalente \texttt{docker compose}} \\
+\midrule
+\endhead
+Levantar el stack & \texttt{make up} & \texttt{<DC> up -d --build} \\
+Detener el stack & \texttt{make down} & \texttt{<DC> down} \\
+Reconstruir imagen web & \texttt{make build} & \texttt{<DC> build web} \\
+Ver logs de web & \texttt{make logs} & \texttt{<DC> logs -f web} \\
+Shell de Django & \texttt{make shell} & \texttt{<DC> exec web python manage.py shell} \\
+Aplicar migraciones & \texttt{make migrate} & \texttt{<DC> exec -T web python manage.py migrate} \\
+Generar migraciones & \texttt{make makemigrations} & \texttt{<DC> exec -T web python manage.py makemigrations} \\
+Sembrar datos (idempotente) & \texttt{make seed} & \texttt{<DC> exec -T web python manage.py seed} \\
+Sembrar datos (recrear) & \texttt{make seed-fresh} & \texttt{<DC> exec -T web python manage.py seed --fresh} \\
+Lint (ruff) & \texttt{make lint} & \texttt{<DC> exec -T web ruff check .} \\
+Type-check (mypy) & \texttt{make type} & \texttt{<DC> exec -T web mypy .} \\
+Pruebas (unit+integración) & \texttt{make test} & \texttt{<DC> exec -T web pytest} \\
+Cobertura (terminal) & \texttt{make coverage} & \texttt{<DC> exec -T web pytest -m "not e2e" --cov --cov-report=term-missing} \\
+Cobertura (HTML) & \texttt{make coverage-html} & \texttt{<DC> exec -T web pytest -m "not e2e" --cov --cov-report=html} \\
+Build CSS (una vez) & \texttt{make css} & \texttt{<DC> exec -T web tailwindcss -i /app/static/css/app.css -o /app/static/css/app.build.css --minify} \\
+Build CSS (watch) & \texttt{make css-watch} & \texttt{<DC> exec -T web tailwindcss ... --watch=always} \\
+Detener + borrar volúmenes & \texttt{make clean} & \texttt{<DC> down -v} \\
+\bottomrule
+\end{longtable}
+
+\paragraph{Ayuda.} \texttt{make help} lista todos los objetivos disponibles con su
+descripción.
+
+% ============================================================================
+\chapter{Configuración}
+% ============================================================================
+
+La configuración se controla por variables de entorno. El archivo
+\texttt{.env.example} es la plantilla de referencia. En desarrollo, los valores se
+inyectan directamente en \texttt{docker-compose.dev.yml}; en producción se
+proveen mediante un \texttt{.env} o el orquestador.
+
+\begin{longtable}{L{5cm} L{9cm}}
+\toprule
+\textbf{Variable} & \textbf{Descripción} \\
+\midrule
+\endhead
+\texttt{DJANGO\_SETTINGS\_MODULE} & Módulo de settings activo
+  (\texttt{config.settings.dev} o \texttt{...prod}). \\
+\texttt{SECRET\_KEY} & Clave secreta de Django. Cambiar en producción. \\
+\texttt{ALLOWED\_HOSTS} & Lista de hosts permitidos, separada por comas. \\
+\midrule
+\multicolumn{2}{l}{\textbf{Base de datos (producción)}} \\
+\texttt{DB\_HOST} & Host de PostgreSQL. \\
+\texttt{DB\_NAME} & Nombre de la base. \\
+\texttt{DB\_USER} & Usuario. \\
+\texttt{DB\_PASSWORD} & Contraseña. \\
+\texttt{DB\_PORT} & Puerto (por defecto \texttt{5432}). \\
+\midrule
+\multicolumn{2}{l}{\textbf{JWT / autenticación}} \\
+\texttt{JWT\_SECRET} & Secreto para validar los JWT. \\
+\texttt{JWT\_ALGORITHM} & Algoritmo (por defecto \texttt{HS256}). \\
+\texttt{AUTH\_PROVIDER\_LOGIN\_URL} & URL de login del proveedor externo. \\
+\texttt{AUTH\_PROVIDER\_LOGOUT\_URL} & URL de logout del proveedor externo. \\
+\midrule
+\multicolumn{2}{l}{\textbf{SIGA (proveedor de identidad)}} \\
+\texttt{SIGA\_BASE\_URL} & URL base del servicio SIGA. \\
+\texttt{SIGA\_TIMEOUT\_SECONDS} & Timeout en segundos (por defecto \texttt{5}). \\
+\midrule
+\multicolumn{2}{l}{\textbf{SMTP (correo, producción)}} \\
+\texttt{EMAIL\_HOST} & Host SMTP. \\
+\texttt{EMAIL\_PORT} & Puerto (por defecto \texttt{587}). \\
+\texttt{EMAIL\_HOST\_USER} & Usuario SMTP. \\
+\texttt{EMAIL\_HOST\_PASSWORD} & Contraseña SMTP. \\
+\texttt{EMAIL\_USE\_TLS} & Usar TLS (\texttt{true}/\texttt{false}). \\
+\texttt{EMAIL\_TIMEOUT} & Timeout en segundos (por defecto \texttt{10}). \\
+\texttt{DEFAULT\_FROM\_EMAIL} & Remitente por defecto
+  (\texttt{no-reply@uaz.edu.mx}). \\
+\midrule
+\multicolumn{2}{l}{\textbf{Sitio}} \\
+\texttt{SITE\_BASE\_URL} & URL base del sitio (\texttt{https://localhost} en dev). \\
+\bottomrule
+\end{longtable}
+
+\paragraph{Valores de desarrollo.} En \texttt{docker-compose.dev.yml} el contenedor
+\texttt{web} usa \texttt{DB\_HOST=db}, \texttt{DB\_NAME/USER/PASSWORD=solicitudes},
+\texttt{EMAIL\_HOST=mailhog} y \texttt{EMAIL\_PORT=1025}, entre otros.
+
+% ============================================================================
+\chapter{Pruebas}
+% ============================================================================
+
+El proyecto cuenta con varios niveles de prueba, cada uno con su propio comando.
+
+\section{Pruebas unitarias y de integración}
+
+Se ejecutan con \texttt{pytest} dentro del contenedor \texttt{web} (en proceso,
+sobre SQLite):
+
+\begin{lstlisting}[language=bash]
+make test
+# equivalente:
+docker compose -f docker-compose.dev.yml exec -T web pytest
+\end{lstlisting}
+
+Las pruebas se etiquetan con \emph{markers}. Para excluir las de navegador se usa
+\texttt{-m "not e2e"}; para ejecutar solo las de navegador, \texttt{-m e2e}. La
+suite de extremo a extremo en proceso usa Playwright y requiere un arranque único
+de Chromium dentro del contenedor:
+
+\begin{lstlisting}[language=bash]
+make e2e-install     # instala Chromium + dependencias (una vez)
+make e2e             # corre la suite Playwright (Tier 1 + Tier 2)
+make e2e-headed      # con navegador visible (--headed --slowmo 200)
+\end{lstlisting}
+
+También puede ejecutarse contra un PostgreSQL efímero con
+\texttt{make e2e-postgres}.
+
+\section{Cobertura}
+
+\begin{lstlisting}[language=bash]
+make coverage         # reporte en terminal con lineas faltantes
+make coverage-html    # reporte HTML en app/htmlcov/
+\end{lstlisting}
+
+Pasando \texttt{E2E=1} (por ejemplo \texttt{make coverage E2E=1}) se añade la suite
+Playwright a la medición. La cobertura global medida del proyecto es del
+\textbf{94\%} sobre 5515 sentencias.
+
+\section{Pruebas de aceptación (behave + Selenium)}
+
+Las pruebas de aceptación de extremo a extremo están escritas en \textbf{Gherkin
+(español)} con \textbf{behave} y se ejecutan con \textbf{Selenium} sobre Google
+Chrome contra el stack en ejecución. Viven en la carpeta \texttt{acceptance/} y
+cubren una historia por módulo del equipo:
+
+\begin{longtable}{L{4cm} L{4cm} L{6cm}}
+\toprule
+\textbf{Feature} & \textbf{Módulo} & \textbf{Historia} \\
+\midrule
+\endhead
+\texttt{acceso.feature} & usuarios & Inicio de sesión por rol / bloqueo de anónimos. \\
+\texttt{intake.feature} & solicitudes/intake & Alta de solicitudes desde el alumno. \\
+\texttt{archivos.feature} & solicitudes/archivos & Adjuntar y descargar archivos (con autorización). \\
+\texttt{revision.feature} & solicitudes/revision & Cola de revisión y atención del personal. \\
+\texttt{plantillas.feature} & solicitudes/pdf & Catálogo y editor de plantillas PDF. \\
+\texttt{mentores.feature} & mentores & Importación CSV de mentores. \\
+\texttt{reportes.feature} & reportes & Dashboard administrativo y export CSV. \\
+\bottomrule
+\end{longtable}
+
+\paragraph{Requisitos.} El stack debe estar levantado y sembrado
+(\texttt{make up \&\& make seed}); la suite ataca \texttt{https://localhost} (el
+\emph{driver} ignora el certificado autofirmado con \texttt{acceptInsecureCerts}).
+Google Chrome debe estar instalado (Selenium Manager descarga el \emph{driver}).
+Las dependencias se instalan en un \emph{virtualenv} aparte del proyecto Django:
+
+\begin{lstlisting}[language=bash]
+cd acceptance
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+\end{lstlisting}
+
+\paragraph{Ejecución.}
+
+\begin{lstlisting}[language=bash]
+cd acceptance
+.venv/bin/behave                          # toda la suite
+.venv/bin/behave features/intake.feature  # una sola feature
+.venv/bin/behave -D headless=false        # ver el navegador
+.venv/bin/behave -D base_url=https://localhost   # apuntar a otro entorno
+\end{lstlisting}
+
+Las aserciones se hacen siempre sobre lo que \textbf{ve el usuario} en el
+navegador (textos, URLs, páginas de error), nunca sobre códigos HTTP crudos.
+
+\section{Pruebas de rendimiento (JMeter)}
+
+Las pruebas de carga se ejecutan con Apache JMeter a partir del plan de prueba
+\texttt{solicitudes\_performance.jmx}, que ejercita los flujos críticos (login,
+alta de solicitud, cola de revisión, descarga de PDF) contra el stack en
+ejecución. Para correrlas sin interfaz gráfica:
+
+\begin{lstlisting}[language=bash]
+jmeter -n -t solicitudes_performance.jmx -l resultados.jtl -e -o reporte_html
+\end{lstlisting}
+
+El reporte HTML resultante (\texttt{reporte\_html/}) muestra latencias,
+\emph{throughput} y porcentaje de error por petición.
+
+\section{Complejidad ciclomática y mantenibilidad (radon)}
+
+La complejidad ciclomática y el índice de mantenibilidad se miden con
+\textbf{radon}:
+
+\begin{lstlisting}[language=bash]
+radon cc app/ -s -a      # complejidad ciclomatica (con promedio)
+radon mi app/            # indice de mantenibilidad
+\end{lstlisting}
+
+El código se mantiene en rango \textbf{A} de mantenibilidad en prácticamente todos
+los módulos, y la complejidad ciclomática por función es baja (rango A en la gran
+mayoría).
+
+\section{Estilo (PEP 8) y tipado}
+
+El cumplimiento de estilo se verifica con \textbf{ruff} y el tipado estático con
+\textbf{mypy} en modo estricto:
+
+\begin{lstlisting}[language=bash]
+make lint    # ruff check .
+make type    # mypy .
+\end{lstlisting}
+
+% ============================================================================
+\chapter{Mantenimiento y extensión}
+% ============================================================================
+
+\section{Añadir una nueva característica respetando las capas}
+
+Toda característica nueva debe respetar el flujo \textbf{Vista $\rightarrow$
+Servicio $\rightarrow$ Repositorio} y usar DTOs de Pydantic en las fronteras. El
+procedimiento recomendado es:
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textbf{Modelo y migración.} Defina o modifique el modelo del ORM en
+        \texttt{models/} y genere la migración con \texttt{make makemigrations},
+        luego \texttt{make migrate}.
+  \item \textbf{DTOs.} Declare los esquemas de Pydantic en \texttt{schemas.py}
+        para la entrada y la salida del servicio.
+  \item \textbf{Repositorio.} Implemente el acceso a datos en
+        \texttt{repositories/}, manteniendo el ORM contenido aquí; traduzca entre
+        modelos y DTOs.
+  \item \textbf{Servicio.} Codifique la lógica de negocio en \texttt{services/},
+        operando solo sobre DTOs (sin HTTP ni ORM).
+  \item \textbf{Excepciones.} Defina las excepciones de dominio en
+        \texttt{exceptions.py} como subclases de \texttt{AppError}, con su
+        \texttt{user\_message} en español.
+  \item \textbf{Vista y plantilla.} Implemente la vista en \texttt{views/},
+        validando la entrada con un formulario de Django y renderizando la
+        plantilla a partir de los DTOs.
+  \item \textbf{Cableado.} Registre las dependencias en \texttt{dependencies.py} y
+        las rutas en \texttt{urls.py}.
+  \item \textbf{Pruebas.} Agregue pruebas en \texttt{tests/} y verifique con
+        \texttt{make test} y \texttt{make coverage}.
+\end{enumerate}
+
+\paragraph{Añadir una app completa.} Cree la carpeta bajo \texttt{app/} replicando
+la estructura por capas, regístrela en \texttt{INSTALLED\_APPS}
+(\texttt{config/settings/base.py}) e incluya sus \texttt{urls.py} en
+\texttt{config/urls.py}.
+
+\section{Datos sembrados (seeders)}
+
+Para sembrar datos de una app nueva, agregue un \texttt{seeders.py} en la raíz de
+la app con una función \texttt{run(*, fresh: bool) -> None}. El comando
+\texttt{manage.py seed} lo descubre automáticamente:
+
+\begin{lstlisting}[language=python]
+# app/<su_app>/seeders.py
+DEPENDS_ON: list[str] = ["usuarios"]  # opcional: corre despues de estas apps
+
+def run(*, fresh: bool) -> None:
+    if fresh:
+        ...  # borra las filas que este seeder posee
+    ...      # update_or_create de sus filas de muestra
+\end{lstlisting}
+
+Use \texttt{update\_or\_create} para mantener la idempotencia y borre filas solo
+cuando \texttt{fresh} es verdadero.
+
+\section{Migraciones}
+
+Genere migraciones tras cualquier cambio de modelo con \texttt{make makemigrations}
+y aplíquelas con \texttt{make migrate}. Las migraciones se versionan junto con el
+código en la carpeta \texttt{migrations/} de cada app.
+
+% ============================================================================
+\chapter{Solución de problemas}
+% ============================================================================
+
+\section{Advertencia de certificado autofirmado}
+
+El \emph{stack} de desarrollo usa nginx con un certificado autofirmado para
+\texttt{localhost}. El navegador advertirá que la conexión no es de confianza la
+primera vez; acepte la excepción una sola vez. Para las pruebas de aceptación, el
+\emph{driver} de Selenium ya ignora el certificado mediante
+\texttt{acceptInsecureCerts}.
+
+\section{Puertos ocupados}
+
+El \emph{stack} expone los puertos \texttt{80}, \texttt{443}, \texttt{5432} y
+\texttt{8025} en el anfitrión. Si alguno está ocupado, el arranque fallará. Detenga
+el proceso que lo usa o ajuste el mapeo de puertos en
+\texttt{docker-compose.dev.yml}. Para verificar qué proceso ocupa un puerto:
+
+\begin{lstlisting}[language=bash]
+lsof -i :443
+\end{lstlisting}
+
+\section{Reconstruir la imagen}
+
+Si cambian las dependencias (\texttt{requirements.txt} /
+\texttt{requirements-dev.txt}) o el \texttt{Dockerfile}, reconstruya la imagen:
+
+\begin{lstlisting}[language=bash]
+make build
+# o forzando una reconstruccion completa:
+docker compose -f docker-compose.dev.yml build --no-cache web
+\end{lstlisting}
+
+\section{Estado inconsistente o base corrupta en desarrollo}
+
+Para partir de cero (detiene todo y borra los volúmenes, incluida la base de
+datos) y volver a levantar:
+
+\begin{lstlisting}[language=bash]
+make clean
+make up
+make migrate
+make seed
+\end{lstlisting}
+
+\section{Chromium ausente en pruebas de navegador}
+
+Si las pruebas Playwright fallan por falta de navegador, ejecute el arranque único:
+
+\begin{lstlisting}[language=bash]
+make e2e-install
+\end{lstlisting}
+
+\end{document}
