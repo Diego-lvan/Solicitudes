@@ -24,7 +24,7 @@ class ImportCsvView(AdminRequiredMixin, View):
             return render(request, self.template_name, {"form": form}, status=400)
 
         actor = getattr(request, "user_dto", None)
-        if actor is None:
+        if actor is None:  # pragma: no cover - AdminRequiredMixin garantiza auth; guarda defensiva
             return render(request, self.template_name, {"form": form}, status=403)
 
         importer = get_mentor_csv_importer()

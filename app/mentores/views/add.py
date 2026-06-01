@@ -26,7 +26,7 @@ class AddMentorView(AdminRequiredMixin, View):
             return render(request, self.template_name, {"form": form}, status=400)
 
         actor = getattr(request, "user_dto", None)
-        if actor is None:
+        if actor is None:  # pragma: no cover - AdminRequiredMixin garantiza auth; guarda defensiva
             # Should never reach this branch — AdminRequiredMixin enforces auth.
             return render(request, self.template_name, {"form": form}, status=403)
 

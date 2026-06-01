@@ -24,7 +24,7 @@ class DeactivateMentorView(AdminRequiredMixin, View):
 
     def post(self, request: HttpRequest, matricula: str) -> HttpResponse:
         actor = getattr(request, "user_dto", None)
-        if actor is None:
+        if actor is None:  # pragma: no cover - AdminRequiredMixin garantiza auth; guarda defensiva
             return redirect(reverse("mentores:list"))
         service = get_mentor_service()
         try:

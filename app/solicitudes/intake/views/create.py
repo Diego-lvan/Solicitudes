@@ -103,7 +103,8 @@ class CreateSolicitudView(CreatorRequiredMixin, View):
                     # atomic block so a failure rolls back the Solicitud too.
                     for name in request.FILES:
                         uploaded = request.FILES[name]
-                        if not isinstance(uploaded, UploadedFile):
+                        # request.FILES siempre entrega UploadedFile; guarda de tipos.
+                        if not isinstance(uploaded, UploadedFile):  # pragma: no cover
                             continue
                         if name == COMPROBANTE_FIELD:
                             archivos.store_for_solicitud(

@@ -114,7 +114,7 @@ class DefaultAutoFillResolver(AutoFillResolver):
     @staticmethod
     def _extract(source: FieldSource, user: UserDTO) -> Any:
         attr = _SOURCE_TO_USER_ATTR.get(source)
-        if attr is None:
+        if attr is None:  # pragma: no cover - enum exhaustivo; defensa ante FieldSource nuevo
             # Defensive — every non-USER_INPUT FieldSource has a mapping. A
             # mismatch here means a new variant was added to the enum without
             # extending the table; surface it loudly rather than persisting
