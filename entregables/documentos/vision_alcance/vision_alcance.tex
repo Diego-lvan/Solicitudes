@@ -1,0 +1,589 @@
+\documentclass[12pt,letterpaper]{report}
+\input{../preambulo.tex}
+
+% --- Encabezado/pie específicos de este documento ---
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Visión y Alcance --- Sistema de Solicitudes}
+\fancyhead[R]{\small Versión 1.0}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\begin{document}
+
+\portada{VISIÓN Y ALCANCE}{\strut}
+\tableofcontents\newpage
+
+% ============================================================
+\chapter{Introducción}
+
+% ------------------------------------------------------------
+\section{Propósito del documento}
+
+El presente documento de \textbf{Visión y Alcance} establece la dirección estratégica del \textit{Sistema de Solicitudes} de la Universidad Autónoma de Zacatecas (UAZ). Su finalidad es alinear a todos los interesados (patrocinadores, usuarios y equipo de desarrollo) en torno a una comprensión común de la oportunidad de negocio que motiva el proyecto, la visión del producto, las características que ofrecerá y, de manera explícita, los límites de lo que el sistema hará y no hará en su primera versión.
+
+A diferencia de la Especificación de Requerimientos de Software (SRS), que detalla el \emph{cómo} a nivel de requerimientos funcionales y de usuario, este documento se concentra en el \emph{qué} y el \emph{por qué} de alto nivel. Sigue la estructura clásica de un documento de Visión y Alcance propuesta por Karl Wiegers, organizando la información en requerimientos de negocio, alcance y limitaciones, contexto del negocio, características principales y criterios de éxito.
+
+% ------------------------------------------------------------
+\section{Alcance y audiencia}
+
+Este documento está dirigido a:
+
+\begin{itemize}
+    \item La \textbf{Dirección de la Unidad Académica} y otros patrocinadores, como base para la aprobación y financiamiento del proyecto.
+    \item El \textbf{personal administrativo} (Control Escolar, Responsables de Programa y administradores del sistema), como descripción de los beneficios y del impacto operativo esperado.
+    \item El \textbf{equipo de desarrollo}, como marco de referencia que delimita el alcance de la solución y orienta las decisiones de diseño.
+\end{itemize}
+
+El documento describe la visión completa del producto, distinguiendo entre lo que se incluye en la primera versión, lo que se contempla para versiones futuras y lo que queda explícitamente fuera del alcance.
+
+% ------------------------------------------------------------
+\section{Definiciones y abreviaturas}
+
+\begin{longtable}{|L{3cm}|L{10.5cm}|}
+    \hline
+    \textbf{Término} & \textbf{Definición} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{Término} & \textbf{Definición} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    UAZ & Universidad Autónoma de Zacatecas. \\
+    \hline
+    SIGA & Sistema Integral de Gestión Académica; sistema institucional que resguarda los datos maestros de alumnos y docentes. \\
+    \hline
+    JWT & \textit{JSON Web Token}; estándar de credencial firmada empleado por el proveedor de autenticación externo. \\
+    \hline
+    SMTP & \textit{Simple Mail Transfer Protocol}; protocolo de envío de correo electrónico. \\
+    \hline
+    Solicitud & Trámite académico o administrativo que un alumno o docente presenta a través del sistema (constancia, kardex, convalidación, apoyo, movilidad, etc.). \\
+    \hline
+    Tipo de solicitud & Plantilla configurable que define los datos requeridos, los archivos necesarios, el rol responsable y demás reglas de un trámite. \\
+    \hline
+    Folio & Identificador único e inmutable asignado a cada solicitud, con formato \texttt{SOL-AAAA-NNNNN}. \\
+    \hline
+    Mentor & Alumno registrado como mentor activo, exento de adjuntar comprobante de pago en ciertos tipos de solicitud. \\
+    \hline
+\end{longtable}
+
+% ============================================================
+\chapter{Requerimientos de Negocio}
+
+Este capítulo describe las oportunidades, objetivos y beneficios de alto nivel que justifican el desarrollo del Sistema de Solicitudes desde la perspectiva del negocio: la gestión académica y administrativa de la universidad.
+
+% ------------------------------------------------------------
+\section{Antecedentes y oportunidad del negocio}
+
+Actualmente, los trámites académicos y administrativos de la UAZ se gestionan mediante canales informales y heterogéneos: correos electrónicos, mensajes, formatos en papel y atención presencial sin registro ni trazabilidad. Esta situación genera tiempos de atención prolongados, duplicación de esfuerzos, pérdida de información, rechazos por documentación incompleta y la imposibilidad de medir el desempeño del proceso.
+
+El Sistema de Solicitudes representa una oportunidad significativa para transformar esta realidad. Los principales aspectos de valor son:
+
+\begin{enumerate}
+    \item \textbf{Mejora de procesos administrativos.} Centralizar y estandarizar las solicitudes reduce los tiempos de atención, elimina la duplicación de esfuerzos y permite al personal enfocarse en resolver trámites en lugar de recopilar información.
+
+    \item \textbf{Transparencia y trazabilidad.} Cada solicitud tendrá un folio único y un historial de seguimiento, lo que permite a los solicitantes conocer el estado de su trámite en todo momento y al personal demostrar que los trámites fueron atendidos.
+
+    \item \textbf{Reducción de errores.} Los formularios dinámicos garantizan que el solicitante envíe toda la información y documentación requerida desde el inicio, reduciendo los rechazos por información incompleta.
+
+    \item \textbf{Escalabilidad.} Al ser los tipos de solicitud configurables desde la base de datos (no desde el código), se pueden agregar nuevos tipos de trámite sin necesidad de desarrollo adicional.
+
+    \item \textbf{Generación de métricas.} Por primera vez se podrán obtener datos cuantitativos sobre volumen de solicitudes, tiempos de atención, tipos más demandados y carga de trabajo por área, lo que facilita la toma de decisiones.
+
+    \item \textbf{Integración con el ecosistema existente.} El sistema se integra como microservicio dentro de la arquitectura existente, aprovechando la autenticación centralizada y los datos del SIGA sin duplicar infraestructura.
+\end{enumerate}
+
+% ------------------------------------------------------------
+\section{Objetivos de negocio}
+
+Los objetivos de negocio expresan, en términos medibles cuando es posible, los resultados que la institución espera obtener con la solución:
+
+\begin{longtable}{|C{1.6cm}|L{12cm}|}
+    \hline
+    \textbf{ID} & \textbf{Objetivo de negocio} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Objetivo de negocio} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    ON-01 & Centralizar la gestión de solicitudes académicas y administrativas en una plataforma única accesible vía web, eliminando los canales informales. \\
+    \hline
+    ON-02 & Reducir los tiempos de atención de los trámites mediante el enrutamiento automático y la recepción de solicitudes completas desde el origen. \\
+    \hline
+    ON-03 & Proporcionar trazabilidad total del ciclo de vida de cada solicitud, con folio único e historial de seguimiento auditable. \\
+    \hline
+    ON-04 & Habilitar la configuración de nuevos tipos de trámite sin intervención del equipo de desarrollo, reduciendo el costo de evolución del sistema. \\
+    \hline
+    ON-05 & Generar información cuantitativa (métricas y reportes) que respalde la toma de decisiones de la gestión académica. \\
+    \hline
+    ON-06 & Modernizar la imagen institucional de los procesos administrativos, ofreciendo a alumnos y docentes una experiencia digital ordenada y confiable. \\
+    \hline
+\end{longtable}
+
+% ------------------------------------------------------------
+\section{Declaración de la visión del producto}
+
+La siguiente declaración de visión sintetiza, en formato Wiegers, la esencia del producto:
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{|l p{10cm}|}
+    \hline
+    \textbf{Para} & los alumnos y docentes de la Universidad Autónoma de Zacatecas \\
+    \textbf{Que} & necesitan solicitar trámites académicos y administrativos (constancias, kardex, convalidaciones, apoyos, movilidad, entre otros) de forma ordenada y con seguimiento \\
+    \textbf{El} & \textit{Sistema de Solicitudes} es un servicio web \\
+    \textbf{Que} & centraliza la creación, envío, atención y seguimiento de solicitudes con formularios dinámicos, enrutamiento automático por roles y generación de documentos PDF \\
+    \textbf{A diferencia de} & el proceso actual basado en correos electrónicos, mensajes informales y solicitudes presenciales sin registro ni trazabilidad \\
+    \textbf{Nuestro producto} & ofrece una plataforma única, configurable y trazable donde cada solicitud tiene un folio, un historial de seguimiento y notificaciones automáticas, integrada como microservicio al ecosistema tecnológico de la universidad \\
+    \hline
+\end{tabular}
+\caption{Enunciado de la visión del Sistema de Solicitudes.}
+\label{tab:vision}
+\end{table}
+
+% ------------------------------------------------------------
+\section{Beneficios para el negocio}
+
+Los beneficios esperados, derivados de los objetivos anteriores, se resumen a continuación:
+
+\begin{longtable}{|L{4cm}|L{9.5cm}|}
+    \hline
+    \textbf{Beneficiario} & \textbf{Beneficio} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{Beneficiario} & \textbf{Beneficio} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    Alumnos y docentes & Realizan trámites en línea, sin acudir presencialmente, con seguimiento claro del estado y notificaciones automáticas. \\
+    \hline
+    Control Escolar y Responsables de Programa & Reciben solicitudes completas y organizadas, atienden por un solo canal y reducen su carga operativa. \\
+    \hline
+    Administradores del sistema & Configuran tipos, formularios y plantillas de forma autónoma, sin depender del equipo de desarrollo. \\
+    \hline
+    Dirección de la Unidad Académica & Obtiene datos cuantitativos para la toma de decisiones y moderniza los procesos internos. \\
+    \hline
+    Institución (UAZ) & Estandariza, hace transparente y audita su gestión de trámites, mejorando la imagen y la eficiencia administrativa. \\
+    \hline
+\end{longtable}
+
+% ------------------------------------------------------------
+\section{Catálogo de requerimientos de negocio}
+
+Los requerimientos de negocio representan las necesidades de alto nivel (épicas) que el sistema debe satisfacer.
+
+\begin{longtable}{|C{1.6cm}|L{12cm}|}
+    \hline
+    \textbf{ID} & \textbf{Descripción} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Descripción} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    RN-01 & Centralizar la gestión de solicitudes académicas y administrativas en una plataforma única accesible vía web. \\
+    \hline
+    RN-02 & Permitir la configuración dinámica de tipos de solicitud, formularios y plantillas sin necesidad de modificar el código fuente. \\
+    \hline
+    RN-03 & Automatizar el enrutamiento de solicitudes al personal responsable según el tipo de trámite solicitado. \\
+    \hline
+    RN-04 & Proporcionar trazabilidad completa del ciclo de vida de cada solicitud con historial de seguimiento. \\
+    \hline
+    RN-05 & Notificar a las partes involucradas (responsables y solicitantes) sobre eventos relevantes mediante correo electrónico. \\
+    \hline
+    RN-06 & Generar documentos oficiales (constancias, etc.) a partir de plantillas configurables con variables dinámicas. \\
+    \hline
+    RN-07 & Ofrecer métricas y reportes sobre el volumen, tipos y estados de las solicitudes para la toma de decisiones. \\
+    \hline
+    RN-08 & Integrarse con los servicios existentes de la universidad (autenticación centralizada y SIGA) como un microservicio independiente. \\
+    \hline
+    RN-09 & Gestionar excepciones de pago para alumnos mentores mediante una lista administrable. \\
+    \hline
+\end{longtable}
+
+% ============================================================
+\chapter{Alcance y Limitaciones}
+
+Este capítulo delimita explícitamente qué entrega el sistema en su primera versión, qué se contempla para el futuro y qué queda fuera del alcance. Esta delimitación es esencial para administrar las expectativas de los interesados y controlar el esfuerzo de desarrollo.
+
+% ------------------------------------------------------------
+\section{Descripción de la solución}
+
+El Sistema de Solicitudes es una aplicación web que funciona como microservicio dentro de la arquitectura de servicios de la universidad. La solución se compone de los siguientes elementos clave:
+
+\begin{enumerate}
+    \item \textbf{Catálogo configurable de tipos de solicitud.} Un administrador puede definir nuevos tipos de solicitud (por ejemplo, constancia de estudios o solicitud de movilidad) directamente desde la interfaz, sin intervenir el código. Cada tipo especifica los datos requeridos, los archivos necesarios, si requiere pago, el rol responsable y los roles autorizados para crearlo.
+
+    \item \textbf{Motor de formularios dinámicos.} Cada tipo de solicitud tiene asociado un formulario cuyos campos son configurables (texto, área de texto, número, fecha, selección, archivo). Esto permite que un mismo sistema soporte solicitudes con requisitos completamente distintos.
+
+    \item \textbf{Flujo de solicitudes con estados.} Cada solicitud atraviesa un ciclo de vida definido (Creada $\rightarrow$ En proceso $\rightarrow$ Finalizada o Cancelada), con registro de cada transición.
+
+    \item \textbf{Enrutamiento automático.} Al crear una solicitud, el sistema la dirige automáticamente al personal con el rol correspondiente (Control Escolar, Responsable de Programa, etc.).
+
+    \item \textbf{Generador de documentos PDF.} Para los tipos que requieren un documento de respuesta (como constancias), el sistema genera PDF a partir de plantillas con variables que se sustituyen con datos del solicitante.
+
+    \item \textbf{Notificaciones por correo.} El sistema envía correos electrónicos al personal cuando recibe una solicitud nueva y al solicitante cuando cambia el estado de su trámite.
+
+    \item \textbf{Gestión de mentores.} El administrador puede mantener una lista de alumnos mentores activos que están exentos de adjuntar comprobante de pago en ciertos tipos de solicitud.
+
+    \item \textbf{Dashboard y reportes.} Paneles con métricas sobre solicitudes (por tipo, estado y periodo) con opción de exportar a CSV y PDF.
+\end{enumerate}
+
+% ------------------------------------------------------------
+\section{Alcance de la primera versión}
+
+La primera versión del Sistema de Solicitudes incluye las siguientes capacidades:
+
+\begin{itemize}
+    \item Gestión del catálogo de tipos de solicitud (alta, edición y baja).
+    \item Configuración de formularios dinámicos por tipo de solicitud.
+    \item Creación de solicitudes por alumnos y docentes, con generación de folio único.
+    \item Ciclo de vida de solicitudes (estados y seguimiento auditable).
+    \item Enrutamiento automático al personal responsable por rol.
+    \item Notificaciones por correo electrónico ante eventos relevantes.
+    \item Generación de documentos PDF a partir de plantillas con variables.
+    \item Gestión de la lista de alumnos mentores (exención de comprobante de pago).
+    \item Dashboard de métricas y exportación de reportes (CSV y PDF).
+    \item Gestión de archivos adjuntos (carga individual y por archivo \texttt{.zip}, descarga por el personal).
+    \item Integración con autenticación externa (consumo de JWT).
+    \item Integración con el SIGA para la consulta de datos de usuarios.
+\end{itemize}
+
+% ------------------------------------------------------------
+\section{Alcance de versiones futuras}
+
+Las siguientes capacidades no forman parte de la primera versión, pero se contemplan como posibles extensiones en versiones posteriores:
+
+\begin{longtable}{|C{1.6cm}|L{12cm}|}
+    \hline
+    \textbf{ID} & \textbf{Capacidad futura} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Capacidad futura} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    VF-01 & \textbf{Inicio de sesión institucional (SSO).} Integración plena con el proveedor de identidad institucional (iniciativa 010), de modo que el acceso se realice mediante las credenciales únicas de la universidad. \\
+    \hline
+    VF-02 & \textbf{Firma electrónica o digital.} Incorporación de firma digital a los documentos generados para dotarlos de validez oficial reforzada. \\
+    \hline
+    VF-03 & \textbf{Pasarela de pagos en línea.} Procesamiento real de pagos dentro del sistema, en sustitución del esquema actual de adjuntar comprobante. \\
+    \hline
+    VF-04 & \textbf{Aplicación móvil nativa.} Aplicaciones dedicadas para Android e iOS, complementarias al acceso web responsivo. \\
+    \hline
+    VF-05 & \textbf{Mensajería interna.} Canal de comunicación directa entre solicitante y responsable más allá de las observaciones de seguimiento y las notificaciones por correo. \\
+    \hline
+    VF-06 & \textbf{Catálogo extendido de tipos de campo.} Nuevos tipos de campo dinámico para soportar trámites con requisitos no previstos en el modelo inicial. \\
+    \hline
+\end{longtable}
+
+% ------------------------------------------------------------
+\section{Limitaciones y exclusiones}
+
+Quedan \textbf{explícitamente fuera del alcance} de este producto, en cualquiera de sus versiones planeadas en el presente documento:
+
+\begin{itemize}
+    \item \textbf{Autenticación y gestión de sesiones.} Se delega por completo al proveedor externo. El sistema no implementa registro, inicio de sesión ni recuperación de contraseña propios. El inicio de sesión institucional (SSO) se aborda como iniciativa independiente (iniciativa 010), fuera del alcance de esta versión.
+    \item \textbf{Gestión de datos maestros de alumnos y docentes.} Los datos de usuarios se consultan al SIGA; no se crean ni modifican en este sistema.
+    \item \textbf{Pagos en línea reales.} El sistema no procesa pagos. Únicamente registra si se requiere comprobante y permite adjuntarlo.
+    \item \textbf{Firma electrónica o digital.} Los documentos generados no llevan firma digital en esta versión.
+    \item \textbf{Aplicación móvil nativa.} El sistema es únicamente web. Se diseña con responsividad para el acceso desde dispositivos móviles, pero no existe una aplicación nativa.
+    \item \textbf{Chat o mensajería interna.} La comunicación entre solicitante y responsable se limita a las observaciones del seguimiento y a las notificaciones por correo.
+\end{itemize}
+
+% ============================================================
+\chapter{Contexto del Negocio}
+
+% ------------------------------------------------------------
+\section{Perfiles de los stakeholders}
+
+\begin{longtable}{|L{3cm}|L{3.5cm}|L{7cm}|}
+    \hline
+    \textbf{Stakeholder} & \textbf{Rol} & \textbf{Interés / Expectativa} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{Stakeholder} & \textbf{Rol} & \textbf{Interés / Expectativa} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    Alumnos & Solicitantes principales & Realizar trámites de forma rápida, sencilla y con seguimiento claro, sin acudir presencialmente ni enviar correos sin respuesta. \\
+    \hline
+    Docentes & Solicitantes secundarios & Solicitar listas de alumnos, constancias, apoyos SNI, estímulos y otros trámites de forma digitalizada. \\
+    \hline
+    Departamento Escolar (Control Escolar) & Personal que atiende solicitudes & Recibir solicitudes completas y organizadas, con toda la documentación desde el inicio, y reducir la carga de atención por múltiples canales. \\
+    \hline
+    Responsable de Programa & Personal que atiende solicitudes & Atender las solicitudes específicas de su programa de forma eficiente, con visibilidad clara de las pendientes. \\
+    \hline
+    Administrador del sistema & Configurador y supervisor & Configurar nuevos tipos de solicitud, formularios y plantillas sin depender del equipo de desarrollo, con visibilidad total y métricas. \\
+    \hline
+    Equipo de desarrollo & Desarrolladores & Contar con requerimientos claros, una arquitectura de microservicios bien definida y APIs documentadas para la integración. \\
+    \hline
+    Dirección de la Unidad Académica & Patrocinador & Mejorar la eficiencia administrativa, disponer de datos para la toma de decisiones y modernizar los procesos internos. \\
+    \hline
+\end{longtable}
+
+\subsection*{Clases de usuario y permisos}
+
+La siguiente tabla resume las capacidades de cada clase de usuario sobre las solicitudes:
+
+\begin{longtable}{|L{3.5cm}|C{2.6cm}|C{2.8cm}|C{2.6cm}|}
+    \hline
+    \textbf{Rol} & \textbf{Crea} & \textbf{Atiende} & \textbf{Administra} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{Rol} & \textbf{Crea} & \textbf{Atiende} & \textbf{Administra} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    Alumno & Sí & No & No \\
+    \hline
+    Docente & Sí & No & No \\
+    \hline
+    Control Escolar & No & Sí (asignadas a su rol) & No \\
+    \hline
+    Responsable de Programa & No & Sí (asignadas a su rol) & No \\
+    \hline
+    Administrador & No & Visibilidad total & Sí \\
+    \hline
+\end{longtable}
+
+% ------------------------------------------------------------
+\section{Diagrama de contexto}
+
+El Sistema de Solicitudes se ubica al centro del ecosistema y se relaciona con cinco tipos de actores y tres sistemas externos. La siguiente tabla describe esas interacciones (equivale a un diagrama de contexto en forma tabular):
+
+\begin{longtable}{|L{4cm}|C{2.2cm}|L{7cm}|}
+    \hline
+    \textbf{Entidad} & \textbf{Tipo} & \textbf{Interacción con el sistema} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{Entidad} & \textbf{Tipo} & \textbf{Interacción con el sistema} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    Alumno & Actor & Crea, consulta, da seguimiento y cancela sus propias solicitudes. \\
+    \hline
+    Docente & Actor & Crea, consulta, da seguimiento y cancela sus propias solicitudes. \\
+    \hline
+    Control Escolar & Actor & Atiende las solicitudes asignadas, cambia su estado, agrega observaciones y genera documentos PDF. \\
+    \hline
+    Responsable de Programa & Actor & Atiende las solicitudes asignadas a su programa, con las mismas capacidades que Control Escolar. \\
+    \hline
+    Administrador & Actor & Configura el catálogo de tipos, los formularios, las plantillas y la lista de mentores; consulta métricas. \\
+    \hline
+    Proveedor de Autenticación (JWT) & Sistema externo & Emite tokens JWT que el sistema consume para identificar al usuario y su rol (entrada). \\
+    \hline
+    SIGA & Sistema externo & Provee datos completos de alumnos y docentes vía API REST, consultados por matrícula (salida). \\
+    \hline
+    Servicio SMTP & Sistema externo & Recibe del sistema las instrucciones para enviar las notificaciones por correo (salida). \\
+    \hline
+\end{longtable}
+
+% ------------------------------------------------------------
+\section{Prioridades del proyecto}
+
+La siguiente tabla establece las prioridades del proyecto entre las dimensiones de calendario, características y costo, orientando las decisiones cuando surgen conflictos:
+
+\begin{longtable}{|L{3.5cm}|L{4cm}|L{6cm}|}
+    \hline
+    \textbf{Dimensión} & \textbf{Prioridad} & \textbf{Criterio} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{Dimensión} & \textbf{Prioridad} & \textbf{Criterio} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    Características (alcance) & Alta & El conjunto de características de la primera versión es el núcleo de valor; se prioriza entregarlo completo y funcional. \\
+    \hline
+    Calidad & Alta & La trazabilidad, la seguridad de los datos y la confiabilidad son imprescindibles dada la naturaleza de la información gestionada. \\
+    \hline
+    Calendario & Media & Existe interés en una entrega oportuna, pero puede ajustarse para preservar el alcance y la calidad del núcleo. \\
+    \hline
+    Costo & Media & El proyecto reaprovecha la infraestructura existente (autenticación y SIGA), lo que acota el costo. \\
+    \hline
+\end{longtable}
+
+% ------------------------------------------------------------
+\section{Supuestos}
+
+\begin{enumerate}
+    \item El servicio de autenticación externo (proveedor de JWT) estará operativo y proporcionará tokens válidos con los datos necesarios (matrícula, correo, rol).
+    \item El SIGA tendrá disponible una API para consultar datos de alumnos y docentes por matrícula.
+    \item Los usuarios contarán con un navegador web moderno y conexión a internet.
+    \item El personal administrativo posee conocimientos básicos de uso de aplicaciones web.
+    \item Los tipos de solicitud iniciales serán configurados por el administrador antes del lanzamiento.
+    \item El servidor de despliegue tendrá capacidad suficiente para almacenar los archivos adjuntos generados por las solicitudes.
+\end{enumerate}
+
+% ------------------------------------------------------------
+\section{Dependencias}
+
+\begin{longtable}{|C{1.6cm}|L{4.5cm}|L{7.4cm}|}
+    \hline
+    \textbf{ID} & \textbf{Dependencia} & \textbf{Descripción} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Dependencia} & \textbf{Descripción} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    DE-01 & Proveedor de autenticación & Servicio externo que autentica usuarios y emite tokens JWT. El sistema no implementa login propio; depende de este servicio para identificar al usuario y su rol. \\
+    \hline
+    DE-02 & SIGA (API de datos) & Sistema externo que contiene la información completa de alumnos y docentes (nombre, programa, semestre, etc.). El sistema consulta estos datos vía API REST usando la matrícula. \\
+    \hline
+    DE-03 & Servicio SMTP & Servidor de correo electrónico para el envío de notificaciones; puede ser un servicio institucional o un proveedor externo. \\
+    \hline
+    DE-04 & Infraestructura de red & Conectividad entre el servidor del sistema, el proveedor de autenticación, el SIGA y el servicio SMTP. \\
+    \hline
+\end{longtable}
+
+% ------------------------------------------------------------
+\section{Riesgos del negocio}
+
+\begin{longtable}{|C{1.2cm}|L{5.5cm}|C{1.5cm}|L{5cm}|}
+    \hline
+    \textbf{ID} & \textbf{Riesgo} & \textbf{Nivel} & \textbf{Mitigación} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Riesgo} & \textbf{Nivel} & \textbf{Mitigación} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    RI-01 & \textbf{Baja adopción.} El personal y los alumnos continúan usando canales informales. & Alto & Capacitación, interfaz intuitiva y comunicación institucional sobre el uso obligatorio del sistema. \\
+    \hline
+    RI-02 & \textbf{Dependencia de servicios externos.} Si el proveedor de JWT o el SIGA fallan, el sistema queda parcialmente inoperativo. & Medio & Manejo de errores robusto, cacheo temporal de datos del SIGA y mensajes claros ante indisponibilidad. \\
+    \hline
+    RI-03 & \textbf{Resistencia al cambio.} El personal administrativo puede resistirse a cambiar sus procesos habituales. & Medio & Involucrar al personal desde el diseño y mostrar beneficios concretos. \\
+    \hline
+    RI-04 & \textbf{Tipos de solicitud no previstos.} Pueden surgir trámites con requisitos que el modelo dinámico actual no soporte. & Bajo & El diseño de formularios es flexible; el catálogo de tipos de campo puede extenderse. \\
+    \hline
+    RI-05 & \textbf{Seguridad de datos.} Las solicitudes pueden contener información sensible. & Alto & HTTPS, validación de tokens JWT, control de acceso por roles y almacenamiento seguro de archivos. \\
+    \hline
+    RI-06 & \textbf{Volumen de archivos.} La acumulación de adjuntos puede consumir almacenamiento significativo. & Bajo & Políticas de retención, límites de tamaño por archivo y compresión. \\
+    \hline
+\end{longtable}
+
+% ============================================================
+\chapter{Características Principales del Producto}
+
+Las características principales agrupan, a alto nivel, las funcionalidades que el producto ofrece. Cada característica se vincula con uno o más requerimientos de negocio.
+
+\begin{longtable}{|C{1.6cm}|L{4.5cm}|L{6cm}|C{1.4cm}|}
+    \hline
+    \textbf{ID} & \textbf{Característica} & \textbf{Descripción} & \textbf{RN} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Característica} & \textbf{Descripción} & \textbf{RN} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    CP-01 & Catálogo dinámico de trámites & Alta, edición y baja de tipos de solicitud configurables sin tocar código. & RN-02 \\
+    \hline
+    CP-02 & Formularios dinámicos & Campos configurables por tipo (texto, número, fecha, selección, archivo) con validaciones. & RN-02 \\
+    \hline
+    CP-03 & Ciclo de vida con estados & Estados Creada, En proceso, Finalizada y Cancelada, con historial de transiciones. & RN-04 \\
+    \hline
+    CP-04 & Enrutamiento por rol & Asignación automática de cada solicitud al rol responsable definido en el tipo. & RN-03 \\
+    \hline
+    CP-05 & Generación de PDF por plantilla & Documentos generados a partir de plantillas con variables sustituibles. & RN-06 \\
+    \hline
+    CP-06 & Archivos adjuntos & Carga individual y por \texttt{.zip}, organización por folio y descarga por el personal. & RN-01 \\
+    \hline
+    CP-07 & Notificaciones por correo & Avisos al responsable y al solicitante ante creación y cambios de estado. & RN-05 \\
+    \hline
+    CP-08 & Gestión de mentores & Lista administrable de alumnos mentores exentos de comprobante de pago. & RN-09 \\
+    \hline
+    CP-09 & Dashboard y reportes & Métricas por tipo, estado y periodo, con exportación a CSV y PDF. & RN-07 \\
+    \hline
+    CP-10 & Integración institucional & Consumo de JWT del proveedor de autenticación e integración con el SIGA como microservicio. & RN-08 \\
+    \hline
+\end{longtable}
+
+\noindent\textbf{Árbol de características.} A modo de resumen, el sistema se organiza en siete módulos funcionales:
+
+\begin{itemize}
+    \item \textbf{Gestión de Catálogo:} alta, edición y baja de tipos de solicitud.
+    \item \textbf{Formularios Dinámicos:} configuración de campos y validaciones por tipo.
+    \item \textbf{Solicitudes:} creación, consulta, cancelación y seguimiento por parte del solicitante.
+    \item \textbf{Atención:} listado de asignadas, cambio de estado y generación de documentos por parte del personal.
+    \item \textbf{Plantillas:} gestión de plantillas de documentos con variables sustituibles.
+    \item \textbf{Mentores:} administración de la lista de alumnos mentores exentos de pago.
+    \item \textbf{Métricas:} dashboard y exportación de reportes.
+\end{itemize}
+
+% ============================================================
+\chapter{Criterios de Éxito}
+
+El proyecto se considerará exitoso cuando se cumplan los siguientes criterios, alineados con los objetivos de negocio:
+
+\begin{longtable}{|C{1.6cm}|L{12cm}|}
+    \hline
+    \textbf{ID} & \textbf{Criterio de éxito} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Criterio de éxito} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+
+    CE-01 & Los alumnos y docentes pueden crear y dar seguimiento a sus solicitudes en línea, sin acudir presencialmente. \\
+    \hline
+    CE-02 & Toda solicitud cuenta con un folio único y un historial de seguimiento completo y auditable. \\
+    \hline
+    CE-03 & El personal atiende exclusivamente las solicitudes asignadas a su rol, recibiéndolas completas desde el origen. \\
+    \hline
+    CE-04 & Un administrador puede dar de alta un nuevo tipo de solicitud, con su formulario y su plantilla, sin intervención del equipo de desarrollo. \\
+    \hline
+    CE-05 & El sistema genera correctamente los documentos PDF a partir de plantillas para los tipos que lo requieren. \\
+    \hline
+    CE-06 & Las notificaciones por correo se envían ante la creación y los cambios de estado, sin afectar la operación si el servicio SMTP falla. \\
+    \hline
+    CE-07 & El dashboard presenta métricas confiables por tipo, estado y periodo, con exportación a CSV y PDF. \\
+    \hline
+    CE-08 & El sistema opera como microservicio independiente, integrándose con la autenticación externa y el SIGA sin duplicar infraestructura. \\
+    \hline
+    CE-09 & La adopción del sistema desplaza progresivamente a los canales informales como vía oficial de los trámites cubiertos. \\
+    \hline
+\end{longtable}
+
+\end{document}
