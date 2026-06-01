@@ -208,4 +208,4 @@ class DefaultLifecycleService(LifecycleService):
         # Views only dispatch the three documented actions, so this branch is
         # unreachable from HTTP. Surfacing as ValueError makes the source of
         # the bug clear if it ever fires.
-        raise ValueError(f"Unknown action: {action!r}")
+        raise ValueError(f"Unknown action: {action!r}")  # pragma: no cover

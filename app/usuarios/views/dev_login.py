@@ -76,7 +76,7 @@ class DevLoginView(View):
             except ValueError:
                 return _bad_request("rol inválido")
             preset = next((p for p in _QUICKSTART_USERS if p[0] is role), None)
-            if preset is None:
+            if preset is None:  # pragma: no cover - todos los roles tienen preset; guarda defensiva
                 return _bad_request("rol no preconfigurado")
             _, matricula, email = preset
             repo.upsert(

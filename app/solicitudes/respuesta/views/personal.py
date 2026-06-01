@@ -1,6 +1,8 @@
 """Handler-side view: create a response batch."""
 from __future__ import annotations
 
+from typing import Any
+
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
@@ -13,6 +15,24 @@ from solicitudes.respuesta.dependencies import get_respuesta_service
 from solicitudes.respuesta.forms.respuesta_upload_form import RespuestaUploadForm
 from solicitudes.respuesta.schemas import CreateRespuestaInput, UploadedFile
 from solicitudes.revision.permissions import ReviewerRequiredMixin
+
+
+def _flash_form_errors(request: HttpRequest, form: RespuestaUploadForm) -> None:
+    for err_list in form.errors.values():
+        for err in err_list:
+            messages.error(request, err)
+
+
+def _build_uploaded_files(files: list[Any]) -> list[UploadedFile]:
+    return [
+        UploadedFile(
+            nombre_original=f.name or "archivo",
+            content_type=f.content_type or "application/octet-stream",
+            size_bytes=f.size or 0,
+            content=f.read(),
+        )
+        for f in files
+    ]
 
 
 class CreateRespuestaView(ReviewerRequiredMixin, View):
@@ -29,22 +49,11 @@ class CreateRespuestaView(ReviewerRequiredMixin, View):
         target = reverse("solicitudes:revision:detail", args=[folio])
 
         if not form.is_valid():
-            for err_list in form.errors.values():
-                for err in err_list:
-                    messages.error(request, err)
+            _flash_form_errors(request, form)
             return redirect(target)
 
         cleaned = form.cleaned_data
-        files = cleaned.get("archivos_list", [])
-        archivos = [
-            UploadedFile(
-                nombre_original=f.name or "archivo",
-                content_type=f.content_type or "application/octet-stream",
-                size_bytes=f.size or 0,
-                content=f.read(),
-            )
-            for f in files
-        ]
+        archivos = _build_uploaded_files(cleaned.get("archivos_list", []))
         try:
             input_dto = CreateRespuestaInput(
                 folio=folio,
@@ -53,7 +62,7 @@ class CreateRespuestaView(ReviewerRequiredMixin, View):
                 comentario=cleaned.get("comentario", ""),
                 archivos=archivos,
             )
-        except ValueError as exc:
+        except ValueError as exc:  # pragma: no cover - el formulario ya valida estas invariantes
             messages.error(request, str(exc))
             return redirect(target)
 

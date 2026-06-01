@@ -25,7 +25,8 @@ def safe_return_path(raw: str) -> str | None:
     if not raw.startswith("/") or raw.startswith("//") or raw.startswith("/\\"):
         return None
     parsed = urlparse(raw)
-    if parsed.scheme or parsed.netloc:
+    # Defensa extra: la guarda de un solo "/" arriba ya impide scheme/netloc.
+    if parsed.scheme or parsed.netloc:  # pragma: no cover
         return None
     return raw
 

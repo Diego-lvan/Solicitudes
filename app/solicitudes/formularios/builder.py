@@ -107,7 +107,7 @@ def _build_django_field(snap: FieldSnapshot) -> forms.Field:
         "help_text": snap.help_text or "",
     }
     builder = _FIELD_BUILDERS.get(snap.field_type)
-    if builder is None:
+    if builder is None:  # pragma: no cover - enum exhaustivo; defensa ante FieldType nuevo
         # Defensive — every FieldType has a builder above. New types must extend.
         raise ValueError(f"Unsupported FieldType: {snap.field_type}")
     return builder(snap, common)
