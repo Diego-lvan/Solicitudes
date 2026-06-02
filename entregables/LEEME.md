@@ -7,15 +7,23 @@ Licenciatura en Ingeniería de Software · Materia de Testing · Junio 2026
 Este paquete reúne todos los entregables solicitados. Abajo se mapea cada punto
 del checklist del proyecto final a su archivo correspondiente.
 
+> **Nota sobre las rutas:** este índice describe la estructura del **ZIP de entrega**
+> (`Entrega_Proyecto_Final_Sistema_Solicitudes.zip`), que contiene la
+> **documentación** (`documentacion/`) y los **artefactos de prueba**
+> (`pruebas/`). El **código fuente y las pruebas (unitarias y de aceptación)
+> se entregan a través del repositorio Git**:
+> <https://github.com/Diego-lvan/Solicitudes> (rama `main`) — el código en
+> `app/` y las pruebas de aceptación behave+selenium en `acceptance/`.
+
 ## Checklist de entregables
 
 | # | Entregable | Ubicación |
 |---|---|---|
-| 1 | **Código fuente y pruebas unitarias** | `codigo_fuente/app/` (769 pruebas con pytest; 714 funciones de test únicas) |
-| 2 | **Pruebas de Aceptación (behave y Selenium)** | `codigo_fuente/acceptance/` (7 features, 20 escenarios Gherkin en español) |
+| 1 | **Código fuente y pruebas unitarias** | Repositorio Git → `app/` (916 pruebas con pytest; 861 funciones de test únicas) |
+| 2 | **Pruebas de Aceptación (behave y Selenium)** | Repositorio Git → `acceptance/` (7 features, 20 escenarios Gherkin en español) |
 | 3 | **Matriz de Trazabilidad** | `pruebas/Matriz_de_Trazabilidad.xlsx` (Historia de Usuario → Requerimiento Técnico → Casos de prueba) |
 | 4 | **Plan de prueba** | `documentacion/01_Plan_de_Prueba.pdf` |
-| 5 | **Plantilla de casos de prueba** | `pruebas/Plantilla_de_Casos_de_Prueba.xlsx` (un renglón por función de prueba) |
+| 5 | **Plantilla de casos de prueba** | `pruebas/Plantilla_de_Casos_de_Prueba.xlsx` (861 funciones de prueba, un renglón cada una) |
 | 6 | **Pruebas de performance (JMeter)** | `pruebas/performance/solicitudes_performance.jmx` (2 casos: login 10 usuarios, alta 5 usuarios) |
 | 7 | **SRS** | `documentacion/02_SRS.pdf` |
 | 8 | **SDD** | `documentacion/03_SDD.pdf` |
@@ -28,8 +36,8 @@ del checklist del proyecto final a su archivo correspondiente.
 
 | Requisito | Evidencia |
 |---|---|
-| Cobertura de código (objetivo 100%) | `pruebas/reportes_calidad/cobertura.txt` y `reportes_calidad/htmlcov/index.html` |
-| Complejidad ciclomática ≤ 10 | `pruebas/reportes_calidad/complejidad_ciclomatica.txt` (todos los métodos ≤ 10; promedio A) |
+| Cobertura de código **100%** | `pruebas/reportes_calidad/cobertura.txt` y `reportes_calidad/htmlcov/index.html` (las exclusiones defensivas usan `# pragma: no cover` justificado) |
+| Complejidad ciclomática ≤ 10 | `pruebas/reportes_calidad/complejidad_ciclomatica.txt` (todos los métodos ≤ 10; `radon cc -n C` sin hallazgos; promedio A) |
 | Índice de mantenibilidad | `pruebas/reportes_calidad/mantenibilidad.txt` (radon mi) |
 | PEP8 | Verificado con `ruff check .` — sin errores |
 | Metodología TDD | Escenarios primero (Gherkin/behave) y pruebas unitarias antes del código |

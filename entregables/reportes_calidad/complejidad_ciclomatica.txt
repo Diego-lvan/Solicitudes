@@ -788,8 +788,10 @@ app/solicitudes/respuesta/views/shared.py
     C 15:0 DownloadArchivoRespuestaView - A (2)
     M 16:4 DownloadArchivoRespuestaView.get - A (1)
 app/solicitudes/respuesta/views/personal.py
-    C 18:0 CreateRespuestaView - C (11)
-    M 26:4 CreateRespuestaView.post - B (10)
+    F 26:0 _build_uploaded_files - A (5)
+    C 38:0 CreateRespuestaView - A (5)
+    M 46:4 CreateRespuestaView.post - A (4)
+    F 20:0 _flash_form_errors - A (3)
 app/solicitudes/respuesta/services/respuesta_service/interface.py
     C 16:0 RespuestaService - A (2)
     M 18:4 RespuestaService.create_batch - A (1)
@@ -898,7 +900,7 @@ app/usuarios/directory/views/detail.py
     M 17:4 DirectoryDetailView.get - A (2)
 app/usuarios/directory/views/_helpers.py
     F 11:0 safe_return_path - B (8)
-    F 33:0 build_filter_querystring - A (3)
+    F 34:0 build_filter_querystring - A (3)
 app/usuarios/directory/services/user_directory/interface.py
     C 10:0 UserDirectoryService - A (2)
     M 12:4 UserDirectoryService.list - A (1)
@@ -1136,5 +1138,5 @@ app/_shared/management/commands/seed.py
     M 86:4 Command._topological_sort - A (2)
     M 29:4 Command.add_arguments - A (1)
 
-920 blocks (classes, functions, methods) analyzed.
-Average complexity: A (2.1043478260869564)
+922 blocks (classes, functions, methods) analyzed.
+Average complexity: A (2.0954446854663775)
