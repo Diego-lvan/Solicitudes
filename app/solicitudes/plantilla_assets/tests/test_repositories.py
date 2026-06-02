@@ -206,3 +206,42 @@ def test_delete_tolerates_already_missing_file() -> None:
         os.remove(path)
     repo.delete(asset.id)
     assert not PlantillaAsset.objects.filter(pk=asset.id).exists()
+
+
+@pytest.mark.django_db
+def test_delete_swallows_filenotfounderror_from_storage(mocker) -> None:
+    """Some storage backends raise FileNotFoundError on a missing blob; the
+    repository must log-and-continue, still deleting the DB row."""
+    asset = make_global_asset()
+    repo = OrmAssetRepository()
+    # Force the storage delete to raise FileNotFoundError on this row's field.
+    mocker.patch(
+        "django.db.models.fields.files.FieldFile.delete",
+        side_effect=FileNotFoundError("gone"),
+    )
+    repo.delete(asset.id)
+    assert not PlantillaAsset.objects.filter(pk=asset.id).exists()
+
+
+@pytest.mark.django_db
+def test_create_reraises_non_slug_integrity_error(mocker) -> None:
+    """An IntegrityError whose message is not a slug collision must propagate
+    unchanged rather than being masked as DuplicateAssetSlug."""
+    admin = _ensure_admin()
+    repo = OrmAssetRepository()
+    mocker.patch.object(
+        PlantillaAsset,
+        "save",
+        side_effect=IntegrityError("some other constraint failed"),
+    )
+    with pytest.raises(IntegrityError):
+        repo.create(
+            slug="x",
+            nombre="X",
+            scope=AssetScope.GLOBAL.value,
+            plantilla_id=None,
+            file_bytes=PNG_1X1,
+            original_filename="x.png",
+            mime_type="image/png",
+            created_by_id=admin.pk,
+        )

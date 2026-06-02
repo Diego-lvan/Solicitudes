@@ -4,10 +4,11 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
+from django.db import IntegrityError
 
 from solicitudes.models import FieldDefinition, TipoSolicitud
 from solicitudes.tipos.constants import FieldSource, FieldType
-from solicitudes.tipos.exceptions import TipoNotFound
+from solicitudes.tipos.exceptions import TipoNotFound, TipoSlugConflict
 from solicitudes.tipos.repositories.tipo import OrmTipoRepository
 from solicitudes.tipos.schemas import (
     CreateFieldInput,
@@ -53,6 +54,48 @@ def test_create_persists_tipo_and_fields(repo: OrmTipoRepository) -> None:
     assert [f.order for f in dto.fields] == [0, 1]
     assert TipoSolicitud.objects.count() == 1
     assert FieldDefinition.objects.count() == 2
+
+
+@pytest.mark.django_db
+def test_create_maps_toctou_slug_integrity_error_to_conflict(
+    repo: OrmTipoRepository, mocker
+) -> None:
+    # ``_build_unique_slug`` makes this rare, but a concurrent insert can still
+    # collide at flush time. A slug-flavored IntegrityError must surface as the
+    # feature's TipoSlugConflict.
+    mocker.patch.object(
+        TipoSolicitud.objects,
+        "create",
+        side_effect=IntegrityError("UNIQUE constraint failed: solicitudes_tipo.slug"),
+    )
+    with pytest.raises(TipoSlugConflict):
+        repo.create(
+            CreateTipoInput(
+                nombre="Constancia de Estudios",
+                responsible_role=Role.CONTROL_ESCOLAR,
+                creator_roles={Role.ALUMNO},
+            )
+        )
+
+
+@pytest.mark.django_db
+def test_create_reraises_non_slug_integrity_error(
+    repo: OrmTipoRepository, mocker
+) -> None:
+    # An IntegrityError unrelated to the slug must propagate unchanged.
+    mocker.patch.object(
+        TipoSolicitud.objects,
+        "create",
+        side_effect=IntegrityError("some other constraint"),
+    )
+    with pytest.raises(IntegrityError):
+        repo.create(
+            CreateTipoInput(
+                nombre="Constancia de Estudios",
+                responsible_role=Role.CONTROL_ESCOLAR,
+                creator_roles={Role.ALUMNO},
+            )
+        )
 
 
 @pytest.mark.django_db

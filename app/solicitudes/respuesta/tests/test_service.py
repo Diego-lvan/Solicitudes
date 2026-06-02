@@ -17,12 +17,14 @@ from _shared.exceptions import Unauthorized
 from solicitudes.formularios.schemas import FormSnapshot
 from solicitudes.lifecycle.constants import Estado
 from solicitudes.lifecycle.schemas import SolicitudDetail
+from solicitudes.respuesta.constants import MAX_FILES_PER_BATCH
 from solicitudes.respuesta.exceptions import (
     ArchivoRespuestaNotFound,
     EmptyRespuestaBatch,
     InvalidStateForRespuesta,
     ResponseFileExtensionNotAllowed,
     ResponseFileTooLarge,
+    TooManyFilesInBatch,
 )
 from solicitudes.respuesta.schemas import CreateRespuestaInput, UploadedFile
 from solicitudes.respuesta.services.respuesta_service.implementation import (
@@ -261,6 +263,22 @@ def test_create_batch_defensive_empty_payload_raises() -> None:
         archivos=[],
     )
     with pytest.raises(EmptyRespuestaBatch):
+        svc.create_batch(bad)
+
+
+def test_create_batch_defensive_too_many_files_raises() -> None:
+    # The DTO caps archivos at MAX_FILES_PER_BATCH; the service re-asserts in
+    # case a caller bypassed the validator via model_construct.
+    detail = _detail()
+    svc, _, _, _ = _service(detail=detail)
+    bad = CreateRespuestaInput.model_construct(
+        folio=detail.folio,
+        actor_matricula="P1",
+        actor_role=Role.CONTROL_ESCOLAR.value,
+        comentario="",
+        archivos=[_file(f"f{i}.pdf") for i in range(MAX_FILES_PER_BATCH + 1)],
+    )
+    with pytest.raises(TooManyFilesInBatch):
         svc.create_batch(bad)
 
 

@@ -77,6 +77,39 @@ def test_callback_blocks_external_return_url() -> None:
     assert response["Location"] == "/"
 
 
+@pytest.mark.django_db
+@override_settings(
+    JWT_SECRET=JWT_SECRET,
+    JWT_ALGORITHM=JWT_ALG,
+    ALLOWED_HOSTS=["testserver"],
+    SIGA_BASE_URL="",
+)
+def test_callback_with_empty_return_falls_back_to_root() -> None:
+    # An explicit empty ``return`` must hit the ``if not raw`` guard and land on "/".
+    client = Client()
+    token = _mint(_valid_claims())
+    response = client.get("/auth/callback", {"token": token, "return": ""})
+    assert response.status_code == 302
+    assert response["Location"] == "/"
+
+
+@pytest.mark.django_db
+@override_settings(
+    JWT_SECRET=JWT_SECRET,
+    JWT_ALGORITHM=JWT_ALG,
+    ALLOWED_HOSTS=["testserver", "idp.example.com"],
+    SIGA_BASE_URL="",
+)
+def test_callback_allows_absolute_return_url_to_allowed_host() -> None:
+    # An absolute URL whose host is in ALLOWED_HOSTS is honored verbatim.
+    client = Client()
+    token = _mint(_valid_claims())
+    target = "https://idp.example.com/dashboard"
+    response = client.get("/auth/callback", {"token": token, "return": target})
+    assert response.status_code == 302
+    assert response["Location"] == target
+
+
 @override_settings(
     JWT_SECRET=JWT_SECRET,
     JWT_ALGORITHM=JWT_ALG,

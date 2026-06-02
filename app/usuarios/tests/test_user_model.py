@@ -58,6 +58,14 @@ def test_get_full_name_falls_back_to_matricula() -> None:
     assert u.get_short_name() == "Ada"
 
 
+@pytest.mark.django_db
+def test_user_str_includes_matricula_and_email() -> None:
+    u = User.objects.create(
+        matricula="STR1", email="str1@uaz.edu.mx", role=Role.ALUMNO.value
+    )
+    assert str(u) == "STR1 <str1@uaz.edu.mx>"
+
+
 def test_user_meta() -> None:
     assert User._meta.db_table == "usuarios_user"
     assert User.USERNAME_FIELD == "matricula"

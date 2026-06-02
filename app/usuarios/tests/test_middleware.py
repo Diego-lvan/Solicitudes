@@ -121,6 +121,68 @@ def test_invalid_token_redirects_to_login() -> None:
     assert response["Location"] == "https://idp.example.com/login"
 
 
+@pytest.mark.django_db
+@override_settings(
+    JWT_SECRET=JWT_SECRET,
+    JWT_ALGORITHM=JWT_ALG,
+    LOGIN_URL="https://idp.example.com/login",
+)
+def test_missing_orm_user_after_upsert_redirects_to_login() -> None:
+    # The in-memory user repo behind the service upserts its own row, but the
+    # middleware then re-reads via the real ORM. With no matching Django row,
+    # ``User.objects.get`` raises DoesNotExist, which the middleware maps to
+    # ``InvalidJwt`` (an AuthenticationRequired subclass) → redirect to login.
+    token = _mint(
+        {
+            "sub": "GHOST",
+            "email": "ghost@uaz.edu.mx",
+            "rol": "alumno",
+            "exp": int(time.time()) + 3600,
+            "iat": int(time.time()),
+        }
+    )
+    rf = RequestFactory()
+    request = rf.get("/protected/")
+    request.COOKIES[SESSION_COOKIE_NAME] = token
+    response = _build_middleware()(request)
+    assert response.status_code == 302
+    assert response["Location"] == "https://idp.example.com/login"
+
+
+@override_settings(JWT_SECRET=JWT_SECRET, JWT_ALGORITHM=JWT_ALG)
+def test_non_auth_app_error_during_setup_propagates() -> None:
+    # A non-AuthenticationRequired AppError raised while seating the actor must
+    # propagate (the ``except AppError: raise`` branch) so the error handler
+    # can turn it into a 500 — it must NOT be swallowed into a login redirect.
+    from _shared.exceptions import AppError
+
+    class _BoomError(AppError):
+        user_message = "boom"
+        http_status = 500
+
+    class _BoomService:
+        def get_or_create_from_claims(self, claims: object) -> None:
+            raise _BoomError("kaboom")
+
+    token = _mint(
+        {
+            "sub": "X1",
+            "email": "x1@uaz.edu.mx",
+            "rol": "alumno",
+            "exp": int(time.time()) + 3600,
+            "iat": int(time.time()),
+        }
+    )
+    rf = RequestFactory()
+    request = rf.get("/protected/")
+    request.COOKIES[SESSION_COOKIE_NAME] = token
+    middleware = JwtAuthenticationMiddleware(
+        _ok, user_service_factory=lambda: _BoomService()  # type: ignore[arg-type,return-value]
+    )
+    with pytest.raises(_BoomError):
+        middleware(request)
+
+
 @override_settings(
     JWT_SECRET=JWT_SECRET,
     JWT_ALGORITHM=JWT_ALG,

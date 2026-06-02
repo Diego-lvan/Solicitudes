@@ -37,6 +37,20 @@ def test_upsert_inserts_when_absent(repo: OrmUserRepository) -> None:
 
 
 @pytest.mark.django_db
+def test_upsert_persists_gender_when_provided(repo: OrmUserRepository) -> None:
+    dto = repo.upsert(
+        CreateOrUpdateUserInput(
+            matricula="G1",
+            email="g1@uaz.edu.mx",
+            role=Role.ALUMNO,
+            gender="M",
+        )
+    )
+    assert dto.gender == "M"
+    assert User.objects.get(matricula="G1").gender == "M"
+
+
+@pytest.mark.django_db
 def test_upsert_updates_when_present(repo: OrmUserRepository) -> None:
     repo.upsert(CreateOrUpdateUserInput(matricula="A1", email="a@x.com", role=Role.ALUMNO))
     dto = repo.upsert(

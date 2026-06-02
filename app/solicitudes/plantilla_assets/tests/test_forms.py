@@ -1,6 +1,7 @@
 """Form-layer tests for AssetUploadForm."""
 from __future__ import annotations
 
+import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from solicitudes.plantilla_assets.constants import MAX_ASSET_BYTES
@@ -43,3 +44,15 @@ def test_whitespace_collapsing_to_short_name_rejected() -> None:
     form = AssetUploadForm(data={"nombre": "  a "}, files={"imagen": upload})
     assert not form.is_valid()
     assert "nombre" in form.errors
+
+
+def test_clean_nombre_rejects_value_that_strips_below_minimum() -> None:
+    # Django's strip=True + min_length=2 normally guard this, but clean_nombre
+    # is the last line of defense: a value that collapses to a single char must
+    # still raise its own ValidationError.
+    from django import forms as dj_forms
+
+    form = AssetUploadForm()
+    form.cleaned_data = {"nombre": " a "}
+    with pytest.raises(dj_forms.ValidationError):
+        form.clean_nombre()

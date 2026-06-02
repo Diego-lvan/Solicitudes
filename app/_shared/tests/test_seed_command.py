@@ -80,3 +80,38 @@ def test_seed_refuses_with_debug_false() -> None:
 def test_seed_runs_with_debug_false_under_allow_prod() -> None:
     call_command("seed", "--allow-prod")
     assert User.objects.filter(matricula="ADMIN_TEST").exists()
+
+
+def test_discover_seeders_skips_modules_without_run(monkeypatch: pytest.MonkeyPatch) -> None:
+    # A seeders module that exists but lacks ``run`` must be skipped (line 81).
+    from types import SimpleNamespace
+
+    from _shared.management.commands import seed as seed_module
+
+    class _Cfg:
+        def __init__(self, name: str, label: str) -> None:
+            self.name = name
+            self.label = label
+
+    fake_app = _Cfg("fakeapp", "fakeapp")
+    monkeypatch.setattr(
+        seed_module.apps, "get_app_configs", lambda: [fake_app]
+    )
+    # A module object that has no ``run`` attribute.
+    monkeypatch.setattr(
+        seed_module, "import_module", lambda name: SimpleNamespace()
+    )
+    found = seed_module.Command._discover_seeders()
+    assert found == []
+
+
+def test_topological_sort_detects_dependency_cycle() -> None:
+    # Two seeders depending on each other must surface a CommandError (lines 98-99).
+    from types import SimpleNamespace
+
+    from _shared.management.commands.seed import Command
+
+    mod_a = SimpleNamespace(DEPENDS_ON=["b"])
+    mod_b = SimpleNamespace(DEPENDS_ON=["a"])
+    with pytest.raises(CommandError, match="cycle"):
+        Command._topological_sort([("a", mod_a), ("b", mod_b)])

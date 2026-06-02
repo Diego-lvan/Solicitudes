@@ -80,3 +80,9 @@ def test_home_redirects_anonymous_to_login() -> None:
     response = Client().get("/")
     assert response.status_code == 302
     assert "/auth/dev-login" in response["Location"]
+
+
+def test_health_returns_ok_status() -> None:
+    response = Client().get("/health/")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"

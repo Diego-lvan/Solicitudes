@@ -44,6 +44,13 @@ def test_page_empty() -> None:
     assert page.has_prev is False
 
 
+def test_page_total_pages_is_zero_when_page_size_is_zero() -> None:
+    # ``Page`` (unlike ``PageRequest``) does not constrain page_size, so the
+    # guard against a zero divisor must hold.
+    page = Page[int](items=[], total=10, page=1, page_size=0)
+    assert page.total_pages == 0
+
+
 def test_page_single_page() -> None:
     page = Page[int](items=[1, 2], total=2, page=1, page_size=10)
     assert page.total_pages == 1

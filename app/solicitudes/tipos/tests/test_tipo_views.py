@@ -18,7 +18,7 @@ from django.test.utils import override_settings
 from django.urls import reverse
 
 from solicitudes.models import TipoSolicitud
-from solicitudes.tipos.constants import FieldType
+from solicitudes.tipos.constants import FieldSource, FieldType
 from solicitudes.tipos.tests.factories import make_field, make_tipo
 from usuarios.constants import SESSION_COOKIE_NAME, Role
 
@@ -155,6 +155,38 @@ def test_create_post_persists_and_redirects(admin_client: Client) -> None:
     assert response["Location"] == reverse(
         "solicitudes:tipos:detail", kwargs={"tipo_id": tipo.id}
     )
+
+
+@pytest.mark.django_db
+def test_create_post_skips_blank_extra_formset_row(admin_client: Client) -> None:
+    # One filled row plus an entirely empty extra row: ``_collect_fields`` must
+    # skip the blank row (empty cleaned_data) instead of trying to build a field.
+    response = admin_client.post(
+        reverse("solicitudes:tipos:create"),
+        data={
+            "nombre": "Constancia con extra vacío",
+            "descripcion": "",
+            "responsible_role": Role.CONTROL_ESCOLAR.value,
+            "creator_roles": [Role.ALUMNO.value],
+            "fields-TOTAL_FORMS": "2",
+            "fields-INITIAL_FORMS": "0",
+            "fields-MIN_NUM_FORMS": "0",
+            "fields-MAX_NUM_FORMS": "50",
+            "fields-0-label": "Nombre",
+            "fields-0-field_type": "TEXT",
+            "fields-0-required": "on",
+            "fields-0-order": "0",
+            # Row 1 left at its unchanged initial values → empty extra row that
+            # the formset marks as not-changed and ``_collect_fields`` skips.
+            "fields-1-label": "",
+            "fields-1-field_type": "",
+            "fields-1-order": "",
+            "fields-1-source": FieldSource.USER_INPUT.value,
+        },
+    )
+    assert response.status_code == 302
+    tipo = TipoSolicitud.objects.get(slug="constancia-con-extra-vacio")
+    assert tipo.fields.count() == 1
 
 
 @pytest.mark.django_db

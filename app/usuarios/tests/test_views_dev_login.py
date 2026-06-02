@@ -122,6 +122,28 @@ def test_unknown_action_returns_400() -> None:
     assert response.status_code == 400
 
 
+@pytest.mark.django_db
+@override_settings(DEBUG=True, ALLOWED_HOSTS=["testserver"])
+def test_quickstart_with_invalid_role_returns_400() -> None:
+    _reload_urls()
+
+    response = Client().post(
+        "/auth/dev-login", {"action": "quickstart", "role": "not-a-role"}
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+@override_settings(DEBUG=True, ALLOWED_HOSTS=["testserver"])
+def test_login_without_matricula_returns_400() -> None:
+    _reload_urls()
+
+    response = Client().post(
+        "/auth/dev-login", {"action": "login", "matricula": "   "}
+    )
+    assert response.status_code == 400
+
+
 @override_settings(DEBUG=False, ALLOWED_HOSTS=["testserver"])
 def test_dev_login_url_is_not_registered_when_debug_false() -> None:
     """URL-level gate: the dev-login pattern must be absent from urlpatterns."""

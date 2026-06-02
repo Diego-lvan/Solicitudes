@@ -54,3 +54,20 @@ def test_zero_page_falls_back_to_one() -> None:
 def test_negative_page_falls_back_to_one() -> None:
     f = _filters_from({"page": "-3"})
     assert f.page == 1
+
+
+def test_to_filters_degrades_invalid_cleaned_role_to_none() -> None:
+    # The ChoiceField normally blocks bad roles, but ``to_filters`` defends
+    # against a ``cleaned_data`` that carries a value outside the Role enum
+    # (e.g. a future caller that injects cleaned_data directly).
+    form = DirectoryFilterForm({})
+    form.cleaned_data = {"role": "NOT_A_ROLE"}
+    assert form.to_filters().role is None
+
+
+def test_to_filters_clamps_sub_one_cleaned_page() -> None:
+    # IntegerField(min_value=1) blocks page<1 at validation, so ``to_filters``
+    # clamps defensively when a cleaned_data smuggles a non-positive page.
+    form = DirectoryFilterForm({})
+    form.cleaned_data = {"page": -5}
+    assert form.to_filters().page == 1
