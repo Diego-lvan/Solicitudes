@@ -132,6 +132,18 @@ def test_detail_shows_role_scoped_solicitud(ce_client: Client) -> None:
 
 
 @pytest.mark.django_db
+def test_detail_admin_can_view_any_responsible_role(admin_client: Client) -> None:
+    # ADMIN bypasses the responsible_role check in the review service.
+    tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)
+    s = make_solicitud(tipo=tipo)
+    response = admin_client.get(
+        reverse("solicitudes:revision:detail", kwargs={"folio": s.folio})
+    )
+    assert response.status_code == 200
+    assert response.context["detail"].folio == s.folio
+
+
+@pytest.mark.django_db
 def test_detail_role_mismatch_rejected(rp_client: Client) -> None:
     tipo = make_tipo(responsible_role=Role.CONTROL_ESCOLAR.value)
     s = make_solicitud(tipo=tipo)
