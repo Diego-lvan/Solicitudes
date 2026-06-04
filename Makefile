@@ -56,7 +56,7 @@ lint:  ## ruff inside web
 type:  ## mypy inside web
 	$(EXEC) mypy .
 
-test:  ## Unit + integration tests (in-process, SQLite)
+test:  ## Unit + integration tests (Postgres, isolated per-process test DB via config.settings.test)
 	$(EXEC) pytest
 
 coverage:  ## Coverage report (Tier 1+2). E2E=1 also runs Playwright suite.
@@ -75,7 +75,7 @@ e2e-install:  ## Bootstrap Chromium + system deps for browser tests (run once af
 	$(DC_DEV) exec -T -u root web python -m playwright install-deps chromium
 	$(EXEC) python -m playwright install chromium
 
-e2e:  ## All Tier 1 + Tier 2 tests (in-process, SQLite, Playwright). Run `make e2e-install` first.
+e2e:  ## All Tier 1 + Tier 2 tests (Postgres test DB + Playwright). Run `make e2e-install` first.
 	$(EXEC) pytest -m e2e
 
 e2e-postgres:  ## Same as e2e against ephemeral Postgres

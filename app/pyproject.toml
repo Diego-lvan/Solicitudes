@@ -30,9 +30,13 @@ ignore_missing_imports = true
 django_settings_module = "config.settings.dev"
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "config.settings.dev"
+DJANGO_SETTINGS_MODULE = "config.settings.test"
 python_files = ["test_*.py"]
-addopts = "-ra --strict-markers"
+# `--ds` is set explicitly because the dev container exports
+# DJANGO_SETTINGS_MODULE=config.settings.dev, and pytest-django ranks that env
+# var ABOVE the ini setting above — only the command-line `--ds` overrides it.
+# `make e2e-postgres` still wins by passing its own `--ds` on the command line.
+addopts = "-ra --strict-markers --ds=config.settings.test"
 markers = [
     "integration: cross-layer tests touching the database",
     "e2e: browser-based end-to-end tests (Playwright)",
