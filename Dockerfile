@@ -67,8 +67,22 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 WORKDIR /app
 COPY --chown=app:app app/ /app/
 
-USER app
+# Build the production Tailwind bundle inside the image. app.build.css is
+# gitignored, so we regenerate it here to keep the build self-contained.
+RUN tailwindcss -i /app/static/css/app.css \
+                 -o /app/static/css/app.build.css --minify
+
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# WORKDIR creates /app as root; collectstatic/uploads need the app user to own
+# it and the generated dirs. Create them up front and hand the tree to `app`.
+RUN mkdir -p /app/staticfiles /app/media && chown -R app:app /app
+
+# NOTE: we intentionally do NOT `USER app` here. The entrypoint starts as root
+# so it can chown the (root-owned) mounted volume, then gunicorn drops worker
+# privileges to the `app` user via --user/--group.
 
 EXPOSE 8000
 
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+CMD ["docker-entrypoint.sh"]

@@ -7,3 +7,4 @@ python-dotenv==1.2.2
 requests==2.33.1
 python-json-logger==2.0.7
 gunicorn==25.3.0
+whitenoise==6.8.2
