@@ -39,7 +39,10 @@ htmlcov/
 .coverage
 coverage.xml
 
-# TLS certs — dev self-signed certs are tracked in certs/; prod certs are mounted from secret store
+# TLS certs — self-signed dev certs are generated locally via `make certs`; never
+# version control them (private keys). Prod certs are mounted from a secret store.
+certs/*.crt
+certs/*.key
 
 # LaTeX build artifacts
 *.aux
