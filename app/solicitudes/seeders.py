@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Any
 
 from solicitudes.models import FieldDefinition, PlantillaSolicitud, TipoSolicitud
-from solicitudes.tipos.constants import FieldType
+from solicitudes.tipos.constants import FieldSource, FieldType
 from usuarios.constants import Role
 
 # Run usuarios seeder first so admin sessions can be created against the
@@ -170,18 +170,21 @@ def run(*, fresh: bool) -> None:
     _replace_fields(
         constancia,
         [
+            # Nombre y programa ya los tenemos en SIGA: se autocompletan del
+            # UserDTO hidratado y el formulario de intake no los pregunta.
             {
                 "label": "Nombre completo",
                 "field_type": FieldType.TEXT.value,
+                "source": FieldSource.USER_FULL_NAME.value,
                 "required": True,
                 "order": 0,
             },
             {
                 "label": "Programa",
-                "field_type": FieldType.SELECT.value,
+                "field_type": FieldType.TEXT.value,
+                "source": FieldSource.USER_PROGRAMA.value,
                 "required": True,
                 "order": 1,
-                "options": ["ISW", "ISC", "Ing. en Comunicaciones y Electrónica"],
             },
             {
                 "label": "Comprobante",
@@ -245,6 +248,7 @@ def _replace_fields(
             defaults={
                 "label": d["label"],
                 "field_type": d["field_type"],
+                "source": d.get("source", FieldSource.USER_INPUT.value),
                 "required": d.get("required", True),
                 "options": d.get("options", []),
                 "accepted_extensions": d.get("accepted_extensions", []),
