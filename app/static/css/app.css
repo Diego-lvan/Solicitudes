@@ -65,6 +65,14 @@
     display: none !important;
   }
 
+  /* Tailwind v4 Preflight resets `margin: 0` on every element (including
+     `::backdrop`), which clobbers the UA `margin: auto` that centers a
+     <dialog> opened with showModal(). Without this the dialog renders pinned
+     to the top-left corner. Restore centering for modal dialogs. */
+  dialog:modal {
+    margin: auto;
+  }
+
   /* Tailwind v4 Preflight strips default browser styling from form controls.
      Django-rendered widgets (`{{ form.field }}`) carry no utility classes, so
      without this fallback they render borderless and invisible. The component
