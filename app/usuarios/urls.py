@@ -18,9 +18,9 @@ urlpatterns = [
 ]
 
 # Dev-only URL: stand-in for the external auth provider while OQ-002-1 is open.
-# The route is mounted ONLY when DEBUG=True so it cannot be reached in
-# production. Initiative 010 will remove this view entirely.
-if settings.DEBUG:
+# Mounted when DEBUG=True (local dev) or ENABLE_DEV_LOGIN=True (demo deploy);
+# never in real production. Initiative 010 will remove this view entirely.
+if settings.DEBUG or getattr(settings, "ENABLE_DEV_LOGIN", False):
     from usuarios.views.dev_login import DevLoginView
 
     urlpatterns.append(path("auth/dev-login", DevLoginView.as_view(), name="dev_login"))

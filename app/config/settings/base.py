@@ -102,6 +102,10 @@ EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "10"))
 LOGIN_URL = os.environ.get("AUTH_PROVIDER_LOGIN_URL", "/auth/login/")
 LOGIN_REDIRECT_URL = LOGIN_URL
 
+# Dev-login role picker: a stand-in for the external auth provider. Mounted
+# only when DEBUG=True (dev) or this flag is on (demo deploy). Never in prod.
+ENABLE_DEV_LOGIN = False
+
 # Auth provider integration (initiative 002).
 JWT_SECRET = os.environ.get("JWT_SECRET", "")
 JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
