@@ -2,8 +2,16 @@
 from __future__ import annotations
 
 from django.conf import settings
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import (
+    Http404,
+    HttpRequest,
+    HttpResponse,
+    HttpResponseNotFound,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.shortcuts import redirect
+from django.views.static import serve
 
 from usuarios.constants import Role
 
@@ -44,3 +52,23 @@ def home(request: HttpRequest) -> HttpResponse:
     role = getattr(user, "role", "")
     target = _HOME_FOR_ROLE.get(role, _DEFAULT_AUTHED_HOME)
     return redirect(target)
+
+
+def serve_media(request: HttpRequest, path: str) -> HttpResponse:
+    """Serve user-uploaded files from ``MEDIA_ROOT`` when no proxy fronts them.
+
+    On the full prod stack nginx serves ``/media/`` and short-circuits this
+    route before it reaches Django. On the Railway demo there is no nginx, so
+    the app must serve its own uploads or every gallery thumbnail 404s.
+
+    ``MEDIA_ROOT`` is resolved per request (not captured at import) so test
+    overrides and runtime config both take effect. ``serve`` runs in every
+    ``DEBUG`` mode and guards against path traversal via ``safe_join``. A
+    missing file is returned as a 404 here rather than letting ``Http404``
+    propagate, because ``AppErrorMiddleware`` turns unhandled exceptions into a
+    500 when ``DEBUG=False``.
+    """
+    try:
+        return serve(request, path, document_root=settings.MEDIA_ROOT)
+    except Http404:
+        return HttpResponseNotFound()
