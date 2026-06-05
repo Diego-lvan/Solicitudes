@@ -96,6 +96,22 @@ def test_admin_list_renders(admin_client: Client) -> None:
     assert "solicitudes/admin/plantilla_assets/list.html" in template_names
 
 
+@pytest.mark.django_db
+def test_admin_list_renders_copyable_snippet(admin_client: Client) -> None:
+    """The card shows the literal ``{{ assets.<slug> }}`` snippet to copy.
+
+    Regression: a ``{{ assets.`` token immediately followed by
+    ``{% endverbatim %}`` makes Django's lexer swallow the closing tag into a
+    variable token, so the verbatim boundaries leak and the page renders the
+    raw ``{% endverbatim %}``/``{% verbatim %}`` tags instead of the snippet.
+    """
+    make_global_asset(nombre="Logo UAZ", slug="logo_uaz")
+    resp = admin_client.get(reverse("solicitudes:plantilla_assets:list"))
+    body = resp.content.decode()
+    assert "{{ assets.logo_uaz }}" in body
+    assert "endverbatim" not in body
+
+
 # ---- upload ----
 
 

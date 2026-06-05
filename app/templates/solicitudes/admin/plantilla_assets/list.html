@@ -33,7 +33,7 @@
         </div>
         <div class="px-3 py-2 border-t border-zinc-200">
           <p class="text-sm font-medium text-zinc-900 truncate" title="{{ a.nombre }}">{{ a.nombre }}</p>
-          <p class="text-xs text-zinc-500 font-mono truncate">{% verbatim %}{{ assets.{% endverbatim %}{{ a.slug }}{% verbatim %} }}{% endverbatim %}</p>
+          <p class="text-xs text-zinc-500 font-mono truncate">{% templatetag openvariable %} assets.{{ a.slug }} {% templatetag closevariable %}</p>
           <p class="text-[11px] text-zinc-400 mt-1">{{ a.created_at|date:"d/m/Y" }}</p>
           <div class="mt-2 flex justify-end">
             <a href="{% url 'solicitudes:plantilla_assets:delete' asset_id=a.id %}"
