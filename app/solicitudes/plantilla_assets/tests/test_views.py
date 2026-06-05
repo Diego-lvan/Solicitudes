@@ -193,6 +193,18 @@ def test_admin_delete_get_renders_confirm(admin_client: Client) -> None:
 
 
 @pytest.mark.django_db
+def test_admin_delete_confirm_renders_copyable_snippet(admin_client: Client) -> None:
+    """Same verbatim-leak regression as the list view, on the confirm page."""
+    asset = make_global_asset(nombre="Logo UAZ", slug="logo_uaz")
+    resp = admin_client.get(
+        reverse("solicitudes:plantilla_assets:delete", kwargs={"asset_id": asset.id})
+    )
+    body = resp.content.decode()
+    assert "{{ assets.logo_uaz }}" in body
+    assert "endverbatim" not in body
+
+
+@pytest.mark.django_db
 def test_admin_delete_post_removes_asset(admin_client: Client) -> None:
     asset = make_global_asset()
     resp = admin_client.post(

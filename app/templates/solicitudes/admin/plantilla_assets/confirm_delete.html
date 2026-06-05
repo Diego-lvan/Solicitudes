@@ -15,7 +15,7 @@
     </div>
     <div>
       <p class="text-sm font-medium text-zinc-900">{{ asset.nombre }}</p>
-      <p class="text-xs text-zinc-500 font-mono">{% verbatim %}{{ assets.{% endverbatim %}{{ asset.slug }}{% verbatim %} }}{% endverbatim %}</p>
+      <p class="text-xs text-zinc-500 font-mono">{% templatetag openvariable %} assets.{{ asset.slug }} {% templatetag closevariable %}</p>
     </div>
   </div>
 
